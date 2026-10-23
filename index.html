@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAXLINE LOGISTICS | Door-to-Door Courier & Cargo Aggregator</title>
+    <meta name="description" content="MAXLINE LOGISTICS Enterprise Multi-Courier Logistics. Connect 12+ top courier partners in 1 click. Compare live rates, automate doorstep pickups, cut RTOs by 40%.">
+    <link rel="icon" type="image/png" href="images/maxline_icon.png">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #ffffff;
+            color: #0f172a;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee-track {
+            display: flex;
+            width: max-content;
+            animation: marquee 28s linear infinite;
+        }
+        .animate-marquee-track:hover {
+            animation-play-state: paused;
+        }
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes floatReverse {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(8px); }
+        }
+        .animate-float-slow {
+            animation: floatSlow 4s ease-in-out infinite;
+        }
+        .animate-float-reverse {
+            animation: floatReverse 4.5s ease-in-out infinite;
+        }
+        @keyframes driveTruckHighway {
+            0% {
+                transform: translateX(-450px);
+            }
+            100% {
+                transform: translateX(100vw);
+            }
+        }
+        .animate-truck-highway {
+            animation: driveTruckHighway 10s linear infinite;
+        }
+        /* Custom Accessible Range Slider Thumb & Track */
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #f97316;
+            border: 3px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            cursor: grab;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #ea580c;
+        }
+        .range-slider::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #f97316;
+            border: 3px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            cursor: grab;
+        }
+
+        /* 4. Interactive Spotlight Hover Effect (Stripe / Vercel style) */
+        .spotlight-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .spotlight-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(
+                550px circle at var(--mouse-x, -1000px) var(--mouse-y, -1000px),
+                rgba(249, 115, 22, 0.08),
+                transparent 45%
+            );
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .spotlight-card:hover::before {
+                opacity: 1;
+            }
+        }
+
+        /* 7. Smooth Scroll Reveal Animations */
+        .reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(22px);
+            transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+        .reveal-on-scroll.is-revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .reveal-on-scroll {
+                opacity: 1 !important;
+                transform: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-900 antialiased flex flex-col min-h-screen">
+
+    <!-- 0. LIVE ACTIVITY TICKER TOP BANNER -->
+    <div id="ticker-bar" class="bg-slate-900 text-white text-xs py-2 px-4 border-b border-slate-800 transition-all duration-300 z-50">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2 overflow-hidden">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+                <span id="ticker-text" class="font-semibold text-slate-200 truncate">
+                    ⚡ AWB #DELHI987612 booked from Delhi ➔ Mumbai via Delhivery Air • 2 mins ago
+                </span>
+            </div>
+            <button onclick="document.getElementById('ticker-bar').style.display='none'" class="text-slate-400 hover:text-white font-bold text-xs">✕</button>
+        </div>
+    </div>
+
+
+    <!-- 0. Dynamic Top Scroll Reading Progress Bar -->
+    <div id="scroll-progress-bar" class="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-orange-500 via-amber-400 to-sky-500 z-50 transition-all duration-75 pointer-events-none" style="width: 0%;"></div>
+
+    <!-- 1. PUBLIC HEADER -->
+    <header id="main-header" class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-18">
+                
+                <!-- Brand Logo: MAXLINE LOGISTICS -->
+                <a href="#home" class="flex items-center text-decoration-none group py-1" aria-label="MAXLINE LOGISTICS Home">
+                    <img src="images/maxline_logo.png" alt="MAXLINE LOGISTICS" class="h-10 sm:h-11 md:h-12 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]">
+                </a>
+
+                <!-- Navigation Links -->
+                <nav class="hidden md:flex items-center space-x-7">
+                    <a href="#why-choose-us" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">Features</a>
+                    <a href="#calculator" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">Rate & Savings</a>
+                    <a href="#home" onclick="switchHeroWidgetTab('pincode')" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">Pincode Check</a>
+                    <a href="#services" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">Services</a>
+                    <a href="#faq" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">FAQ</a>
+                </nav>
+
+                <!-- Header Actions (Login & Sign Up Free Dynamic CTA) -->
+                <div class="hidden lg:flex items-center space-x-3">
+                    <a href="login.html" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all flex items-center gap-1.5 hover:border-slate-300">
+                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                        </svg>
+                        <span>Login</span>
+                    </a>
+                    <a href="register.html" class="relative group overflow-hidden px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 bg-[length:200%_auto] hover:bg-right shadow-md shadow-orange-500/25 transition-all duration-300 flex items-center gap-1.5 transform hover:scale-[1.03] active:scale-95">
+                        <span class="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
+                        <span>Sign Up Free</span>
+                        <svg class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                        </svg>
+                    </a>
+                </div>
+
+                <!-- Mobile Hamburger Button -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path id="open-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        <path id="close-icon" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- Mobile Menu Drawer -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-6 space-y-3">
+            <a href="#why-choose-us" class="block px-3 py-2 rounded-lg font-bold text-slate-700 hover:bg-slate-50">Features</a>
+            <a href="#calculator" class="block px-3 py-2 rounded-lg font-bold text-blue-600 bg-blue-50">Rate & Savings</a>
+            <a href="#home" onclick="switchHeroWidgetTab('pincode')" class="block px-3 py-2 rounded-lg font-bold text-slate-700 hover:bg-slate-50">Pincode Check</a>
+            <a href="#services" class="block px-3 py-2 rounded-lg font-bold text-slate-700 hover:bg-slate-50">Services</a>
+            <a href="#faq" class="block px-3 py-2 rounded-lg font-bold text-slate-700 hover:bg-slate-50">FAQ</a>
+            <div class="pt-2 flex flex-col gap-2">
+                <a href="login.html" class="w-full text-center py-2.5 rounded-xl font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                    </svg>
+                    <span>Login</span>
+                </a>
+                <a href="register.html" class="w-full text-center py-2.5 rounded-xl font-extrabold text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-md shadow-orange-500/25 flex items-center justify-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
+                    <span>Sign Up Free</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+
+    <!-- 2. ENTERPRISE HERO SECTION -->
+    <section id="home" class="relative bg-gradient-to-b from-sky-50/70 via-white to-white py-12 md:py-16 border-b border-slate-100 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-12 gap-10 items-center">
+                
+                <!-- Left Column: Headline & Direct AWB Search -->
+                <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                    
+                    <!-- Badge Bar -->
+                    <div class="inline-flex items-center gap-2 flex-wrap justify-center lg:justify-start">
+                        <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-orange-700 text-xs font-extrabold shadow-sm">
+                            <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                            ⚡ 12+ Courier Networks • 29,000+ Active Pincodes
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold border border-slate-700">
+                            <span>₹0 Setup Fee</span>
+                        </span>
+                    </div>
+
+                    <!-- Main Headline -->
+                    <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-none">
+                        Next-Gen Multi-Carrier <br class="hidden sm:block"/>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-sky-600">
+                            Freight & Logistics Engine.
+                        </span>
+                    </h1>
+
+                    <!-- Subheadline -->
+                    <p class="text-base sm:text-lg text-slate-600 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
+                        Compare live freight rates across 12+ courier networks, automate doorstep pickups, and get instant T+1 COD payouts pan-India.
+                    </p>
+
+                    <!-- CTAs (Sign Up Free Dynamic Button & Login) -->
+                    <div class="pt-1 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
+                        <a href="register.html" class="w-full sm:w-auto px-7 py-3.5 rounded-xl font-extrabold text-white bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 bg-[length:200%_auto] hover:bg-right shadow-lg shadow-orange-500/30 text-sm transition-all duration-300 text-center flex items-center justify-center gap-2 transform hover:scale-[1.02] active:scale-95 group">
+                            <span class="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
+                            <span>Sign Up Free</span>
+                            <span class="text-base group-hover:translate-x-0.5 transition-transform">🚀</span>
+                        </a>
+                        <a href="login.html" class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold text-slate-800 bg-white hover:bg-slate-50 border border-slate-300 text-sm text-center flex items-center justify-center gap-2 shadow-sm transition-all hover:border-slate-400">
+                            <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                            </svg>
+                            <span>Login</span>
+                        </a>
+                    </div>
+                    <div class="pt-0.5 text-center lg:text-left">
+                        <a href="#calculator" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-orange-600 transition-colors">
+                            <span>📊 Looking to estimate parcel rates without login?</span>
+                            <span class="underline">Calculate Live Rates ↓</span>
+                        </a>
+                    </div>
+
+                    <!-- Key Trust Metric Strip (Clean & Accessible) -->
+                    <div class="pt-3 border-t border-slate-200/80 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-xs text-slate-600">
+                        <div class="flex items-center gap-1.5 font-bold">
+                            <span class="text-orange-500 font-black">✓</span>
+                            <span>99.4% On-Time SLA</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 font-bold">
+                            <span class="text-emerald-600 font-black">✓</span>
+                            <span>Daily T+1 COD Remittance</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 font-bold">
+                            <span class="text-sky-600 font-black">✓</span>
+                            <span>29,000+ Pincodes Reach</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Premium Clean Track Order & Pincode Card -->
+                <div class="lg:col-span-5 relative flex flex-col items-center justify-center py-2">
+                    
+                    <!-- Ambient Radial Glow -->
+                    <div class="absolute w-80 h-80 bg-gradient-to-tr from-orange-500/15 via-blue-500/10 to-transparent rounded-full filter blur-3xl pointer-events-none"></div>
+
+                    <!-- Main Widget Card with 3D Tilt Hook -->
+                    <div id="hero-widget-card" class="spotlight-card relative z-10 w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200/90 space-y-5 transition-transform duration-200">
+                        
+                        <!-- Top Dual Tabs with Sliding Pill Indicator -->
+                        <div class="relative grid grid-cols-2 bg-slate-100 p-1.5 rounded-2xl overflow-hidden">
+                            <!-- Animated Sliding Indicator Pill -->
+                            <div id="hero-tab-indicator" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl shadow-md transition-transform duration-300 ease-out pointer-events-none"></div>
+
+                            <button id="hero-tab-track-btn" onclick="switchHeroWidgetTab('track')" class="relative z-10 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm text-white transition-colors flex items-center justify-center gap-1.5">
+                                <span>📦</span> Track Shipment
+                            </button>
+                            <button id="hero-tab-pincode-btn" onclick="switchHeroWidgetTab('pincode')" class="relative z-10 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm text-slate-600 hover:text-slate-900 transition-colors flex items-center justify-center gap-1.5">
+                                <span>📍</span> Check Pincode
+                            </button>
+                        </div>
+
+                        <!-- TAB 1: TRACK ORDER CONTENT -->
+                        <div id="hero-track-content" class="space-y-4">
+                            
+                            <!-- Input Form -->
+                            <form id="track-form" class="space-y-3.5">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <label for="track-input" class="block text-xs font-bold text-slate-700">Enter AWB or Tracking Number:</label>
+                                        <button type="button" onclick="trySampleAWB('MXL9482103IN')" class="text-[11px] text-orange-600 hover:text-orange-700 font-extrabold flex items-center gap-1 hover:underline">
+                                            <span>⚡ Try MXL9482103IN</span>
+                                        </button>
+                                    </div>
+                                    <div class="relative">
+                                        <input type="text" id="track-input" placeholder="e.g. 1428591024 or DEL987654" class="w-full pl-4 pr-11 py-3.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-slate-50/60 focus:bg-white tracking-wider" required>
+                                        <span class="absolute right-3.5 top-3.5 text-slate-400 text-base pointer-events-none">🔍</span>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <button type="submit" class="w-full py-3.5 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800 text-sm shadow-md transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
+                                    <span>Track Live Status</span>
+                                    <span aria-hidden="true">→</span>
+                                </button>
+                            </form>
+
+                            <!-- Dynamic Simulated Tracking Result Timeline -->
+                            <div id="track-result-box" class="hidden bg-slate-950 text-white rounded-2xl p-4 space-y-3.5 text-xs shadow-xl border border-slate-800 transition-all">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Consignment</span>
+                                        <span id="track-result-awb" class="font-black text-orange-400 text-sm tracking-wide">MXL9482103IN</span>
+                                    </div>
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                        In-Transit (Air)
+                                    </span>
+                                </div>
+
+                                <!-- 4-Step Stepper -->
+                                <div class="space-y-2.5">
+                                    <div class="flex items-start gap-2.5">
+                                        <div class="w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">✓</div>
+                                        <div>
+                                            <p class="font-bold text-slate-200">Parcel Picked Up • Panchkula Hub</p>
+                                            <p class="text-[10px] text-slate-400">Delhivery Air Express • Manifest #9821</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2.5">
+                                        <div class="w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">✓</div>
+                                        <div>
+                                            <p class="font-bold text-slate-200">Departed Gateway • IGI Airport Delhi</p>
+                                            <p class="text-[10px] text-slate-400">Air Cargo Transit to Destination</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2.5">
+                                        <div class="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5 animate-pulse">●</div>
+                                        <div>
+                                            <p class="font-bold text-orange-400">Arrived at Destination Hub • Sorted</p>
+                                            <p class="text-[10px] text-slate-300">Prepared for Final Doorstep Dispatch</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2.5">
+                                        <div class="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 text-slate-500 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">4</div>
+                                        <div>
+                                            <p class="font-semibold text-slate-400">Out for Doorstep Delivery</p>
+                                            <p class="text-[10px] text-slate-500">Expected Today by 5:00 PM</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Channel / App Badges Strip -->
+                            <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span>Delhivery • BlueDart • DTDC • Xpressbees</span>
+                                </div>
+                                <span class="text-orange-600 font-bold">12+ Partners</span>
+                            </div>
+
+                        </div>
+
+                        <!-- TAB 2: PINCODE CHECK CONTENT (Hidden by default) -->
+                        <div id="hero-pincode-content" class="hidden space-y-4">
+                            
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-700 block">
+                                        <strong class="text-orange-600 font-black">Verify</strong> Route Serviceability:
+                                    </span>
+                                    <span class="text-[10px] font-black uppercase text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                                        29,000+ Pins
+                                    </span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Instant delivery SLA & COD availability checker.</p>
+                            </div>
+
+                            <form id="hero-pincode-form" onsubmit="handleHeroPincodeSubmit(event)" class="space-y-3">
+                                <div class="grid grid-cols-2 gap-2.5">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Pickup Pincode</label>
+                                        <input type="text" id="hero-pickup-pin" maxlength="6" value="134113" oninput="checkLivePincodeHint()" placeholder="e.g. 134113" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50/60 focus:bg-white" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Delivery Pincode</label>
+                                        <input type="text" id="hero-dest-pin" maxlength="6" value="400001" oninput="checkLivePincodeHint()" placeholder="e.g. 400001" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50/60 focus:bg-white" required>
+                                    </div>
+                                </div>
+
+                                <!-- Live Pincode Hint -->
+                                <div id="hero-pincode-live-hint" class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span>Panchkula, HR ➔ Mumbai, MH (Direct Express Route)</span>
+                                </div>
+
+                                <button type="submit" class="w-full py-3.5 rounded-xl font-black text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-sm shadow-lg shadow-orange-500/25 transition-all flex items-center justify-center gap-2 transform hover:scale-[1.01]">
+                                    <span>Check Serviceability</span>
+                                    <span>📍</span>
+                                </button>
+                            </form>
+
+                            <!-- Pincode Result Box (Hidden by default, shown when user clicks check) -->
+                            <div id="hero-pincode-result" class="hidden bg-gradient-to-br from-emerald-50 to-teal-50/50 rounded-2xl p-3.5 border border-emerald-200/80 space-y-2 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-black text-emerald-800 flex items-center gap-1.5">
+                                        <span>✅</span> 100% Serviceable Route
+                                    </span>
+                                    <span class="bg-emerald-200/60 text-emerald-800 font-extrabold text-[10px] px-2 py-0.5 rounded-full">COD & Prepaid</span>
+                                </div>
+                                <div id="hero-pincode-text" class="text-[11px] text-slate-600 space-y-0.5">
+                                    <div>• <strong>12 Courier Partners Active</strong> (Delhivery, BlueDart, DTDC, Xpressbees)</div>
+                                    <div>• Estimated Transit Time: <strong class="text-slate-800">24-48 Hours Express</strong></div>
+                                    <div>• Doorstep Pickup: <strong class="text-orange-600">Available Daily</strong></div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- 2.3 FULL-WIDTH ANIMATED TRUCK HIGHWAY STRIP -->
+    <div class="w-full bg-gradient-to-r from-sky-50/50 via-blue-50/40 to-sky-50/50 border-y border-slate-100 py-3 relative overflow-hidden my-2">
+        <div class="max-w-7xl mx-auto px-4 relative h-24 sm:h-32 md:h-36 flex items-center">
+            
+            <!-- Driving Truck Moving Across Screen -->
+            <div class="w-full absolute bottom-0 left-0 pointer-events-none overflow-hidden h-full flex items-end">
+                <div class="animate-truck-highway flex items-center">
+                    <img src="images/maxline_truck_transparent.png" alt="MAXLINE LOGISTICS Express Truck" class="h-24 sm:h-32 md:h-36 w-auto object-contain filter drop-shadow-2xl">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- 2.5 DELIVERY NETWORK MARQUEE BANNER WITH ACTUAL LOGOS -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-gradient-to-r from-blue-50 via-sky-50 to-blue-100 border border-sky-200 rounded-2xl p-4 shadow-md overflow-hidden relative flex items-center gap-5">
+            
+            <div class="flex flex-col pr-5 border-r border-slate-300 flex-shrink-0 z-10 bg-blue-50/90 py-1">
+                <span class="text-lg font-black text-slate-900 leading-none tracking-tight">Delivery</span>
+                <span class="text-lg font-black text-sky-600 leading-none tracking-tight">Network</span>
+            </div>
+
+            <!-- Marquee Container -->
+            <div class="flex-1 overflow-hidden relative" style="-webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent); mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);">
+                <div class="animate-marquee-track flex gap-6 items-center">
+                    
+                    <!-- Real Logo 1: DP WORLD -->
+                    <div title="DP World • Global Multimodal & Container Cargo Network" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[140px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-sky-400 hover:shadow-md transition-all duration-200">
+                        <img src="images/carriers/dpworld.png" alt="DP WORLD" class="h-9 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                    </div>
+
+                    <!-- Real Logo 2: DELHIVERY -->
+                    <div title="Delhivery • 29,000+ Pincodes • Air & Surface Priority Courier" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-orange-400 hover:shadow-md transition-all duration-200">
+                        <img src="images/carriers/delhivery.png" alt="DELHIVERY" class="h-8 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                    </div>
+
+                    <!-- Logo 3: ekart -->
+                    <div title="Ekart • E-Commerce Last-Mile Fulfillment & Cash-on-Delivery" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-2 h-14 min-w-[130px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-amber-400 hover:shadow-md transition-all duration-200">
+                        <span class="text-lg font-black text-amber-500 italic">e</span><span class="text-base font-black text-blue-900">kart</span>
+                    </div>
+
+                    <!-- Real Logo 4: XPRESSBEES -->
+                    <div title="Xpressbees • Heavy Surface Cargo & B2B Logistics" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-purple-400 hover:shadow-md transition-all duration-200">
+                        <img src="images/carriers/xpressbees.png" alt="XPRESSBEES" class="h-8 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                    </div>
+
+                    <!-- Logo 5: SHADOWFAX -->
+                    <div title="Shadowfax • Hyperlocal & Intra-City 4-Hour Express" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-2 h-14 min-w-[140px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-emerald-400 hover:shadow-md transition-all duration-200">
+                        <span class="text-sm font-black text-emerald-600 tracking-wider">SHADOWFAX</span>
+                    </div>
+
+                    <!-- Real Logo 6: DTDC -->
+                    <div title="DTDC • Pan-India Reliable Parcel & Document Express" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[140px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-blue-400 hover:shadow-md transition-all duration-200">
+                        <img src="images/carriers/dtdc.png" alt="DTDC" class="h-9 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                    </div>
+
+                    <!-- Logo 7: ECOM EXPRESS -->
+                    <div title="Ecom Express • Full Indian Cash-on-Delivery Reach" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-green-400 hover:shadow-md transition-all duration-200">
+                        <span class="text-xs font-black text-green-700 tracking-wider">ECOM EXPRESS</span>
+                    </div>
+
+                    <!-- Real Logo 8: BLUE DART -->
+                    <div title="Blue Dart • 24-Hour Guaranteed Priority Air SLA" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-blue-500 hover:shadow-md transition-all duration-200">
+                        <img src="images/carriers/bluedart.png" alt="BLUE DART" class="h-9 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                    </div>
+
+                    <!-- Logo 9: APML -->
+                    <div title="Agarwal Packers & Movers • Industrial Machinery & Relocations" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-2 h-14 min-w-[120px] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-105 hover:border-red-400 hover:shadow-md transition-all duration-200">
+                        <span class="w-5 h-5 bg-red-600 text-white rounded flex items-center justify-center text-[10px] font-black">★</span>
+                        <span class="text-sm font-black text-red-900 tracking-wider">APML</span>
+                    </div>
+
+                    <!-- Logo 10: Trackon -->
+                    <div title="Trackon • North & Central India Express Courier" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-2 h-14 min-w-[130px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-red-400 hover:shadow-md transition-all duration-200">
+                        <span class="text-sm font-black text-red-600 italic">Trackon ►</span>
+                    </div>
+
+                    <!-- DUPLICATES FOR INFINITE LOOPING -->
+                    <div title="DP World • Global Multimodal & Container Cargo Network" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[140px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-sky-400 hover:shadow-md transition-all duration-200">
+                        <img src="images/carriers/dpworld.png" alt="DP WORLD" class="h-9 w-auto object-contain mix-blend-multiply">
+                    </div>
+                    <div title="Delhivery • 29,000+ Pincodes • Air & Surface Priority Courier" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-orange-400 hover:shadow-md transition-all duration-200">
+                        <img src="images/carriers/delhivery.png" alt="DELHIVERY" class="h-8 w-auto object-contain mix-blend-multiply">
+                    </div>
+                    <div title="Xpressbees • Heavy Surface Cargo & B2B Logistics" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-purple-400 hover:shadow-md transition-all duration-200">
+                        <img src="images/carriers/xpressbees.png" alt="XPRESSBEES" class="h-8 w-auto object-contain mix-blend-multiply">
+                    </div>
+                    <div title="DTDC • Pan-India Reliable Parcel & Document Express" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[140px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-blue-400 hover:shadow-md transition-all duration-200">
+                        <img src="images/carriers/dtdc.png" alt="DTDC" class="h-9 w-auto object-contain mix-blend-multiply">
+                    </div>
+                    <div title="Blue Dart • 24-Hour Guaranteed Priority Air SLA" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-blue-500 hover:shadow-md transition-all duration-200">
+                        <img src="images/carriers/bluedart.png" alt="BLUE DART" class="h-9 w-auto object-contain mix-blend-multiply">
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- 2.8 WHY ONLINE SELLERS CHOOSE MAXLINE LOGISTICS SECTION -->
+    <section id="why-choose-us" class="py-14 md:py-20 bg-slate-50 border-b border-slate-200 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <!-- Section Header -->
+            <div class="text-center mb-12 space-y-3 reveal-on-scroll">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200/80 text-orange-700 text-xs font-extrabold shadow-sm">
+                    <span>✨</span> Trusted By 5,000+ D2C Brands & Sellers
+                </span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+                    Engineered For High-Growth E-Commerce Brands & Sellers
+                </h2>
+                <p class="text-slate-600 text-base max-w-2xl mx-auto font-medium">
+                    Scale your deliveries across India with automated courier allocation, zero hidden fees, and rapid cash flow.
+                </p>
+            </div>
+
+            <!-- Grid: Left Image with 3D Badges | Right 3 Feature Cards -->
+            <div class="grid lg:grid-cols-12 gap-12 items-center">
+                
+                <!-- Left Image & Floating 3D Badges (6 Cols) -->
+                <div class="lg:col-span-6 relative flex justify-center items-center py-6 reveal-on-scroll">
+                    
+                    <!-- Ambient Glow Backdrop -->
+                    <div class="absolute w-96 h-96 bg-gradient-to-tr from-orange-500/15 via-blue-500/10 to-transparent rounded-full filter blur-3xl pointer-events-none"></div>
+
+                    <!-- Main Image Container with clean presentation -->
+                    <div class="relative z-10 w-full max-w-lg flex justify-center">
+                        <img src="images/maxline_delivery_transparent.png" alt="MAXLINE LOGISTICS Express Delivery Partner" class="w-full max-h-[580px] md:max-h-[620px] object-contain filter drop-shadow-2xl transition-transform duration-300 hover:scale-[1.01]">
+                    </div>
+
+                </div>
+
+                <!-- Right 3 Feature Cards (6 Cols) -->
+                <div class="lg:col-span-6 space-y-5">
+                    
+                    <!-- Feature Card 01: Smart AI Routing -->
+                    <div class="spotlight-card reveal-on-scroll bg-gradient-to-br from-orange-50/70 to-white rounded-2xl p-6 border border-orange-200 shadow-sm space-y-2 hover:shadow-md transition-all">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-black text-orange-600 bg-orange-100 px-2.5 py-1 rounded-md">01</span>
+                                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center font-black shadow-sm">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-extrabold text-slate-900">AI-Powered Smart Routing Engine</h3>
+                            </div>
+                            <span class="text-xs font-bold text-orange-700 bg-orange-100/70 px-2.5 py-0.5 rounded-full border border-orange-200 hidden sm:inline-block">Save 40%</span>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed font-medium">
+                            Stop relying on a single courier. Our intelligent engine automatically allocates every parcel to the fastest and most cost-effective carrier based on real-time pincode performance, cutting shipping costs by up to 40%.
+                        </p>
+                    </div>
+
+                    <!-- Feature Card 02: Daily T+1 COD Remittance -->
+                    <div class="spotlight-card reveal-on-scroll bg-emerald-50/80 rounded-2xl p-6 border border-emerald-200 shadow-sm space-y-2 hover:shadow-md transition-all">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-black text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-md">02</span>
+                                <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-extrabold text-slate-900">Daily T+1 COD Remittance</h3>
+                            </div>
+                            <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200 hidden sm:inline-block">Zero Cash Delay</span>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed font-medium">
+                            Never let locked cash flow stall your business growth. Cash-on-Delivery collections are auto-credited directly to your verified bank account within 24 hours of successful delivery, backed by real-time reconciliation.
+                        </p>
+                    </div>
+
+                    <!-- Feature Card 03: Automated WhatsApp NDR & RTO Reduction -->
+                    <div class="spotlight-card reveal-on-scroll bg-sky-50/80 rounded-2xl p-6 border border-sky-200 shadow-sm space-y-2 hover:shadow-md transition-all">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-black text-sky-700 bg-sky-100 px-2.5 py-1 rounded-md">03</span>
+                                <div class="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center font-black">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-extrabold text-slate-900">Automated WhatsApp NDR & RTO Shield</h3>
+                            </div>
+                            <span class="text-xs font-bold text-sky-800 bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-200 hidden sm:inline-block">38% Less RTO</span>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed font-medium">
+                            Instant WhatsApp verification alerts are sent to buyers upon failed delivery attempts. Customers can confirm their address or reschedule delivery in 1 click—cutting return-to-origin (RTO) losses by up to 38%.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- 3. RATE & SAVINGS CALCULATOR SECTION -->
+    <section id="calculator" class="py-12 md:py-16 bg-white border-t border-slate-100 scroll-mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-3xl mx-auto mb-10 space-y-2 reveal-on-scroll">
+                <span class="inline-flex items-center gap-1.5 text-xs font-bold text-orange-700 bg-orange-50 px-3.5 py-1 rounded-full border border-orange-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                    Smart Shipping Rate & Savings
+                </span>
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+                    Compare Rates & Calculate Freight Savings
+                </h2>
+                <p class="text-slate-600 text-sm sm:text-base">
+                    Test live courier partner pricing or calculate your total monthly savings with automated aggregator rates.
+                </p>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="flex justify-center mb-8 reveal-on-scroll">
+                <div class="bg-slate-100 p-1.5 rounded-2xl border border-slate-200 inline-flex gap-2">
+                    <button id="tab-rates-btn" onclick="switchCalcTab('rates')" class="px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all bg-white text-orange-600 shadow-md border border-orange-100">
+                        📊 Live Rate Comparison
+                    </button>
+                    <button id="tab-savings-btn" onclick="switchCalcTab('savings')" class="px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all text-slate-600 hover:text-slate-900">
+                        💰 Monthly Savings Calculator
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 1: LIVE RATE COMPARISON -->
+            <div id="tab-rates-content" class="max-w-5xl mx-auto grid lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left Input Form -->
+                <div class="lg:col-span-5 spotlight-card reveal-on-scroll bg-slate-50 rounded-2xl border border-slate-200 p-6 space-y-4">
+                    <h3 class="text-base font-extrabold text-slate-900 border-b border-slate-200 pb-3">Shipment Parameters</h3>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Pickup Pincode</label>
+                        <input type="text" id="calc-pickup" value="110001" oninput="updateLiveRates()" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Destination Pincode</label>
+                        <input type="text" id="calc-dest" value="400001" oninput="updateLiveRates()" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Package Weight: <span id="weight-val" class="text-orange-600 font-extrabold">0.5 kg</span></label>
+                        <input type="range" id="calc-weight" min="0.5" max="20" step="0.5" value="0.5" oninput="updateLiveRates()" aria-label="Package weight in kilograms" aria-valuemin="0.5" aria-valuemax="20" aria-valuenow="0.5" aria-valuetext="0.5 kg" class="range-slider w-full h-3 bg-slate-200 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 py-1 accent-orange-500">
+                    </div>
+
+                    <div>
+                        <label id="payment-mode-label" class="block text-xs font-bold text-slate-700 mb-1.5">Payment Mode</label>
+                        <div role="radiogroup" aria-labelledby="payment-mode-label" class="grid grid-cols-2 gap-2">
+                            <button type="button" id="pay-prepaid" role="radio" aria-checked="true" onclick="setPayMode('prepaid')" class="py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 bg-slate-900 text-white border-slate-900 shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <span class="active-check font-black text-orange-400">✓</span>
+                                <span>Prepaid</span>
+                            </button>
+                            <button type="button" id="pay-cod" role="radio" aria-checked="false" onclick="setPayMode('cod')" class="py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 bg-white text-slate-700 border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <span class="active-check hidden font-black text-orange-400">✓</span>
+                                <span>Cash on Delivery</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Calculated Rates Output -->
+                <div class="lg:col-span-7 space-y-3 reveal-on-scroll">
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-500 pb-1">
+                        <span>COURIER PARTNER</span>
+                        <span>SLA & RATE</span>
+                    </div>
+
+                    <!-- Rate Card 1: Delhivery -->
+                    <div id="card-rate-delhivery" class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between transition-all">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-slate-900 text-sm">Delhivery Air Express</span>
+                                <span id="badge-delhivery" class="text-[10px] font-extrabold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">Standard Air</span>
+                            </div>
+                            <div class="text-xs text-slate-500 font-medium">1-2 Days • Door Pickup Included</div>
+                        </div>
+                        <div class="text-right">
+                            <div id="rate-delhivery" class="text-xl font-black text-slate-800 transition-colors">₹ 45.00</div>
+                            <div class="text-[10px] font-bold text-slate-400">GST extra</div>
+                        </div>
+                    </div>
+
+                    <!-- Rate Card 2: Blue Dart -->
+                    <div id="card-rate-bluedart" class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between transition-all">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-slate-900 text-sm">Blue Dart Priority Air</span>
+                                <span id="badge-bluedart" class="text-[10px] font-extrabold bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-200">🚀 Fastest SLA</span>
+                            </div>
+                            <div class="text-xs text-slate-500 font-medium">24 Hours Guaranteed SLA</div>
+                        </div>
+                        <div class="text-right">
+                            <div id="rate-bluedart" class="text-xl font-black text-blue-700 transition-colors">₹ 68.00</div>
+                            <div class="text-[10px] font-bold text-slate-400">GST extra</div>
+                        </div>
+                    </div>
+
+                    <!-- Rate Card 3: Xpressbees -->
+                    <div id="card-rate-xpressbees" class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between transition-all">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-slate-900 text-sm">Xpressbees Surface</span>
+                                <span id="badge-xpressbees" class="text-[10px] font-extrabold bg-purple-100 text-purple-800 px-2 py-0.5 rounded">Economy Surface</span>
+                            </div>
+                            <div class="text-xs text-slate-500 font-medium">2-3 Days Heavy Freight</div>
+                        </div>
+                        <div class="text-right">
+                            <div id="rate-xpressbees" class="text-xl font-black text-purple-700 transition-colors">₹ 38.00</div>
+                            <div class="text-[10px] font-bold text-slate-400">GST extra</div>
+                        </div>
+                    </div>
+
+                    <!-- Rate Card 4: Shadowfax -->
+                    <div id="card-rate-shadowfax" class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between transition-all">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-slate-900 text-sm">Shadowfax Local</span>
+                                <span id="badge-shadowfax" class="text-[10px] font-extrabold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">Intra-City</span>
+                            </div>
+                            <div class="text-xs text-slate-500 font-medium">Same Day / 4 Hours</div>
+                        </div>
+                        <div class="text-right">
+                            <div id="rate-shadowfax" class="text-xl font-black text-slate-800 transition-colors">₹ 42.00</div>
+                            <div class="text-[10px] font-bold text-slate-400">GST extra</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TAB 2: VOLUME SAVINGS CALCULATOR -->
+            <div id="tab-savings-content" class="hidden max-w-4xl mx-auto bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-6 md:p-10 shadow-2xl space-y-8">
+                <div class="text-center space-y-2">
+                    <h3 class="text-xl sm:text-2xl font-black text-white">Estimate Monthly Freight Savings</h3>
+                    <p class="text-slate-300 text-xs sm:text-sm">Slide to your average monthly shipment volume to see how much you save using MAXLINE LOGISTICS aggregated rates.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center text-sm font-extrabold">
+                        <span>Monthly Shipments:</span>
+                        <span id="vol-count" class="text-2xl font-black text-orange-400">1,500 Packages</span>
+                    </div>
+                    <input type="range" id="vol-slider" min="100" max="10000" step="100" value="1500" oninput="updateSavings()" class="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>100 Orders</span>
+                        <span>5,000 Orders</span>
+                        <span>10,000+ Orders</span>
+                    </div>
+                </div>
+
+                <div class="grid sm:grid-cols-2 gap-4 pt-4 border-t border-slate-700">
+                    <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 text-center space-y-1">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Estimated Monthly Savings</span>
+                        <div id="monthly-savings-val" class="text-3xl font-black text-emerald-400">₹ 27,750</div>
+                        <span class="text-[11px] text-slate-400">Based on ₹18.50 avg discount per order</span>
+                    </div>
+                    <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 text-center space-y-1">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Estimated Annual Savings</span>
+                        <div id="annual-savings-val" class="text-3xl font-black text-sky-400">₹ 3,33,000</div>
+                        <span class="text-[11px] text-slate-400">Annual bottom-line profit boost</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- 5. DYNAMIC OUR SERVICES SECTION (ZOPIGO INSPIRED 3D ARCHITECTURE) -->
+    <section id="services" class="py-14 md:py-20 bg-slate-50/70 border-t border-slate-200/80 scroll-mt-16 relative overflow-hidden">
+        <!-- Ambient decorative background glow -->
+        <div class="absolute -top-40 right-0 w-96 h-96 bg-orange-400/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-40 left-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            
+            <!-- Section Header -->
+            <div class="text-center max-w-3xl mx-auto mb-10 space-y-3 reveal-on-scroll">
+                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-orange-600 bg-orange-100/70 border border-orange-200 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                    Comprehensive Logistics Solutions
+                </span>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+                    Our <span class="bg-gradient-to-r from-orange-500 via-rose-500 to-indigo-600 bg-clip-text text-transparent">Services</span>
+                </h2>
+                <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
+                    Comprehensive multi-modal logistics solutions powered by cutting-edge technology, AI route optimization, and 24/7 telematics.
+                </p>
+            </div>
+
+            <!-- Dynamic Category Filter Switcher -->
+            <div class="flex justify-center mb-10 flex-wrap gap-2.5 reveal-on-scroll">
+                <button onclick="filterServices('all', this)" class="service-filter-btn px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-white shadow-md transition-all">All Services (6)</button>
+                <button onclick="filterServices('express', this)" class="service-filter-btn px-4 py-2 rounded-xl text-xs font-extrabold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition-all">⚡ Express & Parcel</button>
+                <button onclick="filterServices('freight', this)" class="service-filter-btn px-4 py-2 rounded-xl text-xs font-extrabold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition-all">🚛 Heavy Freight (FTL / PTL)</button>
+                <button onclick="filterServices('supply', this)" class="service-filter-btn px-4 py-2 rounded-xl text-xs font-extrabold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition-all">🏢 Warehousing & 3PL</button>
+            </div>
+
+            <!-- 6 Dynamic Service Cards Grid (3 Columns x 2 Rows) -->
+            <div id="services-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                
+                <!-- Card 1: Express Delivery -->
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-orange-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="express">
+                    <div class="space-y-3.5">
+                        <!-- 3D Icon & Badge -->
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-orange-50 border border-orange-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
+                                <img src="images/services/service_express_3d.jpg" alt="Express Delivery" class="w-full h-full object-contain rounded-xl">
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-orange-700 bg-orange-50 border border-orange-200 px-2.5 py-0.5 rounded-full">
+                                ⚡ 24-48h SLA
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-orange-600 transition-colors">
+                                Express Delivery
+                            </h3>
+                            <p class="text-xs text-orange-600 font-bold mt-1">Air & Surface Priority Courier</p>
+                            <p class="text-slate-500 text-xs mt-2 leading-relaxed">
+                                Fast pan-India delivery across 29,000+ pincodes with automated multi-carrier allocation & live GPS tracking.
+                            </p>
+                        </div>
+
+                        <!-- Micro Features -->
+                        <div class="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600 font-medium">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>Delhivery, BlueDart, DTDC & Xpressbees</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>Daily T+1 COD Remittance with 0 Fees</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 mt-auto">
+                        <button onclick="openServiceModal('express')" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:text-white hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-500 group-hover:bg-slate-900 group-hover:text-white transition-all duration-300 shadow-2xs flex items-center justify-center gap-1.5">
+                            <span>Learn More & Rates</span>
+                            <span class="group-hover:translate-x-1 transition-transform">➔</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 2: Supply Chain & 3PL -->
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-purple-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="supply">
+                    <div class="space-y-3.5">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-purple-50 border border-purple-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
+                                <img src="images/services/service_supply_3d.jpg" alt="Supply Chain" class="w-full h-full object-contain rounded-xl">
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-full">
+                                🔄 End-to-End
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-purple-600 transition-colors">
+                                Supply Chain
+                            </h3>
+                            <p class="text-xs text-purple-600 font-bold mt-1">3PL & Enterprise Logistics Engine</p>
+                            <p class="text-slate-500 text-xs mt-2 leading-relaxed">
+                                End-to-end supply chain solutions with predictive multi-hub routing and centralized multi-vendor control.
+                            </p>
+                        </div>
+
+                        <div class="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600 font-medium">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>Centralized Multi-Carrier Control Tower</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>Direct ERP & E-Commerce API Integrations</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 mt-auto">
+                        <button onclick="openServiceModal('supply')" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-indigo-500 group-hover:bg-slate-900 group-hover:text-white transition-all duration-300 shadow-2xs flex items-center justify-center gap-1.5">
+                            <span>Learn More & Rates</span>
+                            <span class="group-hover:translate-x-1 transition-transform">➔</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 3: Document Courier -->
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-emerald-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="express">
+                    <div class="space-y-3.5">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-emerald-50 border border-emerald-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
+                                <img src="images/services/service_document_3d.jpg" alt="Document Courier" class="w-full h-full object-contain rounded-xl">
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                                🔒 Tamper-Proof
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                Document Courier
+                            </h3>
+                            <p class="text-xs text-emerald-600 font-bold mt-1">High-Security & Legal Parcels</p>
+                            <p class="text-slate-500 text-xs mt-2 leading-relaxed">
+                                Secure overnight transit for important corporate documents, contracts, tenders, and sensitive parcels.
+                            </p>
+                        </div>
+
+                        <div class="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600 font-medium">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>Tamper-Evident Barcode Sealed Pouch</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>Two-Factor OTP Handover & Instant e-POD</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 mt-auto">
+                        <button onclick="openServiceModal('document')" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:text-white hover:bg-gradient-to-r hover:from-emerald-600 hover:to-teal-500 group-hover:bg-slate-900 group-hover:text-white transition-all duration-300 shadow-2xs flex items-center justify-center gap-1.5">
+                            <span>Learn More & Rates</span>
+                            <span class="group-hover:translate-x-1 transition-transform">➔</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 4: Full Truck Load (FTL) -->
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-rose-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="freight">
+                    <div class="space-y-3.5">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-rose-50 border border-rose-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
+                                <img src="images/services/service_ftl_3d.jpg" alt="Full Truck Load" class="w-full h-full object-contain rounded-xl">
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full">
+                                🚛 Dedicated Fleet
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-rose-600 transition-colors">
+                                Full Truck Load
+                            </h3>
+                            <p class="text-xs text-rose-600 font-bold mt-1">Direct Interstate Heavy Transport</p>
+                            <p class="text-slate-500 text-xs mt-2 leading-relaxed">
+                                Dedicated container trucks for single consignments with direct express transit and zero hub transshipment.
+                            </p>
+                        </div>
+
+                        <div class="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600 font-medium">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>32ft to 40ft Multi-Axle Container Trucks</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>Live GPS Telematics & Geo-Fencing Protection</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 mt-auto">
+                        <button onclick="openServiceModal('ftl')" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:text-white hover:bg-gradient-to-r hover:from-rose-600 hover:to-pink-500 group-hover:bg-slate-900 group-hover:text-white transition-all duration-300 shadow-2xs flex items-center justify-center gap-1.5">
+                            <span>Learn More & Rates</span>
+                            <span class="group-hover:translate-x-1 transition-transform">➔</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 5: Part Truck Load (PTL) -->
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-sky-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="freight">
+                    <div class="space-y-3.5">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-sky-50 border border-sky-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
+                                <img src="images/services/service_ptl_3d.jpg" alt="Part Truck Load" class="w-full h-full object-contain rounded-xl">
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-sky-700 bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-full">
+                                💰 Cost-Effective
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-sky-600 transition-colors">
+                                Part Truck Load
+                            </h3>
+                            <p class="text-xs text-sky-600 font-bold mt-1">Shared Commercial Trucking</p>
+                            <p class="text-slate-500 text-xs mt-2 leading-relaxed">
+                                Cost-effective shared trucking with optimized route consolidation and doorstep commercial pickup.
+                            </p>
+                        </div>
+
+                        <div class="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600 font-medium">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>Pay Only For Weight/Space Consumed</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>Smart Hub Consolidation & Zero Surcharges</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 mt-auto">
+                        <button onclick="openServiceModal('ptl')" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:text-white hover:bg-gradient-to-r hover:from-sky-600 hover:to-cyan-500 group-hover:bg-slate-900 group-hover:text-white transition-all duration-300 shadow-2xs flex items-center justify-center gap-1.5">
+                            <span>Learn More & Rates</span>
+                            <span class="group-hover:translate-x-1 transition-transform">➔</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 6: Smart Warehousing -->
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-amber-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="supply">
+                    <div class="space-y-3.5">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-amber-50 border border-amber-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
+                                <img src="images/services/service_warehouse_3d.jpg" alt="Smart Warehousing" class="w-full h-full object-contain rounded-xl">
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                                🏢 Automated Hubs
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-amber-600 transition-colors">
+                                Smart Warehousing
+                            </h3>
+                            <p class="text-xs text-amber-600 font-bold mt-1">Robotic & Grade-A Fulfillment</p>
+                            <p class="text-slate-500 text-xs mt-2 leading-relaxed">
+                                State-of-the-art automated hubs with IoT sensors, barcode picking, and rapid same-day order dispatch.
+                            </p>
+                        </div>
+
+                        <div class="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600 font-medium">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>99.98% Accurate Pick, Pack & Dispatch</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-emerald-500 font-black">✓</span>
+                                <span>Strategic Hubs in Delhi, Mumbai & Bengaluru</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 mt-auto">
+                        <button onclick="openServiceModal('warehouse')" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:text-white hover:bg-gradient-to-r hover:from-amber-600 hover:to-orange-500 group-hover:bg-slate-900 group-hover:text-white transition-all duration-300 shadow-2xs flex items-center justify-center gap-1.5">
+                            <span>Learn More & Rates</span>
+                            <span class="group-hover:translate-x-1 transition-transform">➔</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- 6. FAQ ACCORDION SECTION -->
+    <section id="faq" class="py-12 md:py-16 bg-slate-50 border-t border-slate-100 scroll-mt-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center mb-10 space-y-2 reveal-on-scroll">
+                <span class="text-xs font-black uppercase tracking-widest text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                    Got Questions?
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                    Frequently Asked Questions
+                </h2>
+            </div>
+
+            <!-- FAQ Category Filter Tabs -->
+            <div class="flex justify-center items-center gap-2 mb-8 flex-wrap reveal-on-scroll">
+                <button type="button" onclick="filterFaq('all')" id="faq-tab-all" class="px-4 py-2 rounded-xl text-xs font-extrabold transition-all bg-slate-900 text-white shadow-sm">
+                    All Questions (5)
+                </button>
+                <button type="button" onclick="filterFaq('rates')" id="faq-tab-rates" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-700 hover:bg-slate-100 border border-slate-200">
+                    💰 Rates & COD
+                </button>
+                <button type="button" onclick="filterFaq('delivery')" id="faq-tab-delivery" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-700 hover:bg-slate-100 border border-slate-200">
+                    🚚 Pickups & RTO
+                </button>
+            </div>
+
+            <div class="space-y-3 reveal-on-scroll">
+                <!-- FAQ 1 -->
+                <div class="faq-item border border-slate-200 rounded-2xl overflow-hidden bg-white" data-category="general">
+                    <button onclick="toggleFaq(1)" class="w-full text-left p-5 font-extrabold text-slate-900 text-sm flex justify-between items-center bg-white hover:bg-slate-50">
+                        <span>What is MAXLINE LOGISTICS multi-courier platform?</span>
+                        <span id="faq-icon-1" class="text-orange-500 font-black text-lg">+</span>
+                    </button>
+                    <div id="faq-ans-1" class="hidden p-5 pt-0 text-xs text-slate-600 leading-relaxed bg-white border-t border-slate-100">
+                        MAXLINE LOGISTICS consolidates 12+ top logistics providers (Delhivery, Bluedart, Xpressbees, Shadowfax, etc.) into a single enterprise platform with automated rate optimization, doorstep pickup, 0 hidden surcharges, and instant WhatsApp tracking alerts.
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="faq-item border border-slate-200 rounded-2xl overflow-hidden bg-white" data-category="rates">
+                    <button onclick="toggleFaq(2)" class="w-full text-left p-5 font-extrabold text-slate-900 text-sm flex justify-between items-center bg-white hover:bg-slate-50">
+                        <span>How does the AI Smart Courier Recommendation Engine work?</span>
+                        <span id="faq-icon-2" class="text-orange-500 font-black text-lg">+</span>
+                    </button>
+                    <div id="faq-ans-2" class="hidden p-5 pt-0 text-xs text-slate-600 leading-relaxed bg-white border-t border-slate-100">
+                        When you create a shipment, our AI algorithm evaluates live pricing, historical SLA performance, pincode reachability, and hub congestion to highlight the Best Value, Fastest Air, and AI Recommended courier in real-time.
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="faq-item border border-slate-200 rounded-2xl overflow-hidden bg-white" data-category="rates">
+                    <button onclick="toggleFaq(3)" class="w-full text-left p-5 font-extrabold text-slate-900 text-sm flex justify-between items-center bg-white hover:bg-slate-50">
+                        <span>What are the COD remittance terms?</span>
+                        <span id="faq-icon-3" class="text-orange-500 font-black text-lg">+</span>
+                    </button>
+                    <div id="faq-ans-3" class="hidden p-5 pt-0 text-xs text-slate-600 leading-relaxed bg-white border-t border-slate-100">
+                        We offer fast daily COD remittance directly into your bank account with complete automated reconciliation ledgers, protecting your e-commerce cash flow.
+                    </div>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="faq-item border border-slate-200 rounded-2xl overflow-hidden bg-white" data-category="delivery">
+                    <button onclick="toggleFaq(4)" class="w-full text-left p-5 font-extrabold text-slate-900 text-sm flex justify-between items-center bg-white hover:bg-slate-50">
+                        <span>How does MAXLINE LOGISTICS cut NDR & RTO losses?</span>
+                        <span id="faq-icon-4" class="text-orange-500 font-black text-lg">+</span>
+                    </button>
+                    <div id="faq-ans-4" class="hidden p-5 pt-0 text-xs text-slate-600 leading-relaxed bg-white border-t border-slate-100">
+                        Our integrated NDR workflow dispatches instant WhatsApp verification messages to buyers upon failed delivery attempts, allowing them to re-schedule or update address in 1 click—cutting RTO rates by up to 40%.
+                    </div>
+                </div>
+
+                <!-- FAQ 5 -->
+                <div class="faq-item border border-slate-200 rounded-2xl overflow-hidden bg-white" data-category="general">
+                    <button onclick="toggleFaq(5)" class="w-full text-left p-5 font-extrabold text-slate-900 text-sm flex justify-between items-center bg-white hover:bg-slate-50">
+                        <span>Can enterprises get custom shipping contracts?</span>
+                        <span id="faq-icon-5" class="text-orange-500 font-black text-lg">+</span>
+                    </button>
+                    <div id="faq-ans-5" class="hidden p-5 pt-0 text-xs text-slate-600 leading-relaxed bg-white border-t border-slate-100">
+                        Yes! High-volume e-commerce brands and logistics resellers can get customized volume pricing matrices, custom API integrations, and dedicated account managers.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- 8. PUBLIC FOOTER (NO LOGIN / SIGNUP LINKS) -->
+    <footer id="footer" class="bg-slate-900 text-slate-300 pt-12 pb-24 md:pb-8 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-slate-800 text-xs">
+                
+                <!-- Col 1 -->
+                <div class="space-y-3">
+                    <a href="#home" class="inline-block" aria-label="MAXLINE LOGISTICS Home">
+                        <img src="images/maxline_logo_white.png" alt="MAXLINE LOGISTICS" class="h-10 sm:h-11 w-auto object-contain">
+                    </a>
+                    <p class="text-slate-400 leading-relaxed">
+                        Enterprise Multi-Courier platform connecting 12+ top shipping networks across 29,000+ pincodes in India.
+                    </p>
+                </div>
+
+                <!-- Col 2 -->
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-white">Quick Navigation</h3>
+                    <ul class="space-y-2.5 text-sm text-slate-400">
+                        <li><a href="#home" class="inline-block py-1 hover:text-white transition-colors focus:outline-none focus:underline">Home Overview</a></li>
+                        <li><a href="#why-choose-us" class="inline-block py-1 hover:text-white transition-colors focus:outline-none focus:underline">Why Businesses Choose Us</a></li>
+                        <li><a href="#calculator" class="inline-block py-1 hover:text-white transition-colors focus:outline-none focus:underline">Rate & Savings Calculator</a></li>
+                        <li><a href="#home" onclick="switchHeroWidgetTab('pincode')" class="inline-block py-1 hover:text-white transition-colors focus:outline-none focus:underline">Pincode Serviceability</a></li>
+                        <li><a href="#services" class="inline-block py-1 hover:text-white transition-colors focus:outline-none focus:underline">Our Services</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3 -->
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-white">Shipping Solutions</h3>
+                    <ul class="space-y-2.5 text-sm text-slate-400">
+                        <li><a href="#calculator" class="inline-block py-1 hover:text-white transition-colors focus:outline-none focus:underline">Express Air Shipping</a></li>
+                        <li><a href="#calculator" class="inline-block py-1 hover:text-white transition-colors focus:outline-none focus:underline">Surface Heavy Freight</a></li>
+                        <li><a href="#calculator" class="inline-block py-1 hover:text-white transition-colors focus:outline-none focus:underline">Hyperlocal Courier</a></li>
+                        <li><a href="#calculator" class="inline-block py-1 hover:text-white transition-colors focus:outline-none focus:underline">COD Remittance</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4 -->
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-white">Support Contact</h3>
+                    <div class="p-3 rounded-xl bg-slate-800 text-slate-300 space-y-1.5 text-xs">
+                        <div>📞 Phone: <a href="tel:+916280400727" class="hover:text-white">+91 62804 00727</a></div>
+                        <div>✉️ Email: <a href="mailto:support@maxlinelogistics.com" class="hover:text-white">support@maxlinelogistics.com</a></div>
+                        <div>📍 Address: Plot No. 167, Industrial Area Phase 2, Panchkula - 134113</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+                <div>© 2026 MAXLINE LOGISTICS. All rights reserved.</div>
+                <div class="flex gap-4">
+                    <a href="#home" class="hover:text-slate-400">Privacy Policy</a>
+                    <a href="#home" class="hover:text-slate-400">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- 9. INTERACTIVE AWB TRACKING TIMELINE DRAWER / MODAL -->
+    <div id="tracking-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex justify-end transition-all">
+        <div class="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto p-6 space-y-6">
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <h3 class="text-base font-black text-slate-900">Shipment Timeline Drawer</h3>
+                    </div>
+                    <button onclick="closeTrackingModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center">✕</button>
+                </div>
+
+                <div class="bg-orange-50/70 border border-orange-200 rounded-2xl p-4 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span id="modal-awb" class="font-black text-orange-950 text-sm font-mono">--</span>
+                        <span id="modal-status" class="text-xs font-extrabold bg-gradient-to-r from-orange-500 to-amber-500 text-white px-2.5 py-0.5 rounded-full shadow-sm">In Transit</span>
+                    </div>
+                    <div id="modal-courier" class="text-xs font-bold text-slate-700">Delhivery Express Direct</div>
+                    <div class="text-xs text-slate-600 flex justify-between border-t border-orange-200/60 pt-2 mt-1">
+                        <span>Route: <strong id="modal-route">Delhi ➔ Mumbai</strong></span>
+                        <span>ETA: <strong id="modal-eta" class="text-emerald-700">Tomorrow by 2 PM</strong></span>
+                    </div>
+                </div>
+
+                <!-- Timeline Steps -->
+                <div class="space-y-4 pt-2">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-400">Tracking Event Log</h4>
+                    <div id="modal-timeline-steps" class="space-y-4 relative pl-4 border-l-2 border-slate-200">
+                        <!-- Step items populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeTrackingModal()" class="w-full py-3 rounded-xl font-extrabold text-white bg-slate-900 hover:bg-slate-800 text-sm shadow-md">
+                Close Tracking Drawer
+            </button>
+
+        </div>
+    </div>
+
+
+    <!-- 9.1 INTERACTIVE SERVICE DETAILS & QUICK QUOTE MODAL -->
+    <div id="service-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
+        <div class="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+            
+            <!-- Modal Header with 3D Icon preview -->
+            <div class="p-6 pb-4 border-b border-slate-100 flex items-start justify-between gap-4 bg-slate-50/70">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-white border border-slate-200 p-1 shadow-md flex-shrink-0">
+                        <img id="svc-modal-img" src="images/services/service_express_3d.jpg" alt="Service 3D Icon" class="w-full h-full object-contain rounded-xl">
+                    </div>
+                    <div>
+                        <span id="svc-modal-cat" class="inline-block text-[10px] font-black uppercase tracking-wider text-orange-600 bg-orange-100/70 px-2.5 py-0.5 rounded-full border border-orange-200">
+                            Express & Parcel
+                        </span>
+                        <h3 id="svc-modal-title" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">
+                            Express Delivery
+                        </h3>
+                        <p id="svc-modal-tagline" class="text-xs text-slate-500 font-medium mt-0.5">
+                            Air & Surface Priority Courier
+                        </p>
+                    </div>
+                </div>
+                <button onclick="closeServiceModal()" class="w-9 h-9 rounded-full bg-white hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center border border-slate-200 shadow-sm flex-shrink-0">✕</button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-6 space-y-5 overflow-y-auto">
+                
+                <!-- Key Specs Grid -->
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                        <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">Guaranteed SLA</span>
+                        <strong id="svc-modal-sla" class="text-slate-900 font-extrabold text-sm block mt-0.5">24 - 48 Hours</strong>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                        <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">Pincode Coverage</span>
+                        <strong id="svc-modal-reach" class="text-slate-900 font-extrabold text-sm block mt-0.5">29,000+ Pincodes</strong>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                        <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">Weight Range</span>
+                        <strong id="svc-modal-weight" class="text-slate-900 font-extrabold text-sm block mt-0.5">50g to 50kg</strong>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                        <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">Remittance & Security</span>
+                        <strong id="svc-modal-security" class="text-emerald-700 font-extrabold text-sm block mt-0.5">Daily T+1 COD & Insured</strong>
+                    </div>
+                </div>
+
+                <!-- Feature Highlights -->
+                <div>
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2.5">Key Capability & Enterprise Features</h4>
+                    <ul id="svc-modal-features" class="space-y-2.5 text-xs text-slate-700 font-medium">
+                        <!-- Injected via JS -->
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="p-5 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row gap-3">
+                <a id="svc-modal-calc-btn" href="#calculator" onclick="closeServiceModal()" class="flex-1 py-3 px-4 rounded-xl text-xs font-extrabold text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 shadow-sm text-center transition-all flex items-center justify-center gap-1.5">
+                    <span>Calculate Rate in Calculator 🏷️</span>
+                </a>
+                <a id="svc-modal-wa-btn" href="#" target="_blank" rel="noopener" class="flex-1 py-3 px-4 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-500/20 text-center transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 fill-current text-white" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-1.116 4.075 4.148-1.088z"/></svg>
+                    <span>Instant Quote on WhatsApp</span>
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Ticker Messages Rotation
+        const tickerMessages = [
+            "⚡ AWB #DELHI987612 booked from Delhi ➔ Mumbai via Delhivery Air • 2 mins ago",
+            "🎉 Merchant #4812 just saved ₹4,200 today using AI Smart Rate Allocation",
+            "🚚 AWB #BLUEDART4920 delivered in 18 hours to Bengaluru • On-Time SLA 99.4%",
+            "💰 COD Remittance payout batch ₹1,42,000 processed to Merchant Accounts (T+1)"
+        ];
+        let tickerIdx = 0;
+        setInterval(() => {
+            tickerIdx = (tickerIdx + 1) % tickerMessages.length;
+            const el = document.getElementById('ticker-text');
+            if (el) el.innerText = tickerMessages[tickerIdx];
+        }, 4500);
+
+        // Mobile Menu Toggle & Auto-Close on Nav
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const openIcon = document.getElementById('open-icon');
+        const closeIcon = document.getElementById('close-icon');
+
+        if (mobileBtn && mobileMenu) {
+            mobileBtn.addEventListener('click', () => {
+                const isHidden = mobileMenu.classList.contains('hidden');
+                if (isHidden) {
+                    mobileMenu.classList.remove('hidden');
+                    openIcon.classList.add('hidden');
+                    closeIcon.classList.remove('hidden');
+                } else {
+                    mobileMenu.classList.add('hidden');
+                    openIcon.classList.remove('hidden');
+                    closeIcon.classList.add('hidden');
+                }
+            });
+
+            document.querySelectorAll('#mobile-menu a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                    openIcon.classList.remove('hidden');
+                    closeIcon.classList.add('hidden');
+                });
+            });
+        }
+
+        // Hero Dual-Widget Tab Switcher with Sliding Pill
+        function switchHeroWidgetTab(tab) {
+            const trackBtn = document.getElementById('hero-tab-track-btn');
+            const pincodeBtn = document.getElementById('hero-tab-pincode-btn');
+            const trackContent = document.getElementById('hero-track-content');
+            const pincodeContent = document.getElementById('hero-pincode-content');
+            const indicator = document.getElementById('hero-tab-indicator');
+
+            if (tab === 'track') {
+                if (indicator) indicator.style.transform = 'translateX(0%)';
+                if (trackBtn) {
+                    trackBtn.classList.remove('text-slate-600', 'hover:text-slate-900');
+                    trackBtn.classList.add('text-white');
+                }
+                if (pincodeBtn) {
+                    pincodeBtn.classList.remove('text-white');
+                    pincodeBtn.classList.add('text-slate-600', 'hover:text-slate-900');
+                }
+                if (trackContent) trackContent.classList.remove('hidden');
+                if (pincodeContent) pincodeContent.classList.add('hidden');
+            } else {
+                if (indicator) indicator.style.transform = 'translateX(100%)';
+                if (pincodeBtn) {
+                    pincodeBtn.classList.remove('text-slate-600', 'hover:text-slate-900');
+                    pincodeBtn.classList.add('text-white');
+                }
+                if (trackBtn) {
+                    trackBtn.classList.remove('text-white');
+                    trackBtn.classList.add('text-slate-600', 'hover:text-slate-900');
+                }
+                if (pincodeContent) pincodeContent.classList.remove('hidden');
+                if (trackContent) trackContent.classList.add('hidden');
+            }
+        }
+
+        // Live Pincode Instant Detection Map
+        const PINCODE_MAP = {
+            '134113': 'Panchkula, HR',
+            '160001': 'Chandigarh, PB',
+            '110001': 'New Delhi, DL',
+            '400001': 'Mumbai, MH',
+            '560001': 'Bengaluru, KA',
+            '700001': 'Kolkata, WB',
+            '600001': 'Chennai, TN',
+            '500001': 'Hyderabad, TS',
+            '380001': 'Ahmedabad, GJ',
+            '302001': 'Jaipur, RJ',
+            '141001': 'Ludhiana, PB'
+        };
+
+        function checkLivePincodeHint() {
+            const pickInput = document.getElementById('hero-pickup-pin');
+            const destInput = document.getElementById('hero-dest-pin');
+            const hint = document.getElementById('hero-pincode-live-hint');
+            if (!hint) return;
+
+            const pVal = pickInput ? pickInput.value.trim() : '';
+            const dVal = destInput ? destInput.value.trim() : '';
+
+            const pCity = PINCODE_MAP[pVal] || (pVal.length === 6 ? `Pin ${pVal}` : 'Pickup');
+            const dCity = PINCODE_MAP[dVal] || (dVal.length === 6 ? `Pin ${dVal}` : 'Delivery');
+
+            hint.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>${pCity} ➔ ${dCity} (Verified Direct Network)</span>`;
+        }
+
+        // Hero Pincode Route Checker
+        function handleHeroPincodeSubmit(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const pickInput = document.getElementById('hero-pickup-pin');
+            const destInput = document.getElementById('hero-dest-pin');
+            const pick = (pickInput && pickInput.value.trim());
+            const dest = (destInput && destInput.value.trim());
+
+            if (!pick || !dest) {
+                alert('Please enter both Pickup and Delivery pincodes.');
+                return;
+            }
+
+            const resultBox = document.getElementById('hero-pincode-result');
+            const textEl = document.getElementById('hero-pincode-text');
+
+            if (resultBox && textEl) {
+                resultBox.classList.remove('hidden');
+                resultBox.className = "bg-gradient-to-br from-emerald-50 to-teal-50/50 rounded-2xl p-3.5 border border-emerald-300 shadow-sm space-y-2 text-xs transition-all";
+                textEl.innerHTML = `
+                    <div>• Route: <strong class="text-slate-900">${pick} ➔ ${dest}</strong> (100% Serviceable)</div>
+                    <div>• <strong>12 Courier Partners Active</strong>: Delhivery, BlueDart, DTDC, Xpressbees</div>
+                    <div>• Estimated Transit Time: <strong class="text-emerald-700 font-bold">24-48 Hours Express</strong></div>
+                    <div>• Doorstep Pickup: <strong class="text-orange-600 font-bold">Available Daily</strong></div>
+                `;
+            }
+        }
+
+        // Sample AWB Quick Simulation
+        function trySampleAWB(awb) {
+            const input = document.getElementById('track-input');
+            if (input) input.value = awb;
+            simulateTracking(awb);
+        }
+
+        function simulateTracking(awb) {
+            const resultBox = document.getElementById('track-result-box');
+            const awbDisplay = document.getElementById('track-result-awb');
+            if (awbDisplay) awbDisplay.innerText = awb || 'MXL9482103IN';
+            if (resultBox) {
+                resultBox.classList.remove('hidden');
+            }
+        }
+
+        // Track Form Search
+        const trackForm = document.getElementById('track-form');
+        if (trackForm) {
+            trackForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const inputEl = document.getElementById('track-input');
+                const val = (inputEl && inputEl.value.trim().toUpperCase());
+                if (!val) {
+                    alert('Please enter a valid AWB or Tracking Number.');
+                    return;
+                }
+                simulateTracking(val);
+            });
+        }
+
+        function openTrackingModal(awb) {
+            const modalAwb = document.getElementById('modal-awb');
+            if (modalAwb) modalAwb.innerText = awb;
+            const isBlue = awb.includes('BLUE');
+            const isShadow = awb.includes('SHADOW');
+            const isDelivered = awb.includes('DELIVERED') || awb.includes('DELVD');
+
+            const courierEl = document.getElementById('modal-courier');
+            if (courierEl) courierEl.innerText = isBlue ? 'Blue Dart Priority Air' : isShadow ? 'Shadowfax Local' : 'Delhivery Direct Air';
+            
+            const statusEl = document.getElementById('modal-status');
+            if (statusEl) statusEl.innerText = isDelivered ? 'Delivered' : 'In Transit';
+
+            const etaEl = document.getElementById('modal-eta');
+            if (etaEl) etaEl.innerText = isDelivered ? 'Delivered Today 11:20 AM' : 'Expected Tomorrow by 2:00 PM';
+
+            const steps = [
+                { title: 'Shipment Registered & AWB Created', time: 'Yesterday, 04:30 PM', done: true },
+                { title: 'Picked Up by Courier Agent', time: 'Yesterday, 07:15 PM', done: true },
+                { title: 'Arrived at Central Sort Facility Hub', time: 'Yesterday, 10:45 PM', done: true },
+                { title: 'In Transit on Express Cargo', time: 'Today, 06:00 AM', done: true },
+                { title: 'Out for Delivery to Recipient', time: isDelivered ? 'Today 10:15 AM' : 'Pending', done: isDelivered },
+                { title: 'Delivered to Recipient Doorstep', time: isDelivered ? 'Today 11:20 AM' : 'Pending', done: isDelivered }
+            ];
+
+            const stepsContainer = document.getElementById('modal-timeline-steps');
+            if (stepsContainer) {
+                stepsContainer.innerHTML = steps.map(s => `
+                    <div class="relative pl-3">
+                        <span class="absolute -left-[23px] top-0.5 w-3.5 h-3.5 rounded-full ${s.done ? 'bg-emerald-500 text-white' : 'bg-slate-300'} flex items-center justify-center text-[9px] font-bold">
+                            ${s.done ? '✓' : ''}
+                        </span>
+                        <div class="text-xs font-bold ${s.done ? 'text-slate-900' : 'text-slate-400'}">${s.title}</div>
+                        <div class="text-[10px] text-slate-500">${s.time}</div>
+                    </div>
+                `).join('');
+            }
+
+            const modal = document.getElementById('tracking-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeTrackingModal() {
+            const modal = document.getElementById('tracking-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // Calculator Logic
+        let currentPayMode = 'prepaid';
+        function switchCalcTab(tab) {
+            const ratesBtn = document.getElementById('tab-rates-btn');
+            const savingsBtn = document.getElementById('tab-savings-btn');
+            const ratesContent = document.getElementById('tab-rates-content');
+            const savingsContent = document.getElementById('tab-savings-content');
+
+            if (tab === 'rates') {
+                if (ratesBtn) ratesBtn.className = "px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all bg-white text-orange-600 shadow-md border border-orange-100";
+                if (savingsBtn) savingsBtn.className = "px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all text-slate-600 hover:text-slate-900";
+                if (ratesContent) ratesContent.classList.remove('hidden');
+                if (savingsContent) savingsContent.classList.add('hidden');
+            } else {
+                if (savingsBtn) savingsBtn.className = "px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all bg-white text-orange-600 shadow-md border border-orange-100";
+                if (ratesBtn) ratesBtn.className = "px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all text-slate-600 hover:text-slate-900";
+                if (savingsContent) savingsContent.classList.remove('hidden');
+                if (ratesContent) ratesContent.classList.add('hidden');
+            }
+        }
+
+        function setPayMode(mode) {
+            currentPayMode = mode;
+            const prepaidBtn = document.getElementById('pay-prepaid');
+            const codBtn = document.getElementById('pay-cod');
+            const isPrepaid = mode === 'prepaid';
+
+            if (prepaidBtn) {
+                prepaidBtn.setAttribute('aria-checked', isPrepaid ? 'true' : 'false');
+                const check = prepaidBtn.querySelector('.active-check');
+                if (isPrepaid) {
+                    prepaidBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 bg-slate-900 text-white border-slate-900 shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-orange-500";
+                    if (check) check.classList.remove('hidden');
+                } else {
+                    prepaidBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 bg-white text-slate-700 border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500";
+                    if (check) check.classList.add('hidden');
+                }
+            }
+
+            if (codBtn) {
+                codBtn.setAttribute('aria-checked', isPrepaid ? 'false' : 'true');
+                const check = codBtn.querySelector('.active-check');
+                if (!isPrepaid) {
+                    codBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 bg-slate-900 text-white border-slate-900 shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-orange-500";
+                    if (check) check.classList.remove('hidden');
+                } else {
+                    codBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 bg-white text-slate-700 border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500";
+                    if (check) check.classList.add('hidden');
+                }
+            }
+            updateLiveRates();
+        }
+
+        let currentRates = { del: 45, blue: 68, xp: 38, shad: 42 };
+
+        function animateNumberRoll(elem, start, end, duration = 220) {
+            if (!elem) return;
+            const startTime = performance.now();
+            function updateFrame(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const ease = 1 - Math.pow(1 - progress, 3);
+                const val = start + (end - start) * ease;
+                elem.innerText = "₹ " + val.toFixed(2);
+                if (progress < 1) requestAnimationFrame(updateFrame);
+            }
+            requestAnimationFrame(updateFrame);
+        }
+
+        function updateLiveRates() {
+            const weightInput = document.getElementById('calc-weight');
+            const weight = weightInput ? (parseFloat(weightInput.value) || 0.5) : 0.5;
+            const weightVal = document.getElementById('weight-val');
+            if (weightVal) weightVal.innerText = weight + " kg";
+
+            // Dynamic slider track fill
+            if (weightInput) {
+                const pct = ((weight - 0.5) / (20 - 0.5)) * 100;
+                weightInput.style.background = `linear-gradient(to right, #f97316 0%, #ea580c ${pct}%, #e2e8f0 ${pct}%, #e2e8f0 100%)`;
+            }
+
+            const extraCod = currentPayMode === 'cod' ? 15 : 0;
+            const pickupInput = document.getElementById('calc-pickup');
+            const destInput = document.getElementById('calc-dest');
+            const pickup = pickupInput ? pickupInput.value.trim() : '110001';
+            const dest = destInput ? destInput.value.trim() : '400001';
+            const isSameZone = pickup.length > 0 && dest.length > 0 && pickup.charAt(0) === dest.charAt(0);
+            const zoneMultiplier = isSameZone ? 0.85 : 1.0;
+
+            const base = weight * 40 * zoneMultiplier;
+            const newDel = base + 25 + extraCod;
+            const newBlue = base + 48 + extraCod;
+            const newXp = base + 18 + extraCod;
+            const newShad = base + 22 + extraCod;
+
+            const rDel = document.getElementById('rate-delhivery');
+            const rBlue = document.getElementById('rate-bluedart');
+            const rXp = document.getElementById('rate-xpressbees');
+            const rShad = document.getElementById('rate-shadowfax');
+
+            animateNumberRoll(rDel, currentRates.del, newDel);
+            animateNumberRoll(rBlue, currentRates.blue, newBlue);
+            animateNumberRoll(rXp, currentRates.xp, newXp);
+            animateNumberRoll(rShad, currentRates.shad, newShad);
+
+            currentRates = { del: newDel, blue: newBlue, xp: newXp, shad: newShad };
+
+            // Dynamic Best Value Tag (cheapest among the 4)
+            const rates = [
+                { id: 'delhivery', val: newDel },
+                { id: 'bluedart', val: newBlue },
+                { id: 'xpressbees', val: newXp },
+                { id: 'shadowfax', val: newShad }
+            ];
+            const minRate = rates.reduce((prev, curr) => curr.val < prev.val ? curr : prev, rates[0]);
+
+            rates.forEach(r => {
+                const card = document.getElementById('card-rate-' + r.id);
+                const badge = document.getElementById('badge-' + r.id);
+                if (r.id === minRate.id) {
+                    if (card) {
+                        card.className = "bg-white rounded-2xl p-4 border-2 border-emerald-400 shadow-md flex items-center justify-between transition-all";
+                    }
+                    if (badge) {
+                        badge.className = "text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-300 animate-pulse";
+                        badge.innerText = "⚡ Best Value (Save 35%)";
+                    }
+                } else if (r.id === 'bluedart') {
+                    if (card) card.className = "bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between transition-all";
+                    if (badge) {
+                        badge.className = "text-[10px] font-extrabold bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-200";
+                        badge.innerText = "🚀 Fastest SLA (Air 24h)";
+                    }
+                } else {
+                    if (card) card.className = "bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between transition-all";
+                    if (badge) {
+                        badge.className = "text-[10px] font-extrabold bg-slate-100 text-slate-700 px-2 py-0.5 rounded";
+                        badge.innerText = r.id === 'xpressbees' ? "Economy Surface" : "Intra-City Express";
+                    }
+                }
+            });
+        }
+
+        function updateSavings() {
+            const slider = document.getElementById('vol-slider');
+            const vol = slider ? (parseInt(slider.value) || 1500) : 1500;
+            const volCount = document.getElementById('vol-count');
+            if (volCount) volCount.innerText = vol.toLocaleString('en-IN') + " Packages";
+            
+            const mSave = Math.round(vol * 18.5);
+            const aSave = mSave * 12;
+
+            const mVal = document.getElementById('monthly-savings-val');
+            const aVal = document.getElementById('annual-savings-val');
+            if (mVal) mVal.innerText = "₹ " + mSave.toLocaleString('en-IN');
+            if (aVal) aVal.innerText = "₹ " + aSave.toLocaleString('en-IN');
+        }
+
+        // 5. Dynamic Our Services Logic
+        const servicesData = {
+            express: {
+                title: "Express Delivery",
+                category: "Express & Parcel",
+                catColor: "text-orange-600 bg-orange-100/70 border-orange-200",
+                icon: "images/services/service_express_3d.jpg",
+                tagline: "Air & Surface Priority Courier",
+                sla: "24 - 48 Hours Pan-India",
+                reach: "29,000+ Pincodes Reach",
+                weight: "50g to 50kg (Parcels & Cartons)",
+                security: "Daily T+1 COD & Fully Insured",
+                features: [
+                    "Automated AI multi-carrier routing between Delhivery, BlueDart, DTDC & Xpressbees",
+                    "Real-time GPS milestone tracking with automated WhatsApp & SMS alerts",
+                    "Daily T+1 COD remittance credited directly into your bank account with zero delay",
+                    "Automated WhatsApp NDR verification workflow cutting RTO returns by up to 38%"
+                ],
+                waMsg: "Hello MAXLINE LOGISTICS, I want to book Express Delivery service."
+            },
+            supply: {
+                title: "Supply Chain",
+                category: "Warehousing & 3PL",
+                catColor: "text-purple-600 bg-purple-100/70 border-purple-200",
+                icon: "images/services/service_supply_3d.jpg",
+                tagline: "3PL & Enterprise Logistics Engine",
+                sla: "Same-Day Hub Dispatch",
+                reach: "All Major Industrial & Metro Hubs",
+                weight: "Bulk Cargo & High-Velocity Inventory",
+                security: "Centralized Multi-Hub Visibility",
+                features: [
+                    "Centralized multi-carrier control tower with automated rules & dynamic dispatching",
+                    "Direct 1-click API integration with Shopify, WooCommerce, Amazon, and ERPs",
+                    "Predictive demand allocation to store products closer to your top buyer clusters",
+                    "Dedicated Key Account Manager (KAM) with guaranteed 15-minute SLA support response"
+                ],
+                waMsg: "Hello MAXLINE LOGISTICS, I want to inquire about Supply Chain & 3PL solutions."
+            },
+            document: {
+                title: "Document Courier",
+                category: "Express & Parcel",
+                catColor: "text-emerald-600 bg-emerald-100/70 border-emerald-200",
+                icon: "images/services/service_document_3d.jpg",
+                tagline: "High-Security & Legal Parcels",
+                sla: "Priority 24h Overnight",
+                reach: "All Commercial Metros & Capital Cities",
+                weight: "Envelopes to 5kg Secured Consignments",
+                security: "Two-Factor OTP Handover & e-POD",
+                features: [
+                    "Tamper-evident serialized barcode pouches for legal documents, tenders & passports",
+                    "Two-factor OTP verified handover with real-time digital signature proof of delivery (e-POD)",
+                    "Direct priority air courier routes with dedicated green-channel hub clearance",
+                    "Comprehensive transit liability protection up to ₹1,00,000 per consignment"
+                ],
+                waMsg: "Hello MAXLINE LOGISTICS, I need Document & High-Value Courier service."
+            },
+            ftl: {
+                title: "Full Truck Load",
+                category: "Heavy Freight (FTL / PTL)",
+                catColor: "text-rose-600 bg-rose-100/70 border-rose-200",
+                icon: "images/services/service_ftl_3d.jpg",
+                tagline: "Direct Interstate Heavy Transport",
+                sla: "Direct Express Highway Transit",
+                reach: "Pan-India Dedicated Freight Corridors",
+                weight: "3.5 Tons to 35 Tons (32ft - 40ft Fleet)",
+                security: "Live GPS Telematics & Geo-Fencing",
+                features: [
+                    "Dedicated container trucks with zero intermediate hub handling or transshipment",
+                    "Live 24/7 GPS telematics with real-time driver tracking and arrival alerts",
+                    "Verified fleet drivers with background checks & digitized e-Way bills compliance",
+                    "Instant spot booking availability & customized long-term enterprise freight contracts"
+                ],
+                waMsg: "Hello MAXLINE LOGISTICS, I want to book a Full Truck Load (FTL) shipment."
+            },
+            ptl: {
+                title: "Part Truck Load",
+                category: "Heavy Freight (FTL / PTL)",
+                catColor: "text-sky-600 bg-sky-100/70 border-sky-200",
+                icon: "images/services/service_ptl_3d.jpg",
+                tagline: "Shared Commercial Trucking",
+                sla: "48 - 72 Hours Scheduled Transit",
+                reach: "27,000+ Industrial & B2B Commercial Pins",
+                weight: "100kg to 3.5 Tons",
+                security: "Palletized Handling & Milestone Scans",
+                features: [
+                    "Smart multi-consigner route consolidation for maximum cost-per-kilogram savings",
+                    "Palletized shrink-wrapped cargo handling minimizing in-transit damage or shifting",
+                    "Doorstep commercial pickup and scheduled delivery appointments",
+                    "Transparent weight-based billing with 0 hidden fuel or unloading surcharges"
+                ],
+                waMsg: "Hello MAXLINE LOGISTICS, I want to inquire about Part Truck Load (PTL) rates."
+            },
+            warehouse: {
+                title: "Smart Warehousing",
+                category: "Warehousing & 3PL",
+                catColor: "text-amber-600 bg-amber-100/70 border-amber-200",
+                icon: "images/services/service_warehouse_3d.jpg",
+                tagline: "Robotic & Grade-A Fulfillment",
+                sla: "Same-Day Order Processing (Cut-off 3 PM)",
+                reach: "Strategic Hubs in Delhi, Mumbai & Bengaluru",
+                weight: "Bulk B2B Pallets & D2C Pick-Pack",
+                security: "24/7 CCTV Surveillance & WMS Control",
+                features: [
+                    "Grade-A automated fulfillment hubs with AGV automated guided vehicles",
+                    "Barcode-driven 99.98% inventory picking & packing accuracy",
+                    "Direct order sync with Shopify, Blinkit, Amazon, and WooCommerce",
+                    "Flexible pay-per-pallet and pay-per-order seasonal scaling"
+                ],
+                waMsg: "Hello MAXLINE LOGISTICS, I want to inquire about Smart Warehousing & Fulfillment."
+            }
+        };
+
+        function filterServices(category, btn) {
+            const cards = document.querySelectorAll('.service-card');
+            cards.forEach(card => {
+                if (category === 'all' || card.getAttribute('data-category') === category) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+            const buttons = document.querySelectorAll('.service-filter-btn');
+            buttons.forEach(b => {
+                b.className = 'service-filter-btn px-4 py-2 rounded-xl text-xs font-extrabold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition-all';
+            });
+            if (btn) {
+                btn.className = 'service-filter-btn px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-white shadow-md transition-all';
+            }
+        }
+
+        function openServiceModal(key) {
+            const data = servicesData[key];
+            if (!data) return;
+            const modal = document.getElementById('service-modal');
+            const img = document.getElementById('svc-modal-img');
+            const cat = document.getElementById('svc-modal-cat');
+            const title = document.getElementById('svc-modal-title');
+            const tagline = document.getElementById('svc-modal-tagline');
+            const sla = document.getElementById('svc-modal-sla');
+            const reach = document.getElementById('svc-modal-reach');
+            const weight = document.getElementById('svc-modal-weight');
+            const security = document.getElementById('svc-modal-security');
+            const features = document.getElementById('svc-modal-features');
+            const waBtn = document.getElementById('svc-modal-wa-btn');
+
+            if (img) img.src = data.icon;
+            if (cat) {
+                cat.innerText = data.category;
+                cat.className = 'inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ' + data.catColor;
+            }
+            if (title) title.innerText = data.title;
+            if (tagline) tagline.innerText = data.tagline;
+            if (sla) sla.innerText = data.sla;
+            if (reach) reach.innerText = data.reach;
+            if (weight) weight.innerText = data.weight;
+            if (security) security.innerText = data.security;
+
+            if (features) {
+                features.innerHTML = data.features.map(f => `
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">✓</span>
+                        <span class="text-slate-700 leading-snug">${f}</span>
+                    </li>
+                `).join('');
+            }
+
+            if (waBtn) {
+                waBtn.href = 'https://wa.me/916280400727?text=' + encodeURIComponent(data.waMsg);
+            }
+
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeServiceModal() {
+            const modal = document.getElementById('service-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // Close service modal on backdrop click or ESC
+        const serviceModalEl = document.getElementById('service-modal');
+        if (serviceModalEl) {
+            serviceModalEl.addEventListener('click', (e) => {
+                if (e.target === serviceModalEl) closeServiceModal();
+            });
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeServiceModal();
+            }
+        });
+
+        // FAQ Toggle Logic
+        function toggleFaq(num) {
+            const ans = document.getElementById('faq-ans-' + num);
+            const icon = document.getElementById('faq-icon-' + num);
+            if (!ans) return;
+            const isHidden = ans.classList.contains('hidden');
+            if (isHidden) {
+                ans.classList.remove('hidden');
+                if (icon) icon.innerText = '-';
+            } else {
+                ans.classList.add('hidden');
+                if (icon) icon.innerText = '+';
+            }
+        }
+
+        // FAQ Category Filter Logic
+        function filterFaq(cat) {
+            document.querySelectorAll('.faq-item').forEach(item => {
+                if (cat === 'all' || item.getAttribute('data-category') === cat) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+            ['all', 'rates', 'delivery'].forEach(c => {
+                const btn = document.getElementById('faq-tab-' + c);
+                if (btn) {
+                    if (c === cat) {
+                        btn.className = "px-4 py-2 rounded-xl text-xs font-extrabold transition-all bg-slate-900 text-white shadow-sm";
+                    } else {
+                        btn.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
+                    }
+                }
+            });
+        }
+    </script>
+
+    <!-- Floating MAXLINE AI Chatbot & WhatsApp Hybrid Widget -->
+    <div id="maxline-chat-widget-container" class="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 font-sans">
+        
+        <!-- Floating Trigger Button (Compact Sleek Circle) -->
+        <button id="maxline-chat-toggle-btn" onclick="toggleMaxlineChatWidget()" title="Chat Support & WhatsApp" aria-label="Support Assistant" class="relative group w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-900 hover:from-orange-500 hover:to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center border-2 border-white/80 transition-all duration-300 transform hover:scale-110 active:scale-95">
+            <!-- Live Online Indicator Pulse -->
+            <span class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
+            </span>
+
+            <span class="text-2xl select-none group-hover:scale-110 transition-transform">🤖</span>
+        </button>
+
+        <!-- Chat Modal Window -->
+        <div id="maxline-chat-modal" class="hidden absolute bottom-16 right-0 w-[92vw] max-w-[390px] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col transition-all duration-300" style="height: 540px;">
+            
+            <!-- Header with Tabs & Close -->
+            <div class="bg-slate-900 text-white p-4 pb-3 flex flex-col justify-between shrink-0">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-lg shadow-md">
+                            🤖
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-black text-white flex items-center gap-2">
+                                MAXLINE LOGISTICS Support Assistant
+                                <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">Online</span>
+                            </h3>
+                            <p class="text-[11px] text-slate-400 font-medium">Multilingual AI & WhatsApp Live Support</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleMaxlineChatWidget()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center font-bold text-base transition-colors">✕</button>
+                </div>
+
+                <!-- Tab Switcher -->
+                <div class="grid grid-cols-2 bg-slate-800 p-1 rounded-xl text-xs font-extrabold gap-1">
+                    <button id="tab-ai-btn" onclick="switchMaxlineTab('ai')" class="py-2 rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all">
+                        🤖 AI Bot
+                    </button>
+                    <button id="tab-wa-btn" onclick="switchMaxlineTab('wa')" class="py-2 rounded-lg text-slate-400 hover:text-white flex items-center justify-center gap-1.5 transition-all">
+                        💬 WhatsApp Live
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 1: AI Chatbot Container -->
+            <div id="maxline-tab-ai" class="flex-1 flex flex-col overflow-hidden bg-slate-50">
+                <!-- Messages Scroll Area -->
+                <div id="maxline-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3.5 text-xs">
+                    
+                    <!-- Bot Welcome Message -->
+                    <div class="flex items-start gap-2.5">
+                        <div class="w-7 h-7 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">🤖</div>
+                        <div class="bg-white rounded-2xl rounded-tl-none p-3.5 shadow-sm border border-slate-200 text-slate-800 leading-relaxed max-w-[88%] space-y-2">
+                            <p class="font-semibold text-slate-900">Namaste! 🙏 Welcome to MAXLINE LOGISTICS Support.</p>
+                            <p class="text-slate-600">Main aapki kaise sahayata kar sakta hoon? Aap niche diye gaye quick options chun sakte hain ya direct sawaal pooch sakte hain (Hindi, English ya Hinglish me)!</p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Chips -->
+                    <div class="flex flex-wrap gap-1.5 pl-9" id="maxline-quick-chips">
+                        <button onclick="sendMaxlineChip('Track shipment status')" class="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all hover:scale-95 text-[11px] flex items-center gap-1">📦 Track Order</button>
+                        <button onclick="sendMaxlineChip('Shipping rates kitne hai')" class="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all hover:scale-95 text-[11px] flex items-center gap-1">💰 Rates & Pricing</button>
+                        <button onclick="sendMaxlineChip('COD remittance kab milega')" class="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all hover:scale-95 text-[11px] flex items-center gap-1">⚡ COD Remittance</button>
+                        <button onclick="sendMaxlineChip('Seller account kaise banaye')" class="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all hover:scale-95 text-[11px] flex items-center gap-1">🤝 New Seller Join</button>
+                        <button onclick="sendMaxlineChip('Pincode serviceability check')" class="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all hover:scale-95 text-[11px] flex items-center gap-1">📍 29,000+ Pincodes</button>
+                    </div>
+
+                </div>
+
+                <!-- Typing Indicator (Hidden by default) -->
+                <div id="maxline-bot-typing" class="hidden px-4 py-2 text-[11px] font-semibold text-slate-500 flex items-center gap-2 bg-slate-50 border-t border-slate-100">
+                    <span class="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></span>
+                    <span class="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                    <span class="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                    <span>MAXLINE AI is typing...</span>
+                </div>
+
+                <!-- Chat Input Area -->
+                <form id="maxline-chat-form" onsubmit="handleMaxlineChatSubmit(event)" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2 shrink-0">
+                    <input id="maxline-chat-input" type="text" placeholder="Type in Hindi, English, Hinglish..." class="flex-1 bg-slate-100 focus:bg-white text-slate-900 placeholder-slate-400 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-orange-500 focus:outline-none transition-all" autocomplete="off" />
+                    <button type="submit" class="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl px-4 py-2.5 font-bold text-xs shadow-md shadow-orange-500/20 transition-all flex items-center gap-1">
+                        Send 🚀
+                    </button>
+                </form>
+            </div>
+
+            <!-- TAB 2: WhatsApp Direct Support Container (Hidden by default) -->
+            <div id="maxline-tab-wa" class="hidden flex-1 flex flex-col justify-between p-5 bg-gradient-to-b from-emerald-50/50 to-white overflow-y-auto">
+                <div class="space-y-4 text-center py-2">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner border border-emerald-200">
+                        💬
+                    </div>
+                    <div>
+                        <h4 class="text-base font-black text-slate-900">WhatsApp Live Desk</h4>
+                        <p class="text-xs text-slate-600 font-medium mt-1">Connect with our dedicated logistics account manager instantly on WhatsApp!</p>
+                    </div>
+
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm text-left space-y-2 text-xs">
+                        <div class="flex items-center gap-2 text-emerald-700 font-extrabold text-[11px]">
+                            <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span> Support Hours: 24/7 Priority Support
+                        </div>
+                        <p class="text-slate-600 leading-snug">Average response time is under <strong>2 minutes</strong>. Get custom shipping quotes, onboarding assistance, or priority dispute resolutions.</p>
+                    </div>
+
+                    <div class="space-y-2 pt-1 text-left">
+                        <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Quick Start Messages:</span>
+                        <a href="https://wa.me/916280400727?text=Hi%20MAXLINE%20LOGISTICS%20Support,%20I%20want%20to%20create%20a%20new%20Seller%20Account" target="_blank" class="block bg-white hover:bg-emerald-50 border border-slate-200 text-slate-800 font-bold p-2.5 rounded-xl text-xs hover:border-emerald-400 transition-all flex items-center justify-between">
+                            <span>🤝 Create New Seller Account</span>
+                            <span class="text-emerald-600 font-black">➔</span>
+                        </a>
+                        <a href="https://wa.me/916280400727?text=Hi%20MAXLINE%20LOGISTICS%20Support,%20I%20need%20discounted%20bulk%20shipping%20rates" target="_blank" class="block bg-white hover:bg-emerald-50 border border-slate-200 text-slate-800 font-bold p-2.5 rounded-xl text-xs hover:border-emerald-400 transition-all flex items-center justify-between">
+                            <span>💰 Request Bulk Shipping Rates</span>
+                            <span class="text-emerald-600 font-black">➔</span>
+                        </a>
+                        <a href="https://wa.me/916280400727?text=Hi%20MAXLINE%20LOGISTICS%20Support,%20I%20have%20an%20issue%20with%20my%20shipment/AWB" target="_blank" class="block bg-white hover:bg-emerald-50 border border-slate-200 text-slate-800 font-bold p-2.5 rounded-xl text-xs hover:border-emerald-400 transition-all flex items-center justify-between">
+                            <span>📦 Shipment & AWB Support</span>
+                            <span class="text-emerald-600 font-black">➔</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Direct Launch Button -->
+                <a href="https://wa.me/916280400727?text=Hi%20MAXLINE%20LOGISTICS,%20I%20need%20assistance" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-3.5 px-4 rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]">
+                    <span class="text-lg">💬</span> Open WhatsApp Chat Now
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 10. MOBILE FLOATING STICKY ACTION DOCK (VISIBLE ONLY ON MOBILE: md:hidden) -->
+    <div id="mobile-sticky-dock" class="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-4 py-2.5 flex items-center gap-3">
+        <!-- Calculate Rates CTA -->
+        <a href="#calculator" class="flex-1 py-2.5 px-3 rounded-xl font-extrabold text-xs text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-500/20 text-center flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+            <span>📊</span>
+            <span>Check Rates</span>
+        </a>
+        <!-- WhatsApp Instant Quote CTA -->
+        <a href="https://wa.me/916280400727?text=Hello%20MAXLINE%20LOGISTICS,%20I%20would%20like%20to%20get%20a%20shipping%20quote" target="_blank" rel="noopener" class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs text-slate-800 bg-white hover:bg-slate-50 border border-slate-300 shadow-xs text-center flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+            <svg class="w-3.5 h-3.5 text-emerald-500 fill-current" viewBox="0 0 24 24">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-1.116 4.075 4.148-1.088z"/>
+            </svg>
+            <span>WhatsApp Quote</span>
+        </a>
+    </div>
+
+    <script>
+        // Chatbot Widget State & Handlers
+        function toggleMaxlineChatWidget() {
+            const modal = document.getElementById('maxline-chat-modal');
+            if (modal) {
+                modal.classList.toggle('hidden');
+            }
+        }
+
+        function switchMaxlineTab(tab) {
+            const tabAi = document.getElementById('maxline-tab-ai');
+            const tabWa = document.getElementById('maxline-tab-wa');
+            const btnAi = document.getElementById('tab-ai-btn');
+            const btnWa = document.getElementById('tab-wa-btn');
+
+            if (tab === 'ai') {
+                tabAi.classList.remove('hidden');
+                tabWa.classList.add('hidden');
+                btnAi.className = 'py-2 rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all';
+                btnWa.className = 'py-2 rounded-lg text-slate-400 hover:text-white flex items-center justify-center gap-1.5 transition-all';
+            } else {
+                tabAi.classList.add('hidden');
+                tabWa.classList.remove('hidden');
+                btnWa.className = 'py-2 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all';
+                btnAi.className = 'py-2 rounded-lg text-slate-400 hover:text-white flex items-center justify-center gap-1.5 transition-all';
+            }
+        }
+
+        function appendMaxlineUserMessage(msgText) {
+            const container = document.getElementById('maxline-chat-messages');
+            if (!container) return;
+            
+            const msgHtml = `
+                <div class="flex items-start justify-end gap-2">
+                    <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl rounded-tr-none p-3 shadow-sm leading-relaxed max-w-[85%] font-medium">
+                        ${escapeHtml(msgText)}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', msgHtml);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendMaxlineBotMessage(botHtml) {
+            const container = document.getElementById('maxline-chat-messages');
+            if (!container) return;
+
+            const msgHtml = `
+                <div class="flex items-start gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">🤖</div>
+                    <div class="bg-white rounded-2xl rounded-tl-none p-3.5 shadow-sm border border-slate-200 text-slate-800 leading-relaxed max-w-[88%] space-y-2">
+                        ${botHtml}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', msgHtml);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function handleMaxlineChatSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('maxline-chat-input');
+            if (!input || !input.value.trim()) return;
+
+            const userMsg = input.value.trim();
+            input.value = '';
+
+            appendMaxlineUserMessage(userMsg);
+
+            // Show typing indicator
+            const typing = document.getElementById('maxline-bot-typing');
+            if (typing) typing.classList.remove('hidden');
+
+            setTimeout(() => {
+                if (typing) typing.classList.add('hidden');
+                const reply = getMaxlineAiResponse(userMsg);
+                appendMaxlineBotMessage(reply);
+            }, 600);
+        }
+
+        function sendMaxlineChip(text) {
+            const input = document.getElementById('maxline-chat-input');
+            if (input) {
+                input.value = text;
+                handleMaxlineChatSubmit(new Event('submit'));
+            }
+        }
+
+        function getMaxlineAiResponse(msg) {
+            const text = msg.toLowerCase().trim();
+
+            if (text.includes('track') || text.includes('order') || text.includes('awb') || text.includes('status') || text.includes('kahan') || text.includes('location')) {
+                return `📦 <strong>Shipment Tracking Help:</strong><br><br>
+                Aap apna 10-12 digit <strong>AWB / Tracking Number</strong> upar diye gaye Top Header Bar me daal kar <strong>"Track Order"</strong> par click karein!<br><br>
+                Deep tracking details me 12+ Courier Partners (Delhivery, BlueDart, Xpressbees, DTDC) ke live scans, current city, aur estimated delivery date dikh jayegi.`;
+            }
+
+            if (text.includes('rate') || text.includes('price') || text.includes('cost') || text.includes('charge') || text.includes('kitna') || text.includes('paise') || text.includes('cheap')) {
+                return `💰 <strong>MAXLINE LOGISTICS Shipping Rates & Matrix:</strong><br><br>
+                • <strong>Domestic Surface:</strong> Starting at just <strong>₹18 / 500g</strong><br>
+                • <strong>Air Priority Cargo:</strong> Starting at <strong>₹35 / 500g</strong><br>
+                • <strong>Hyperlocal Same-Day:</strong> Starting at <strong>₹30</strong><br><br>
+                Exact pricing calculate karne ke liye hamare website ke <strong>"Rate Calculator"</strong> section par jayein ya WhatsApp support se sample rate chart maangein!`;
+            }
+
+            if (text.includes('cod') || text.includes('remittance') || text.includes('payout') || text.includes('payment') || text.includes('kab milega') || text.includes('bank') || text.includes('money')) {
+                return `⚡ <strong>T+1 Daily COD Remittance Policy:</strong><br><br>
+                MAXLINE LOGISTICS par aapko milta hai <strong>Daily COD Remittance (T+1)</strong>.<br>
+                Courier dwara Cash-on-Delivery collection ke 24 ghante ke andar aapka amount direct aapke linked Bank Account me auto-credit ho jata hai! 💸`;
+            }
+
+            if (text.includes('pincode') || text.includes('pin code') || text.includes('reach') || text.includes('city') || text.includes('area') || text.includes('deliver') || text.includes('serviceable')) {
+                return `📍 <strong>Pan-India Serviceability & Coverage:</strong><br><br>
+                MAXLINE LOGISTICS India ke <strong>29,000+ Pincodes</strong> cover karta hai.<br>
+                Metros, Tier 1, Tier 2, Tier 3, aur North-East & Rural areas me bhi 100% COD & Prepaid delivery available hai!`;
+            }
+
+            if (text.includes('courier') || text.includes('partner') || text.includes('delhivery') || text.includes('bluedart') || text.includes('xpressbees') || text.includes('dtdc') || text.includes('fedex')) {
+                return `🚚 <strong>12+ Premium Courier Partners:</strong><br><br>
+                Ek hi MAXLINE LOGISTICS Dashboard se aap <strong>Delhivery, BlueDart, Xpressbees, Shadowfax, DTDC, Ecom Express, Ekart, & FedEx</strong> me se best automated courier choose kar sakte hain!`;
+            }
+
+            if (text.includes('seller') || text.includes('register') || text.includes('sign up') || text.includes('login') || text.includes('account') || text.includes('join') || text.includes('kaise banaye')) {
+                return `🤝 <strong>Join MAXLINE LOGISTICS as a Seller:</strong><br><br>
+                Seller Account banana 100% <strong>FREE & Instant</strong> hai!<br>
+                1. Top Right me <strong>"Login / Register"</strong> button par click karein.<br>
+                2. Business details & KYC fill karein.<br>
+                3. Instant ₹100 Free Shipping Credits paayein aur bhejye apna pehla parcel! 🎁`;
+            }
+
+            if (text.includes('contact') || text.includes('support') || text.includes('help') || text.includes('phone') || text.includes('number') || text.includes('call') || text.includes('baat')) {
+                return `💬 <strong>MAXLINE LOGISTICS Support Desk:</strong><br><br>
+                Aap hamari team se 24x7 connect kar sakte hain:<br>
+                • <strong>WhatsApp Direct:</strong> Is Chat Box me top <strong>"WhatsApp Live"</strong> tab par click karein!<br>
+                • <strong>Phone / Helpline:</strong> +91 62804 00727<br>
+                • <strong>Email:</strong> support@maxlinelogistics.com`;
+            }
+
+            if (text.includes('hi') || text.includes('hello') || text.includes('hey') || text.includes('namaste') || text.includes('pranam') || text.includes('hlo') || text.includes('hy')) {
+                return `Namaste! 🙏 Main MAXLINE LOGISTICS AI Assistant hoon.<br><br>Main aapki shipping, order tracking, COD payout, aur rates se judi har query me sahayata kar sakta hoon. Aap Hindi, English ya Hinglish me kuch bhi pooch sakte hain!`;
+            }
+
+            return `Aapka query humne note kar liya hai! 🤖<br><br>
+            MAXLINE LOGISTICS se jude kisi bhi vishesh sawaal (Track Order, Shipping Rates, Pincode Check, COD Payouts) ke liye aap upar diye chips click kar sakte hain, ya hamari <strong>WhatsApp Live Desk</strong> tab par jaakar direct support agent se baat kar sakte hain! 💬`;
+        }
+
+        // 4. Interactive Spotlight Hover Effect (Stripe & Vercel style)
+        if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+            document.querySelectorAll('.spotlight-card').forEach(card => {
+                card.addEventListener('pointermove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    card.style.setProperty('--mouse-x', `${x}px`);
+                    card.style.setProperty('--mouse-y', `${y}px`);
+                });
+            });
+        }
+
+        // 7. Smooth Scroll Reveal Animations (Subtle & Fluid)
+        if ('IntersectionObserver' in window) {
+            const revealObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-revealed');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                root: null,
+                threshold: 0.08,
+                rootMargin: '0px 0px -30px 0px'
+            });
+
+            document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+                revealObserver.observe(el);
+            });
+        }
+
+        // 8. Dynamic Scroll Progress Bar & Header Frosted Glass Effect
+        const scrollBar = document.getElementById('scroll-progress-bar');
+        const mainHeader = document.getElementById('main-header');
+        window.addEventListener('scroll', () => {
+            const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+            if (totalScroll > 0 && scrollBar) {
+                const scrolled = (window.scrollY / totalScroll) * 100;
+                scrollBar.style.width = `${scrolled}%`;
+            }
+            if (mainHeader) {
+                if (window.scrollY > 20) {
+                    mainHeader.classList.add('shadow-md', 'bg-white/95');
+                } else {
+                    mainHeader.classList.remove('shadow-md');
+                }
+            }
+        }, { passive: true });
+
+        // 9. Hero Card 3D Perspective Tilt on Desktop Mouse Move
+        const heroTiltCard = document.getElementById('hero-widget-card');
+        if (heroTiltCard && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+            const container = heroTiltCard.parentElement;
+            if (container) {
+                container.addEventListener('mousemove', (e) => {
+                    const rect = heroTiltCard.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    const rotateX = -(y / rect.height) * 8;
+                    const rotateY = (x / rect.width) * 8;
+                    heroTiltCard.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.01, 1.01, 1.01)`;
+                });
+                container.addEventListener('mouseleave', () => {
+                    heroTiltCard.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                    heroTiltCard.style.transition = 'transform 0.4s ease';
+                });
+                container.addEventListener('mouseenter', () => {
+                    heroTiltCard.style.transition = 'none';
+                });
+            }
+        }
+    </script>
+</body>
+</html>
