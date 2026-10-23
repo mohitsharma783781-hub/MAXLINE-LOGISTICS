@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Under Working | MAXLINE LOGISTICS</title>
-    <link rel="icon" type="image/png" href="images/maxline_icon.png">
+    <link rel="icon" type="image/png" href="maxline_icon.png">
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +23,27 @@
             animation: gentleBounce 2.5s ease-in-out infinite;
         }
     </style>
+    <script>
+        // Automatic image path resolver: seamlessly handles both root and  subfolders
+        window.addEventListener('error', function(e) {
+            if (e.target && e.target.tagName === 'IMG') {
+                const src = e.target.getAttribute('src');
+                if (!src) return;
+                const fileName = src.split('/').pop();
+                const tried = e.target.getAttribute('data-img-fallback');
+                if (!tried) {
+                    e.target.setAttribute('data-img-fallback', '1');
+                    // If failed on ..., fallback to root filename
+                    // If failed on root filename, fallback to ...
+                    if (src.startsWith('')) {
+                        e.target.src = fileName;
+                    } else {
+                        e.target.src = '' + fileName;
+                    }
+                }
+            }
+        }, true);
+    </script>
 </head>
 <body class="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between selection:bg-orange-500 selection:text-white">
 
@@ -30,7 +51,7 @@
     <header class="w-full border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-3">
-                <img src="images/maxline_icon.png" alt="MAXLINE LOGISTICS" class="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl" onerror="this.style.display='none'">
+                <img src="maxline_icon.png" alt="MAXLINE LOGISTICS" class="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-xl" onerror="this.style.display='none'">
                 <div>
                     <span class="text-base sm:text-lg font-black tracking-tight text-white block leading-tight">
                         MAXLINE <span class="text-orange-500">LOGISTICS</span>
