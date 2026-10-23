@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MAXLINE LOGISTICS | Door-to-Door Courier & Cargo Aggregator</title>
     <meta name="description" content="MAXLINE LOGISTICS Enterprise Multi-Courier Logistics. Connect 12+ top courier partners in 1 click. Compare live rates, automate doorstep pickups, cut RTOs by 40%.">
-    <link rel="icon" type="image/png" href="images/maxline_icon.png">
+    <link rel="icon" type="image/png" href="maxline_icon.png">
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -150,6 +150,27 @@
             }
         }
     </style>
+    <script>
+        // Automatic image path resolver: seamlessly handles both root and  subfolders
+        window.addEventListener('error', function(e) {
+            if (e.target && e.target.tagName === 'IMG') {
+                const src = e.target.getAttribute('src');
+                if (!src) return;
+                const fileName = src.split('/').pop();
+                const tried = e.target.getAttribute('data-img-fallback');
+                if (!tried) {
+                    e.target.setAttribute('data-img-fallback', '1');
+                    // If failed on ..., fallback to root filename
+                    // If failed on root filename, fallback to ...
+                    if (src.startsWith('')) {
+                        e.target.src = fileName;
+                    } else {
+                        e.target.src = '' + fileName;
+                    }
+                }
+            }
+        }, true);
+    </script>
 </head>
 <body class="bg-white text-slate-900 antialiased flex flex-col min-h-screen">
 
@@ -177,7 +198,7 @@
                 
                 <!-- Brand Logo: MAXLINE LOGISTICS -->
                 <a href="#home" class="flex items-center text-decoration-none group py-1" aria-label="MAXLINE LOGISTICS Home">
-                    <img src="images/maxline_logo.png" alt="MAXLINE LOGISTICS" class="h-10 sm:h-11 md:h-12 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]">
+                    <img src="maxline_logo.png" alt="MAXLINE LOGISTICS" class="h-10 sm:h-11 md:h-12 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]">
                 </a>
 
                 <!-- Navigation Links -->
@@ -490,7 +511,7 @@
             <!-- Driving Truck Moving Across Screen -->
             <div class="w-full absolute bottom-0 left-0 pointer-events-none overflow-hidden h-full flex items-end">
                 <div class="animate-truck-highway flex items-center">
-                    <img src="images/maxline_truck_transparent.png" alt="MAXLINE LOGISTICS Express Truck" class="h-24 sm:h-32 md:h-36 w-auto object-contain filter drop-shadow-2xl">
+                    <img src="maxline_truck_transparent.png" alt="MAXLINE LOGISTICS Express Truck" class="h-24 sm:h-32 md:h-36 w-auto object-contain filter drop-shadow-2xl">
                 </div>
             </div>
 
@@ -513,12 +534,12 @@
                     
                     <!-- Real Logo 1: DP WORLD -->
                     <div title="DP World • Global Multimodal & Container Cargo Network" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[140px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-sky-400 hover:shadow-md transition-all duration-200">
-                        <img src="images/carriers/dpworld.png" alt="DP WORLD" class="h-9 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                        <img src="dpworld.png" alt="DP WORLD" class="h-9 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
                     </div>
 
                     <!-- Real Logo 2: DELHIVERY -->
                     <div title="Delhivery • 29,000+ Pincodes • Air & Surface Priority Courier" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-orange-400 hover:shadow-md transition-all duration-200">
-                        <img src="images/carriers/delhivery.png" alt="DELHIVERY" class="h-8 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                        <img src="delhivery.png" alt="DELHIVERY" class="h-8 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
                     </div>
 
                     <!-- Logo 3: ekart -->
@@ -528,7 +549,7 @@
 
                     <!-- Real Logo 4: XPRESSBEES -->
                     <div title="Xpressbees • Heavy Surface Cargo & B2B Logistics" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-purple-400 hover:shadow-md transition-all duration-200">
-                        <img src="images/carriers/xpressbees.png" alt="XPRESSBEES" class="h-8 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                        <img src="xpressbees.png" alt="XPRESSBEES" class="h-8 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
                     </div>
 
                     <!-- Logo 5: SHADOWFAX -->
@@ -538,7 +559,7 @@
 
                     <!-- Real Logo 6: DTDC -->
                     <div title="DTDC • Pan-India Reliable Parcel & Document Express" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[140px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-blue-400 hover:shadow-md transition-all duration-200">
-                        <img src="images/carriers/dtdc.png" alt="DTDC" class="h-9 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                        <img src="dtdc.png" alt="DTDC" class="h-9 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
                     </div>
 
                     <!-- Logo 7: ECOM EXPRESS -->
@@ -548,7 +569,7 @@
 
                     <!-- Real Logo 8: BLUE DART -->
                     <div title="Blue Dart • 24-Hour Guaranteed Priority Air SLA" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-blue-500 hover:shadow-md transition-all duration-200">
-                        <img src="images/carriers/bluedart.png" alt="BLUE DART" class="h-9 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                        <img src="bluedart.png" alt="BLUE DART" class="h-9 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
                     </div>
 
                     <!-- Logo 9: APML -->
@@ -564,19 +585,19 @@
 
                     <!-- DUPLICATES FOR INFINITE LOOPING -->
                     <div title="DP World • Global Multimodal & Container Cargo Network" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[140px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-sky-400 hover:shadow-md transition-all duration-200">
-                        <img src="images/carriers/dpworld.png" alt="DP WORLD" class="h-9 w-auto object-contain mix-blend-multiply">
+                        <img src="dpworld.png" alt="DP WORLD" class="h-9 w-auto object-contain mix-blend-multiply">
                     </div>
                     <div title="Delhivery • 29,000+ Pincodes • Air & Surface Priority Courier" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-orange-400 hover:shadow-md transition-all duration-200">
-                        <img src="images/carriers/delhivery.png" alt="DELHIVERY" class="h-8 w-auto object-contain mix-blend-multiply">
+                        <img src="delhivery.png" alt="DELHIVERY" class="h-8 w-auto object-contain mix-blend-multiply">
                     </div>
                     <div title="Xpressbees • Heavy Surface Cargo & B2B Logistics" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-purple-400 hover:shadow-md transition-all duration-200">
-                        <img src="images/carriers/xpressbees.png" alt="XPRESSBEES" class="h-8 w-auto object-contain mix-blend-multiply">
+                        <img src="xpressbees.png" alt="XPRESSBEES" class="h-8 w-auto object-contain mix-blend-multiply">
                     </div>
                     <div title="DTDC • Pan-India Reliable Parcel & Document Express" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[140px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-blue-400 hover:shadow-md transition-all duration-200">
-                        <img src="images/carriers/dtdc.png" alt="DTDC" class="h-9 w-auto object-contain mix-blend-multiply">
+                        <img src="dtdc.png" alt="DTDC" class="h-9 w-auto object-contain mix-blend-multiply">
                     </div>
                     <div title="Blue Dart • 24-Hour Guaranteed Priority Air SLA" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-blue-500 hover:shadow-md transition-all duration-200">
-                        <img src="images/carriers/bluedart.png" alt="BLUE DART" class="h-9 w-auto object-contain mix-blend-multiply">
+                        <img src="bluedart.png" alt="BLUE DART" class="h-9 w-auto object-contain mix-blend-multiply">
                     </div>
 
                 </div>
@@ -614,7 +635,7 @@
 
                     <!-- Main Image Container with clean presentation -->
                     <div class="relative z-10 w-full max-w-lg flex justify-center">
-                        <img src="images/maxline_delivery_transparent.png" alt="MAXLINE LOGISTICS Express Delivery Partner" class="w-full max-h-[580px] md:max-h-[620px] object-contain filter drop-shadow-2xl transition-transform duration-300 hover:scale-[1.01]">
+                        <img src="maxline_delivery_transparent.png" alt="MAXLINE LOGISTICS Express Delivery Partner" class="w-full max-h-[580px] md:max-h-[620px] object-contain filter drop-shadow-2xl transition-transform duration-300 hover:scale-[1.01]">
                     </div>
 
                 </div>
@@ -899,7 +920,7 @@
                         <!-- 3D Icon & Badge -->
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-orange-50 border border-orange-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
-                                <img src="images/services/service_express_3d.jpg" alt="Express Delivery" class="w-full h-full object-contain rounded-xl">
+                                <img src="service_express_3d.jpg" alt="Express Delivery" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-orange-700 bg-orange-50 border border-orange-200 px-2.5 py-0.5 rounded-full">
                                 ⚡ 24-48h SLA
@@ -942,7 +963,7 @@
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-purple-50 border border-purple-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
-                                <img src="images/services/service_supply_3d.jpg" alt="Supply Chain" class="w-full h-full object-contain rounded-xl">
+                                <img src="service_supply_3d.jpg" alt="Supply Chain" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-full">
                                 🔄 End-to-End
@@ -984,7 +1005,7 @@
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-emerald-50 border border-emerald-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
-                                <img src="images/services/service_document_3d.jpg" alt="Document Courier" class="w-full h-full object-contain rounded-xl">
+                                <img src="service_document_3d.jpg" alt="Document Courier" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                                 🔒 Tamper-Proof
@@ -1026,7 +1047,7 @@
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-rose-50 border border-rose-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
-                                <img src="images/services/service_ftl_3d.jpg" alt="Full Truck Load" class="w-full h-full object-contain rounded-xl">
+                                <img src="service_ftl_3d.jpg" alt="Full Truck Load" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full">
                                 🚛 Dedicated Fleet
@@ -1068,7 +1089,7 @@
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-sky-50 border border-sky-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
-                                <img src="images/services/service_ptl_3d.jpg" alt="Part Truck Load" class="w-full h-full object-contain rounded-xl">
+                                <img src="service_ptl_3d.jpg" alt="Part Truck Load" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-sky-700 bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-full">
                                 💰 Cost-Effective
@@ -1110,7 +1131,7 @@
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-amber-50 border border-amber-100 p-1.5 shadow-xs group-hover:scale-105 group-hover:shadow-md transition-all duration-300 shrink-0">
-                                <img src="images/services/service_warehouse_3d.jpg" alt="Smart Warehousing" class="w-full h-full object-contain rounded-xl">
+                                <img src="service_warehouse_3d.jpg" alt="Smart Warehousing" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
                                 🏢 Automated Hubs
@@ -1248,7 +1269,7 @@
                 <!-- Col 1 -->
                 <div class="space-y-3">
                     <a href="#home" class="inline-block" aria-label="MAXLINE LOGISTICS Home">
-                        <img src="images/maxline_logo_white.png" alt="MAXLINE LOGISTICS" class="h-10 sm:h-11 w-auto object-contain">
+                        <img src="maxline_logo_white.png" alt="MAXLINE LOGISTICS" class="h-10 sm:h-11 w-auto object-contain">
                     </a>
                     <p class="text-slate-400 leading-relaxed">
                         Enterprise Multi-Courier platform connecting 12+ top shipping networks across 29,000+ pincodes in India.
@@ -1351,7 +1372,7 @@
             <div class="p-6 pb-4 border-b border-slate-100 flex items-start justify-between gap-4 bg-slate-50/70">
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-white border border-slate-200 p-1 shadow-md flex-shrink-0">
-                        <img id="svc-modal-img" src="images/services/service_express_3d.jpg" alt="Service 3D Icon" class="w-full h-full object-contain rounded-xl">
+                        <img id="svc-modal-img" src="service_express_3d.jpg" alt="Service 3D Icon" class="w-full h-full object-contain rounded-xl">
                     </div>
                     <div>
                         <span id="svc-modal-cat" class="inline-block text-[10px] font-black uppercase tracking-wider text-orange-600 bg-orange-100/70 px-2.5 py-0.5 rounded-full border border-orange-200">
@@ -1796,7 +1817,7 @@
                 title: "Express Delivery",
                 category: "Express & Parcel",
                 catColor: "text-orange-600 bg-orange-100/70 border-orange-200",
-                icon: "images/services/service_express_3d.jpg",
+                icon: "service_express_3d.jpg",
                 tagline: "Air & Surface Priority Courier",
                 sla: "24 - 48 Hours Pan-India",
                 reach: "29,000+ Pincodes Reach",
@@ -1814,7 +1835,7 @@
                 title: "Supply Chain",
                 category: "Warehousing & 3PL",
                 catColor: "text-purple-600 bg-purple-100/70 border-purple-200",
-                icon: "images/services/service_supply_3d.jpg",
+                icon: "service_supply_3d.jpg",
                 tagline: "3PL & Enterprise Logistics Engine",
                 sla: "Same-Day Hub Dispatch",
                 reach: "All Major Industrial & Metro Hubs",
@@ -1832,7 +1853,7 @@
                 title: "Document Courier",
                 category: "Express & Parcel",
                 catColor: "text-emerald-600 bg-emerald-100/70 border-emerald-200",
-                icon: "images/services/service_document_3d.jpg",
+                icon: "service_document_3d.jpg",
                 tagline: "High-Security & Legal Parcels",
                 sla: "Priority 24h Overnight",
                 reach: "All Commercial Metros & Capital Cities",
@@ -1850,7 +1871,7 @@
                 title: "Full Truck Load",
                 category: "Heavy Freight (FTL / PTL)",
                 catColor: "text-rose-600 bg-rose-100/70 border-rose-200",
-                icon: "images/services/service_ftl_3d.jpg",
+                icon: "service_ftl_3d.jpg",
                 tagline: "Direct Interstate Heavy Transport",
                 sla: "Direct Express Highway Transit",
                 reach: "Pan-India Dedicated Freight Corridors",
@@ -1868,7 +1889,7 @@
                 title: "Part Truck Load",
                 category: "Heavy Freight (FTL / PTL)",
                 catColor: "text-sky-600 bg-sky-100/70 border-sky-200",
-                icon: "images/services/service_ptl_3d.jpg",
+                icon: "service_ptl_3d.jpg",
                 tagline: "Shared Commercial Trucking",
                 sla: "48 - 72 Hours Scheduled Transit",
                 reach: "27,000+ Industrial & B2B Commercial Pins",
@@ -1886,7 +1907,7 @@
                 title: "Smart Warehousing",
                 category: "Warehousing & 3PL",
                 catColor: "text-amber-600 bg-amber-100/70 border-amber-200",
-                icon: "images/services/service_warehouse_3d.jpg",
+                icon: "service_warehouse_3d.jpg",
                 tagline: "Robotic & Grade-A Fulfillment",
                 sla: "Same-Day Order Processing (Cut-off 3 PM)",
                 reach: "Strategic Hubs in Delhi, Mumbai & Bengaluru",
