@@ -1,0 +1,12 @@
+{
+  "name": "kds-postal-service",
+  "version": "1.0.0",
+  "description": "KDS Postal Service - Door-to-Door Courier & Cargo Aggregator Website",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
