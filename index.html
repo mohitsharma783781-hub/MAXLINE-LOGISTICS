@@ -88,13 +88,13 @@
             font-size: 0.875rem;
             line-height: 1.25rem;
             color: #ffffff;
-            background: linear-gradient(to right, #f97316, #f59e0b);
+            background: linear-gradient(to right, #f59e0b, #d97706);
             border-radius: 0.75rem;
-            box-shadow: 0 4px 12px -2px rgba(249, 115, 22, 0.3);
+            box-shadow: 0 4px 12px -2px rgba(245, 158, 11, 0.28);
             transition: all 0.2s ease;
         }
         .btn-primary:hover {
-            background: linear-gradient(to right, #ea580c, #d97706);
+            background: linear-gradient(to right, #d97706, #b45309);
             transform: translateY(-1px);
         }
         .btn-secondary {
@@ -158,25 +158,25 @@
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            background: #f97316;
+            background: #2563eb;
             border: 3px solid #ffffff;
-            box-shadow: 0 3px 8px rgba(249, 115, 22, 0.45), 0 1px 3px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 3px 8px rgba(37, 99, 235, 0.35), 0 1px 3px rgba(0, 0, 0, 0.12);
             cursor: grab;
             margin-top: -7px;
             transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
         }
         .range-slider::-webkit-slider-thumb:hover {
             transform: scale(1.12);
-            background: #ea580c;
-            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.6);
+            background: #1d4ed8;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
         }
         .range-slider::-moz-range-thumb {
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            background: #f97316;
+            background: #2563eb;
             border: 3px solid #ffffff;
-            box-shadow: 0 3px 8px rgba(249, 115, 22, 0.45), 0 1px 3px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 3px 8px rgba(37, 99, 235, 0.35), 0 1px 3px rgba(0, 0, 0, 0.12);
             cursor: grab;
         }
 
@@ -192,7 +192,7 @@
             border-radius: inherit;
             background: radial-gradient(
                 550px circle at var(--mouse-x, -1000px) var(--mouse-y, -1000px),
-                rgba(249, 115, 22, 0.08),
+                rgba(37, 99, 235, 0.07),
                 transparent 45%
             );
             opacity: 0;
@@ -264,7 +264,7 @@
 
 
     <!-- 0. Dynamic Top Scroll Reading Progress Bar -->
-    <div id="scroll-progress-bar" class="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-orange-500 via-amber-400 to-sky-500 z-50 transition-all duration-75 pointer-events-none" style="width: 0%;"></div>
+    <div id="scroll-progress-bar" class="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-blue-600 via-indigo-600 to-amber-500 z-50 transition-all duration-75 pointer-events-none" style="width: 0%;"></div>
 
     <!-- 1. PUBLIC HEADER -->
     <header id="main-header" class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm transition-all duration-300">
@@ -293,7 +293,7 @@
                         </svg>
                         <span>Login</span>
                     </a>
-                    <a href="register.html" class="relative group overflow-hidden px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 bg-[length:200%_auto] hover:bg-right shadow-md shadow-orange-500/25 transition-all duration-300 flex items-center gap-1.5 transform hover:scale-[1.03] active:scale-95">
+                    <a href="register.html" class="relative group overflow-hidden px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md shadow-amber-500/25 transition-all duration-300 flex items-center gap-1.5 transform hover:scale-[1.03] active:scale-95">
                         <span class="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
                         <span>Sign Up Free</span>
                         <svg class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -327,7 +327,7 @@
                     </svg>
                     <span>Login</span>
                 </a>
-                <a href="register.html" class="w-full text-center py-2.5 rounded-xl font-extrabold text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-md shadow-orange-500/25 flex items-center justify-center gap-2">
+                <a href="register.html" class="w-full text-center py-2.5 rounded-xl font-extrabold text-white bg-gradient-to-r from-amber-500 to-amber-600 shadow-md shadow-amber-500/25 flex items-center justify-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
                     <span>Sign Up Free</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -349,8 +349,8 @@
                     
                     <!-- Badge Bar -->
                     <div class="inline-flex items-center gap-2 flex-wrap justify-center lg:justify-start">
-                        <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-orange-600 text-xs font-extrabold shadow-sm">
-                            <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                        <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-extrabold shadow-sm">
+                            <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
                             ⚡ 12+ Courier Networks • 29,000+ Active Pincodes
                         </span>
                         <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold border border-slate-700">
@@ -361,7 +361,7 @@
                     <!-- Main Headline -->
                     <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-black text-slate-900 tracking-tight leading-none">
                         Next-Gen Multi-Carrier <br class="hidden sm:block"/>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-sky-600">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-indigo-600 to-amber-500">
                             Freight & Logistics Engine.
                         </span>
                     </h1>
@@ -373,7 +373,7 @@
 
                     <!-- CTAs (Sign Up Free Dynamic Button & Login) -->
                     <div class="pt-1 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
-                        <a href="register.html" class="w-full sm:w-auto px-7 py-3.5 rounded-xl font-extrabold text-white bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 bg-[length:200%_auto] hover:bg-right shadow-md shadow-orange-500/25 text-sm transition-all duration-300 text-center flex items-center justify-center gap-2 transform hover:scale-[1.02] active:scale-95 group">
+                        <a href="register.html" class="w-full sm:w-auto px-7 py-3.5 rounded-xl font-extrabold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md shadow-amber-500/25 text-sm transition-all duration-300 text-center flex items-center justify-center gap-2 transform hover:scale-[1.02] active:scale-95 group">
                             <span class="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
                             <span>Sign Up Free</span>
                             <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -388,7 +388,7 @@
                         </a>
                     </div>
                     <div class="pt-0.5 text-center lg:text-left">
-                        <a href="#calculator" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-orange-600 transition-colors">
+                        <a href="#calculator" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-blue-600 transition-colors">
                             <span>📊 Looking to estimate parcel rates without login?</span>
                             <span class="underline">Calculate Live Rates ↓</span>
                         </a>
@@ -397,7 +397,7 @@
                     <!-- Key Trust Metric Strip (Issue 13: Properly aligned with content grid) -->
                     <div class="pt-3 border-t border-slate-200/80 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-xs text-slate-600 max-w-xl mx-auto lg:mx-0">
                         <div class="flex items-center gap-1.5 font-bold">
-                            <span class="text-orange-500 font-black">✓</span>
+                            <span class="text-blue-600 font-black">✓</span>
                             <span>99.4% On-Time SLA</span>
                         </div>
                         <div class="flex items-center gap-1.5 font-bold">
@@ -416,7 +416,7 @@
                 <div class="lg:col-span-5 relative flex flex-col items-center justify-center py-2">
                     
                     <!-- Ambient Radial Glow (Issue 2: Softened) -->
-                    <div class="absolute w-72 h-72 bg-gradient-to-tr from-orange-500/10 via-blue-500/5 to-transparent rounded-full filter blur-3xl pointer-events-none"></div>
+                    <div class="absolute w-72 h-72 bg-gradient-to-tr from-blue-600/10 via-indigo-500/5 to-transparent rounded-full filter blur-3xl pointer-events-none"></div>
 
                     <!-- Main Widget Card (Issue 2 & 9: Softer shadow-lg, rounded-2xl) -->
                     <div id="hero-widget-card" class="spotlight-card relative z-10 w-full max-w-md bg-white rounded-2xl p-6 sm:p-7 shadow-lg border border-slate-200/80 space-y-5 transition-transform duration-200">
@@ -424,7 +424,7 @@
                         <!-- Top Dual Tabs with ARIA Semantics (Issue 4) -->
                         <div role="tablist" aria-label="Shipment quick tools" class="relative grid grid-cols-2 bg-slate-100 p-1.5 rounded-xl overflow-hidden">
                             <!-- Animated Sliding Indicator Pill -->
-                            <div id="hero-tab-indicator" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl shadow-sm transition-transform duration-300 ease-out pointer-events-none"></div>
+                            <div id="hero-tab-indicator" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-blue-700 to-blue-600 rounded-xl shadow-sm transition-transform duration-300 ease-out pointer-events-none"></div>
 
                             <button id="hero-tab-track-btn" role="tab" aria-selected="true" aria-controls="hero-track-content" onclick="switchHeroWidgetTab('track')" class="relative z-10 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white transition-colors flex items-center justify-center gap-1.5 focus:outline-none">
                                 <span>📦</span> Track Shipment
@@ -442,12 +442,12 @@
                                 <div>
                                     <div class="flex items-center justify-between mb-1.5">
                                         <label for="track-input" class="block text-xs font-bold text-slate-800">Enter AWB or Tracking Number:</label>
-                                        <button type="button" onclick="trySampleAWB('MXL9482103IN')" class="text-[11px] text-orange-600 hover:text-orange-600 font-extrabold flex items-center gap-1 hover:underline">
+                                        <button type="button" onclick="trySampleAWB('MXL9482103IN')" class="text-[11px] text-blue-600 hover:text-blue-700 font-extrabold flex items-center gap-1 hover:underline">
                                             <span>⚡ Try MXL9482103IN</span>
                                         </button>
                                     </div>
                                     <div class="relative">
-                                        <input type="text" id="track-input" placeholder="e.g. 1428591024 or DEL987654" class="w-full pl-4 pr-11 py-3 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-slate-50/60 focus:bg-white tracking-wider" required>
+                                        <input type="text" id="track-input" placeholder="e.g. 1428591024 or DEL987654" class="w-full pl-4 pr-11 py-3 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all bg-slate-50/60 focus:bg-white tracking-wider" required>
                                         <span class="absolute right-3.5 top-3.5 text-slate-400 text-base pointer-events-none">🔍</span>
                                     </div>
                                 </div>
@@ -467,7 +467,7 @@
                                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                     <span>Delhivery • BlueDart • DTDC • Xpressbees</span>
                                 </div>
-                                <span class="text-orange-600 font-bold">12+ Partners</span>
+                                <span class="text-blue-600 font-bold">12+ Partners</span>
                             </div>
 
                         </div>
@@ -478,7 +478,7 @@
                             <div>
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-bold text-slate-800 block">
-                                        <strong class="text-orange-600 font-black">Verify</strong> Route Serviceability:
+                                        <strong class="text-blue-600 font-black">Verify</strong> Route Serviceability:
                                     </span>
                                     <span class="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
                                         29,000+ Pins
@@ -491,11 +491,11 @@
                                 <div class="grid grid-cols-2 gap-2.5">
                                     <div>
                                         <label class="block text-[11px] font-bold text-slate-600 mb-1">Pickup Pincode</label>
-                                        <input type="text" id="hero-pickup-pin" maxlength="6" value="134113" placeholder="e.g. 134113" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50/60 focus:bg-white" required>
+                                        <input type="text" id="hero-pickup-pin" maxlength="6" value="134113" placeholder="e.g. 134113" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50/60 focus:bg-white" required>
                                     </div>
                                     <div>
                                         <label class="block text-[11px] font-bold text-slate-600 mb-1">Delivery Pincode</label>
-                                        <input type="text" id="hero-dest-pin" maxlength="6" value="400001" placeholder="e.g. 400001" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-slate-50/60 focus:bg-white" required>
+                                        <input type="text" id="hero-dest-pin" maxlength="6" value="400001" placeholder="e.g. 400001" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50/60 focus:bg-white" required>
                                     </div>
                                 </div>
 
@@ -504,7 +504,7 @@
                                     <span class="text-emerald-600 font-bold">100% Pan-India COD</span>
                                 </div>
 
-                                <button type="submit" class="w-full py-3.5 rounded-xl font-black text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-sm shadow-lg shadow-orange-500/25 transition-all flex items-center justify-center gap-2 transform hover:scale-[1.01]">
+                                <button type="submit" class="w-full py-3.5 rounded-xl font-black text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-sm shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 transform hover:scale-[1.01]">
                                     <span>Check Serviceability</span>
                                     <span>📍</span>
                                 </button>
@@ -563,7 +563,7 @@
                     </div>
 
                     <!-- Real Logo 2: DELHIVERY -->
-                    <div title="Delhivery • 29,000+ Pincodes • Air & Surface Priority Courier" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-orange-400 hover:shadow-md transition-all duration-200">
+                    <div title="Delhivery • 29,000+ Pincodes • Air & Surface Priority Courier" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-blue-400 hover:shadow-md transition-all duration-200">
                         <img src="delhivery.png" alt="DELHIVERY" class="h-8 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
                     </div>
 
@@ -612,7 +612,7 @@
                     <div title="DP World • Global Multimodal & Container Cargo Network" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[140px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-sky-400 hover:shadow-md transition-all duration-200">
                         <img src="dpworld.png" alt="DP WORLD" class="h-9 w-auto object-contain mix-blend-multiply">
                     </div>
-                    <div title="Delhivery • 29,000+ Pincodes • Air & Surface Priority Courier" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-orange-400 hover:shadow-md transition-all duration-200">
+                    <div title="Delhivery • 29,000+ Pincodes • Air & Surface Priority Courier" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-blue-400 hover:shadow-md transition-all duration-200">
                         <img src="delhivery.png" alt="DELHIVERY" class="h-8 w-auto object-contain mix-blend-multiply">
                     </div>
                     <div title="Xpressbees • Heavy Surface Cargo & B2B Logistics" class="group bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2 h-14 min-w-[150px] flex items-center justify-center cursor-pointer hover:scale-105 hover:border-purple-400 hover:shadow-md transition-all duration-200">
@@ -638,7 +638,7 @@
             
             <!-- Section Header -->
             <div class="text-center mb-12 space-y-3 reveal-on-scroll">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200/80 text-orange-600 text-xs font-extrabold shadow-sm">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-extrabold shadow-sm">
                     <span>✨</span> Trusted By 5,000+ D2C Brands & Sellers
                 </span>
                 <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
@@ -656,7 +656,7 @@
                 <div class="lg:col-span-6 relative flex justify-center items-center py-6 reveal-on-scroll">
                     
                     <!-- Ambient Glow Backdrop -->
-                    <div class="absolute w-96 h-96 bg-gradient-to-tr from-orange-500/15 via-blue-500/10 to-transparent rounded-full filter blur-3xl pointer-events-none"></div>
+                    <div class="absolute w-96 h-96 bg-gradient-to-tr from-blue-600/15 via-indigo-500/10 to-transparent rounded-full filter blur-3xl pointer-events-none"></div>
 
                     <!-- Main Image Container with clean presentation -->
                     <div class="relative z-10 w-full max-w-lg flex justify-center">
@@ -669,18 +669,18 @@
                 <div class="lg:col-span-6 space-y-5">
                     
                     <!-- Feature Card 01: Smart AI Routing -->
-                    <div class="spotlight-card reveal-on-scroll bg-gradient-to-br from-orange-50/70 to-white rounded-2xl p-6 border border-orange-200 shadow-sm space-y-2 hover:shadow-md transition-all">
+                    <div class="spotlight-card reveal-on-scroll bg-gradient-to-br from-blue-50/70 to-white rounded-2xl p-6 border border-blue-200/80 shadow-sm space-y-2 hover:shadow-md transition-all">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <span class="text-xs font-black text-orange-600 bg-orange-100 px-2.5 py-1 rounded-xl">01</span>
-                                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center font-black shadow-sm">
+                                <span class="text-xs font-black text-blue-700 bg-blue-100 px-2.5 py-1 rounded-xl">01</span>
+                                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black shadow-sm">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                                     </svg>
                                 </div>
                                 <h3 class="text-lg font-extrabold text-slate-900">AI-Powered Smart Routing Engine</h3>
                             </div>
-                            <span class="text-xs font-bold text-orange-600 bg-orange-100/70 px-2.5 py-0.5 rounded-full border border-orange-200 hidden sm:inline-block">Save 40%</span>
+                            <span class="text-xs font-bold text-blue-700 bg-blue-100/80 px-2.5 py-0.5 rounded-full border border-blue-200 hidden sm:inline-block">Save 40%</span>
                         </div>
                         <p class="text-sm text-slate-800 leading-relaxed font-medium">
                             Stop relying on a single courier. Our intelligent engine automatically allocates every parcel to the fastest and most cost-effective carrier based on real-time pincode performance, cutting shipping costs by up to 40%.
@@ -737,8 +737,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
             <div class="text-center max-w-3xl mx-auto mb-10 space-y-2 reveal-on-scroll">
-                <span class="inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 bg-orange-50 px-3.5 py-1 rounded-full border border-orange-200">
-                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                <span class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 px-3.5 py-1 rounded-full border border-blue-200/80 shadow-sm">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                     Smart Shipping Rate & Savings
                 </span>
                 <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
@@ -752,7 +752,7 @@
             <!-- Tab Buttons -->
             <div class="flex justify-center mb-8 reveal-on-scroll">
                 <div class="bg-slate-100 p-1.5 rounded-2xl border border-slate-200 inline-flex gap-2">
-                    <button id="tab-rates-btn" onclick="switchCalcTab('rates')" class="px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all bg-white text-orange-600 shadow-md border border-orange-100">
+                    <button id="tab-rates-btn" onclick="switchCalcTab('rates')" class="px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all bg-white text-blue-700 shadow-sm border border-blue-100">
                         📊 Live Rate Comparison
                     </button>
                     <button id="tab-savings-btn" onclick="switchCalcTab('savings')" class="px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all text-slate-600 hover:text-slate-900">
@@ -770,18 +770,18 @@
                     
                     <div>
                         <label for="calc-pickup" class="block text-xs font-bold text-slate-800 mb-1.5">Pickup Pincode</label>
-                        <input type="text" id="calc-pickup" value="110001" oninput="updateLiveRates()" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+                        <input type="text" id="calc-pickup" value="110001" oninput="updateLiveRates()" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white">
                     </div>
 
                     <div>
                         <label for="calc-dest" class="block text-xs font-bold text-slate-800 mb-1.5">Destination Pincode</label>
-                        <input type="text" id="calc-dest" value="400001" oninput="updateLiveRates()" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+                        <input type="text" id="calc-dest" value="400001" oninput="updateLiveRates()" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white">
                     </div>
 
                     <!-- Issue 5 & 14: Thicker slider track and clear min/max labels -->
                     <div>
-                        <label for="calc-weight" class="block text-xs font-bold text-slate-800 mb-1.5">Package Weight: <span id="weight-val" class="text-orange-600 font-extrabold">0.5 kg</span></label>
-                        <input type="range" id="calc-weight" min="0.5" max="20" step="0.5" value="0.5" oninput="updateLiveRates()" aria-label="Package weight in kilograms" aria-valuemin="0.5" aria-valuemax="20" aria-valuenow="0.5" aria-valuetext="0.5 kg" class="range-slider w-full h-3.5 bg-slate-200 rounded-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 accent-orange-500">
+                        <label for="calc-weight" class="block text-xs font-bold text-slate-800 mb-1.5">Package Weight: <span id="weight-val" class="text-blue-600 font-extrabold">0.5 kg</span></label>
+                        <input type="range" id="calc-weight" min="0.5" max="20" step="0.5" value="0.5" oninput="updateLiveRates()" aria-label="Package weight in kilograms" aria-valuemin="0.5" aria-valuemax="20" aria-valuenow="0.5" aria-valuetext="0.5 kg" class="range-slider w-full h-3.5 bg-slate-200 rounded-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-600 accent-blue-600">
                         <div class="flex justify-between text-[11px] font-bold text-slate-400 mt-1.5 px-0.5" aria-hidden="true">
                             <span>0.5 kg</span>
                             <span>10 kg</span>
@@ -793,15 +793,15 @@
                     <div>
                         <label id="payment-mode-label" class="block text-xs font-bold text-slate-800 mb-1.5">Payment Mode</label>
                         <div role="radiogroup" aria-labelledby="payment-mode-label" class="grid grid-cols-2 gap-2.5">
-                            <button type="button" id="pay-prepaid" role="radio" aria-checked="true" onclick="setPayMode('prepaid')" class="py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-slate-900 text-white border-slate-900 shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-orange-500">
-                                <span class="radio-indicator w-3.5 h-3.5 rounded-full border border-orange-400 flex items-center justify-center shrink-0">
-                                    <span class="radio-dot w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                            <button type="button" id="pay-prepaid" role="radio" aria-checked="true" onclick="setPayMode('prepaid')" class="py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-slate-900 text-white border-slate-900 shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                <span class="radio-indicator w-3.5 h-3.5 rounded-full border border-blue-400 flex items-center justify-center shrink-0">
+                                    <span class="radio-dot w-1.5 h-1.5 rounded-full bg-blue-400"></span>
                                 </span>
                                 <span>Prepaid</span>
                             </button>
-                            <button type="button" id="pay-cod" role="radio" aria-checked="false" onclick="setPayMode('cod')" class="py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-white text-slate-800 border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <button type="button" id="pay-cod" role="radio" aria-checked="false" onclick="setPayMode('cod')" class="py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-white text-slate-800 border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-blue-600">
                                 <span class="radio-indicator w-3.5 h-3.5 rounded-full border border-slate-300 flex items-center justify-center shrink-0">
-                                    <span class="radio-dot hidden w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                                    <span class="radio-dot hidden w-1.5 h-1.5 rounded-full bg-blue-400"></span>
                                 </span>
                                 <span>Cash on Delivery</span>
                             </button>
@@ -889,9 +889,9 @@
                 <div class="space-y-4">
                     <div class="flex justify-between items-center text-sm font-extrabold">
                         <span>Monthly Shipments:</span>
-                        <span id="vol-count" class="text-2xl font-black text-orange-600">1,500 Packages</span>
+                        <span id="vol-count" class="text-2xl font-black text-blue-600">1,500 Packages</span>
                     </div>
-                    <input type="range" id="vol-slider" min="100" max="10000" step="100" value="1500" oninput="updateSavings()" class="w-full h-3 bg-slate-700 rounded-xl appearance-none cursor-pointer accent-orange-500">
+                    <input type="range" id="vol-slider" min="100" max="10000" step="100" value="1500" oninput="updateSavings()" class="w-full h-3 bg-slate-700 rounded-xl appearance-none cursor-pointer accent-blue-600">
                     <div class="flex justify-between text-xs text-slate-400">
                         <span>100 Orders</span>
                         <span>5,000 Orders</span>
@@ -920,19 +920,19 @@
     <!-- 5. DYNAMIC OUR SERVICES SECTION (ZOPIGO INSPIRED 3D ARCHITECTURE) -->
     <section id="services" class="py-14 md:py-20 bg-slate-50/70 border-t border-slate-200/80 scroll-mt-16 relative overflow-hidden">
         <!-- Ambient decorative background glow -->
-        <div class="absolute -top-40 right-0 w-96 h-96 bg-orange-400/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -top-40 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute -bottom-40 left-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             
             <!-- Section Header (Issue 10: Sentence case eyebrow) -->
             <div class="text-center max-w-3xl mx-auto mb-10 space-y-3 reveal-on-scroll">
-                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold text-orange-600 bg-orange-50 border border-orange-200/80 shadow-xs">
-                    <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/80 shadow-xs">
+                    <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
                     Comprehensive Logistics Solutions
                 </span>
                 <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
-                    Our <span class="bg-gradient-to-r from-orange-500 via-rose-500 to-indigo-600 bg-clip-text text-transparent">Services</span>
+                    Our <span class="bg-gradient-to-r from-blue-700 via-indigo-600 to-amber-500 bg-clip-text text-transparent">Services</span>
                 </h2>
                 <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
                     Comprehensive multi-modal logistics solutions powered by cutting-edge technology, AI route optimization, and 24/7 telematics.
@@ -945,15 +945,15 @@
                     All Services (6)
                 </button>
                 <button onclick="filterServices('express', this)" class="service-filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-800 border border-slate-200 hover:bg-slate-100 transition-all flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     Express & Parcel
                 </button>
                 <button onclick="filterServices('freight', this)" class="service-filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-800 border border-slate-200 hover:bg-slate-100 transition-all flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0v-5m0 0h3.586a1 1 0 01.707.293l2.414 2.414a1 1 0 01.293.707V16m-6 0h6"/></svg>
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0v-5m0 0h3.586a1 1 0 01.707.293l2.414 2.414a1 1 0 01.293.707V16m-6 0h6"/></svg>
                     Heavy Freight (FTL / PTL)
                 </button>
                 <button onclick="filterServices('supply', this)" class="service-filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-800 border border-slate-200 hover:bg-slate-100 transition-all flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                     Warehousing & 3PL
                 </button>
             </div>
@@ -962,23 +962,23 @@
             <div id="services-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                 
                 <!-- Card 1: Express Delivery -->
-                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-orange-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="express">
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="express">
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 p-1.5 shadow-xs group-hover:scale-105 transition-all duration-300 shrink-0">
                                 <img src="service_express_3d.jpg" alt="Express Delivery" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
-                                <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                                 24-48h SLA
                             </span>
                         </div>
                         
                         <div>
-                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-orange-600 transition-colors">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">
                                 Express Delivery
                             </h3>
-                            <p class="text-xs text-orange-600 font-bold mt-1">Air & Surface Priority Courier</p>
+                            <p class="text-xs text-blue-600 font-bold mt-1">Air & Surface Priority Courier</p>
                             <p class="text-slate-600 text-xs mt-2 leading-relaxed">
                                 Fast pan-India delivery across 29,000+ pincodes with automated multi-carrier allocation & live GPS tracking.
                             </p>
@@ -1005,23 +1005,23 @@
                 </div>
 
                 <!-- Card 2: Supply Chain & 3PL -->
-                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-orange-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="supply">
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="supply">
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 p-1.5 shadow-xs group-hover:scale-105 transition-all duration-300 shrink-0">
                                 <img src="service_supply_3d.jpg" alt="Supply Chain" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
-                                <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                                 End-to-End
                             </span>
                         </div>
                         
                         <div>
-                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-orange-600 transition-colors">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">
                                 Supply Chain
                             </h3>
-                            <p class="text-xs text-orange-600 font-bold mt-1">3PL & Enterprise Logistics Engine</p>
+                            <p class="text-xs text-blue-600 font-bold mt-1">3PL & Enterprise Logistics Engine</p>
                             <p class="text-slate-600 text-xs mt-2 leading-relaxed">
                                 End-to-end supply chain solutions with predictive multi-hub routing and centralized multi-vendor control.
                             </p>
@@ -1048,23 +1048,23 @@
                 </div>
 
                 <!-- Card 3: Document Courier -->
-                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-orange-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="express">
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="express">
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 p-1.5 shadow-xs group-hover:scale-105 transition-all duration-300 shrink-0">
                                 <img src="service_document_3d.jpg" alt="Document Courier" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
-                                <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                                 Tamper-Proof
                             </span>
                         </div>
                         
                         <div>
-                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-orange-600 transition-colors">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">
                                 Document Courier
                             </h3>
-                            <p class="text-xs text-orange-600 font-bold mt-1">High-Security & Legal Parcels</p>
+                            <p class="text-xs text-blue-600 font-bold mt-1">High-Security & Legal Parcels</p>
                             <p class="text-slate-600 text-xs mt-2 leading-relaxed">
                                 Secure overnight transit for important corporate documents, contracts, tenders, and sensitive parcels.
                             </p>
@@ -1091,23 +1091,23 @@
                 </div>
 
                 <!-- Card 4: Full Truck Load (FTL) -->
-                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-orange-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="freight">
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="freight">
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 p-1.5 shadow-xs group-hover:scale-105 transition-all duration-300 shrink-0">
                                 <img src="service_ftl_3d.jpg" alt="Full Truck Load" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
-                                <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                                 Dedicated Fleet
                             </span>
                         </div>
                         
                         <div>
-                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-orange-600 transition-colors">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">
                                 Full Truck Load
                             </h3>
-                            <p class="text-xs text-orange-600 font-bold mt-1">Direct Interstate Heavy Transport</p>
+                            <p class="text-xs text-blue-600 font-bold mt-1">Direct Interstate Heavy Transport</p>
                             <p class="text-slate-600 text-xs mt-2 leading-relaxed">
                                 Dedicated container trucks for single consignments with direct express transit and zero hub transshipment.
                             </p>
@@ -1134,23 +1134,23 @@
                 </div>
 
                 <!-- Card 5: Part Truck Load (PTL) -->
-                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-orange-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="freight">
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="freight">
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 p-1.5 shadow-xs group-hover:scale-105 transition-all duration-300 shrink-0">
                                 <img src="service_ptl_3d.jpg" alt="Part Truck Load" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
-                                <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                                 Cost-Effective
                             </span>
                         </div>
                         
                         <div>
-                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-orange-600 transition-colors">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">
                                 Part Truck Load
                             </h3>
-                            <p class="text-xs text-orange-600 font-bold mt-1">Shared Commercial Trucking</p>
+                            <p class="text-xs text-blue-600 font-bold mt-1">Shared Commercial Trucking</p>
                             <p class="text-slate-600 text-xs mt-2 leading-relaxed">
                                 Cost-effective shared trucking with optimized route consolidation and doorstep commercial pickup.
                             </p>
@@ -1177,23 +1177,23 @@
                 </div>
 
                 <!-- Card 6: Smart Warehousing -->
-                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-orange-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="supply">
+                <div class="service-card spotlight-card reveal-on-scroll bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-300 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between relative group" data-category="supply">
                     <div class="space-y-3.5">
                         <div class="flex items-center justify-between gap-3">
                             <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 p-1.5 shadow-xs group-hover:scale-105 transition-all duration-300 shrink-0">
                                 <img src="service_warehouse_3d.jpg" alt="Smart Warehousing" class="w-full h-full object-contain rounded-xl">
                             </div>
                             <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
-                                <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                                 Automated Hubs
                             </span>
                         </div>
                         
                         <div>
-                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-orange-600 transition-colors">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">
                                 Smart Warehousing
                             </h3>
-                            <p class="text-xs text-orange-600 font-bold mt-1">Robotic & Grade-A Fulfillment</p>
+                            <p class="text-xs text-blue-600 font-bold mt-1">Robotic & Grade-A Fulfillment</p>
                             <p class="text-slate-600 text-xs mt-2 leading-relaxed">
                                 State-of-the-art automated hubs with IoT sensors, barcode picking, and rapid same-day order dispatch.
                             </p>
@@ -1244,7 +1244,7 @@
                     All Questions (5)
                 </button>
                 <button type="button" onclick="filterFaq('rates')" id="faq-tab-rates" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-800 hover:bg-slate-100 border border-slate-200 flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                     Rates & COD (2)
                 </button>
                 <button type="button" onclick="filterFaq('delivery')" id="faq-tab-delivery" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-800 hover:bg-slate-100 border border-slate-200 flex items-center gap-1.5">
@@ -1259,7 +1259,7 @@
                 <div class="faq-item border border-slate-200 rounded-2xl overflow-hidden bg-white" data-category="general">
                     <button onclick="toggleFaq(1)" class="w-full text-left py-3.5 px-4 sm:px-5 font-bold text-slate-900 text-sm flex justify-between items-center bg-white hover:bg-slate-50 transition-colors">
                         <span>What is MAXLINE LOGISTICS multi-courier platform?</span>
-                        <span id="faq-icon-1" class="text-orange-500 font-black text-lg shrink-0 ml-3">+</span>
+                        <span id="faq-icon-1" class="text-blue-600 font-black text-lg shrink-0 ml-3">+</span>
                     </button>
                     <div id="faq-ans-1" class="hidden px-4 sm:px-5 pb-4 pt-0 text-xs text-slate-600 leading-relaxed bg-white border-t border-slate-100">
                         MAXLINE LOGISTICS consolidates 12+ top logistics providers (Delhivery, Bluedart, Xpressbees, Shadowfax, etc.) into a single enterprise platform with automated rate optimization, doorstep pickup, 0 hidden surcharges, and instant WhatsApp tracking alerts.
@@ -1270,7 +1270,7 @@
                 <div class="faq-item border border-slate-200 rounded-2xl overflow-hidden bg-white" data-category="rates">
                     <button onclick="toggleFaq(2)" class="w-full text-left py-3.5 px-4 sm:px-5 font-bold text-slate-900 text-sm flex justify-between items-center bg-white hover:bg-slate-50 transition-colors">
                         <span>How does the AI Smart Courier Recommendation Engine work?</span>
-                        <span id="faq-icon-2" class="text-orange-500 font-black text-lg shrink-0 ml-3">+</span>
+                        <span id="faq-icon-2" class="text-blue-600 font-black text-lg shrink-0 ml-3">+</span>
                     </button>
                     <div id="faq-ans-2" class="hidden px-4 sm:px-5 pb-4 pt-0 text-xs text-slate-600 leading-relaxed bg-white border-t border-slate-100">
                         When you create a shipment, our AI algorithm evaluates live pricing, historical SLA performance, pincode reachability, and hub congestion to highlight the Best Value, Fastest Air, and AI Recommended courier in real-time.
@@ -1281,7 +1281,7 @@
                 <div class="faq-item border border-slate-200 rounded-2xl overflow-hidden bg-white" data-category="rates">
                     <button onclick="toggleFaq(3)" class="w-full text-left py-3.5 px-4 sm:px-5 font-bold text-slate-900 text-sm flex justify-between items-center bg-white hover:bg-slate-50 transition-colors">
                         <span>What are the COD remittance terms?</span>
-                        <span id="faq-icon-3" class="text-orange-500 font-black text-lg shrink-0 ml-3">+</span>
+                        <span id="faq-icon-3" class="text-blue-600 font-black text-lg shrink-0 ml-3">+</span>
                     </button>
                     <div id="faq-ans-3" class="hidden px-4 sm:px-5 pb-4 pt-0 text-xs text-slate-600 leading-relaxed bg-white border-t border-slate-100">
                         We offer fast daily COD remittance directly into your bank account with complete automated reconciliation ledgers, protecting your e-commerce cash flow.
@@ -1292,7 +1292,7 @@
                 <div class="faq-item border border-slate-200 rounded-2xl overflow-hidden bg-white" data-category="delivery">
                     <button onclick="toggleFaq(4)" class="w-full text-left py-3.5 px-4 sm:px-5 font-bold text-slate-900 text-sm flex justify-between items-center bg-white hover:bg-slate-50 transition-colors">
                         <span>How does MAXLINE LOGISTICS cut NDR & RTO losses?</span>
-                        <span id="faq-icon-4" class="text-orange-500 font-black text-lg shrink-0 ml-3">+</span>
+                        <span id="faq-icon-4" class="text-blue-600 font-black text-lg shrink-0 ml-3">+</span>
                     </button>
                     <div id="faq-ans-4" class="hidden px-4 sm:px-5 pb-4 pt-0 text-xs text-slate-600 leading-relaxed bg-white border-t border-slate-100">
                         Our integrated NDR workflow dispatches instant WhatsApp verification messages to buyers upon failed delivery attempts, allowing them to re-schedule or update address in 1 click—cutting RTO rates by up to 40%.
@@ -1303,7 +1303,7 @@
                 <div class="faq-item border border-slate-200 rounded-2xl overflow-hidden bg-white" data-category="general">
                     <button onclick="toggleFaq(5)" class="w-full text-left py-3.5 px-4 sm:px-5 font-bold text-slate-900 text-sm flex justify-between items-center bg-white hover:bg-slate-50 transition-colors">
                         <span>Can enterprises get custom shipping contracts?</span>
-                        <span id="faq-icon-5" class="text-orange-500 font-black text-lg shrink-0 ml-3">+</span>
+                        <span id="faq-icon-5" class="text-blue-600 font-black text-lg shrink-0 ml-3">+</span>
                     </button>
                     <div id="faq-ans-5" class="hidden px-4 sm:px-5 pb-4 pt-0 text-xs text-slate-600 leading-relaxed bg-white border-t border-slate-100">
                         Yes! High-volume e-commerce brands and logistics resellers can get customized volume pricing matrices, custom API integrations, and dedicated account managers.
@@ -1389,13 +1389,13 @@
                     <button onclick="closeTrackingModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold flex items-center justify-center">✕</button>
                 </div>
 
-                <div class="bg-orange-50/70 border border-orange-200 rounded-2xl p-4 space-y-2">
+                <div class="bg-blue-50/70 border border-blue-200/80 rounded-2xl p-4 space-y-2">
                     <div class="flex justify-between items-center">
-                        <span id="modal-awb" class="font-black text-orange-600 text-sm font-mono">--</span>
-                        <span id="modal-status" class="text-xs font-extrabold bg-gradient-to-r from-orange-500 to-amber-500 text-white px-2.5 py-0.5 rounded-full shadow-sm">In Transit</span>
+                        <span id="modal-awb" class="font-black text-blue-700 text-sm font-mono">--</span>
+                        <span id="modal-status" class="text-xs font-extrabold bg-gradient-to-r from-blue-700 to-blue-600 text-white px-2.5 py-0.5 rounded-full shadow-sm">In Transit</span>
                     </div>
                     <div id="modal-courier" class="text-xs font-bold text-slate-800">Delhivery Express Direct</div>
-                    <div class="text-xs text-slate-600 flex justify-between border-t border-orange-200/60 pt-2 mt-1">
+                    <div class="text-xs text-slate-600 flex justify-between border-t border-blue-200/60 pt-2 mt-1">
                         <span>Route: <strong id="modal-route">Delhi ➔ Mumbai</strong></span>
                         <span>ETA: <strong id="modal-eta" class="text-emerald-600">Tomorrow by 2 PM</strong></span>
                     </div>
@@ -1442,7 +1442,7 @@
                     <div class="text-sm font-black text-slate-900" id="pin-modal-route">134113 (Panchkula) ➔ 400001 (Mumbai)</div>
                     <div class="text-xs text-slate-600 pt-1 border-t border-emerald-200/60 flex justify-between">
                         <span>Transit SLA: <strong class="text-emerald-600">24-48 Hours Express</strong></span>
-                        <span>Pickup: <strong class="text-orange-600">Daily Doorstep</strong></span>
+                        <span>Pickup: <strong class="text-blue-600">Daily Doorstep</strong></span>
                     </div>
                 </div>
 
@@ -1505,7 +1505,7 @@
                         <img id="svc-modal-img" src="service_express_3d.jpg" alt="Service 3D Icon" class="w-full h-full object-contain rounded-xl">
                     </div>
                     <div>
-                        <span id="svc-modal-cat" class="inline-block text-[10px] font-black uppercase tracking-wider text-orange-600 bg-orange-100/70 px-2.5 py-0.5 rounded-full border border-orange-200">
+                        <span id="svc-modal-cat" class="inline-block text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/80">
                             Express & Parcel
                         </span>
                         <h3 id="svc-modal-title" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">
@@ -1557,7 +1557,7 @@
                 <a id="svc-modal-calc-btn" href="#calculator" onclick="closeServiceModal()" class="flex-1 py-3 px-4 rounded-xl text-xs font-extrabold text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 shadow-sm text-center transition-all flex items-center justify-center gap-1.5">
                     <span>Calculate Rate in Calculator 🏷️</span>
                 </a>
-                <a id="svc-modal-wa-btn" href="#" target="_blank" rel="noopener" class="flex-1 py-3 px-4 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-500/20 text-center transition-all flex items-center justify-center gap-2">
+                <a id="svc-modal-wa-btn" href="#" target="_blank" rel="noopener" class="flex-1 py-3 px-4 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md shadow-amber-500/20 text-center transition-all flex items-center justify-center gap-2">
                     <svg class="w-4 h-4 fill-current text-white" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-1.116 4.075 4.148-1.088z"/></svg>
                     <span>Instant Quote on WhatsApp</span>
                 </a>
@@ -1800,12 +1800,12 @@
             const savingsContent = document.getElementById('tab-savings-content');
 
             if (tab === 'rates') {
-                if (ratesBtn) ratesBtn.className = "px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all bg-white text-orange-600 shadow-md border border-orange-100";
+                if (ratesBtn) ratesBtn.className = "px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all bg-white text-blue-700 shadow-sm border border-blue-100";
                 if (savingsBtn) savingsBtn.className = "px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all text-slate-600 hover:text-slate-900";
                 if (ratesContent) ratesContent.classList.remove('hidden');
                 if (savingsContent) savingsContent.classList.add('hidden');
             } else {
-                if (savingsBtn) savingsBtn.className = "px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all bg-white text-orange-600 shadow-md border border-orange-100";
+                if (savingsBtn) savingsBtn.className = "px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all bg-white text-blue-700 shadow-sm border border-blue-100";
                 if (ratesBtn) ratesBtn.className = "px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all text-slate-600 hover:text-slate-900";
                 if (savingsContent) savingsContent.classList.remove('hidden');
                 if (ratesContent) ratesContent.classList.add('hidden');
@@ -1823,11 +1823,11 @@
                 const dot = prepaidBtn.querySelector('.radio-dot');
                 const indicator = prepaidBtn.querySelector('.radio-indicator');
                 if (isPrepaid) {
-                    prepaidBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-slate-900 text-white border-slate-900 shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-orange-500";
-                    if (indicator) indicator.className = "radio-indicator w-3.5 h-3.5 rounded-full border border-orange-400 flex items-center justify-center shrink-0";
+                    prepaidBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-slate-900 text-white border-slate-900 shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-blue-600";
+                    if (indicator) indicator.className = "radio-indicator w-3.5 h-3.5 rounded-full border border-blue-400 flex items-center justify-center shrink-0";
                     if (dot) dot.classList.remove('hidden');
                 } else {
-                    prepaidBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-white text-slate-800 border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500";
+                    prepaidBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-white text-slate-800 border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-blue-600";
                     if (indicator) indicator.className = "radio-indicator w-3.5 h-3.5 rounded-full border border-slate-300 flex items-center justify-center shrink-0";
                     if (dot) dot.classList.add('hidden');
                 }
@@ -1838,11 +1838,11 @@
                 const dot = codBtn.querySelector('.radio-dot');
                 const indicator = codBtn.querySelector('.radio-indicator');
                 if (!isPrepaid) {
-                    codBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-slate-900 text-white border-slate-900 shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-orange-500";
-                    if (indicator) indicator.className = "radio-indicator w-3.5 h-3.5 rounded-full border border-orange-400 flex items-center justify-center shrink-0";
+                    codBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-slate-900 text-white border-slate-900 shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-blue-600";
+                    if (indicator) indicator.className = "radio-indicator w-3.5 h-3.5 rounded-full border border-blue-400 flex items-center justify-center shrink-0";
                     if (dot) dot.classList.remove('hidden');
                 } else {
-                    codBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-white text-slate-800 border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500";
+                    codBtn.className = "py-2.5 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 bg-white text-slate-800 border-slate-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-blue-600";
                     if (indicator) indicator.className = "radio-indicator w-3.5 h-3.5 rounded-full border border-slate-300 flex items-center justify-center shrink-0";
                     if (dot) dot.classList.add('hidden');
                 }
@@ -1875,7 +1875,7 @@
             // Dynamic slider track fill
             if (weightInput) {
                 const pct = ((weight - 0.5) / (20 - 0.5)) * 100;
-                weightInput.style.background = `linear-gradient(to right, #f97316 0%, #ea580c ${pct}%, #e2e8f0 ${pct}%, #e2e8f0 100%)`;
+                weightInput.style.background = `linear-gradient(to right, #2563eb 0%, #1d4ed8 ${pct}%, #e2e8f0 ${pct}%, #e2e8f0 100%)`;
             }
 
             const extraCod = currentPayMode === 'cod' ? 15 : 0;
@@ -1960,7 +1960,7 @@
             express: {
                 title: "Express Delivery",
                 category: "Express & Parcel",
-                catColor: "text-orange-600 bg-orange-100/70 border-orange-200",
+                catColor: "text-blue-700 bg-blue-50 border-blue-200/80",
                 icon: "service_express_3d.jpg",
                 tagline: "Air & Surface Priority Courier",
                 sla: "24 - 48 Hours Pan-India",
@@ -2014,7 +2014,7 @@
             ftl: {
                 title: "Full Truck Load",
                 category: "Heavy Freight (FTL / PTL)",
-                catColor: "text-orange-600 bg-rose-100/70 border-rose-200",
+                catColor: "text-slate-800 bg-slate-100 border-slate-300",
                 icon: "service_ftl_3d.jpg",
                 tagline: "Direct Interstate Heavy Transport",
                 sla: "Direct Express Highway Transit",
@@ -2050,7 +2050,7 @@
             warehouse: {
                 title: "Smart Warehousing",
                 category: "Warehousing & 3PL",
-                catColor: "text-orange-500 bg-amber-100/70 border-amber-200",
+                catColor: "text-amber-800 bg-amber-50 border-amber-200/80",
                 icon: "service_warehouse_3d.jpg",
                 tagline: "Robotic & Grade-A Fulfillment",
                 sla: "Same-Day Order Processing (Cut-off 3 PM)",
@@ -2187,7 +2187,7 @@
     <div id="maxline-chat-widget-container" class="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 font-sans">
         
         <!-- Floating Trigger Button (Compact Sleek Circle) -->
-        <button id="maxline-chat-toggle-btn" onclick="toggleMaxlineChatWidget()" title="Chat Support & WhatsApp" aria-label="Support Assistant" class="relative group w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-900 hover:from-orange-500 hover:to-amber-500 text-white rounded-full shadow-2xl flex items-center justify-center border-2 border-white/80 transition-all duration-300 transform hover:scale-110 active:scale-95">
+        <button id="maxline-chat-toggle-btn" onclick="toggleMaxlineChatWidget()" title="Chat Support & WhatsApp" aria-label="Support Assistant" class="relative group w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-900 hover:from-blue-600 hover:to-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center border-2 border-white/80 transition-all duration-300 transform hover:scale-110 active:scale-95">
             <!-- Live Online Indicator Pulse -->
             <span class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -2264,8 +2264,8 @@
 
                 <!-- Chat Input Area -->
                 <form id="maxline-chat-form" onsubmit="handleMaxlineChatSubmit(event)" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2 shrink-0">
-                    <input id="maxline-chat-input" type="text" placeholder="Type in Hindi, English, Hinglish..." class="flex-1 bg-slate-100 focus:bg-white text-slate-900 placeholder-slate-400 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-orange-500 focus:outline-none transition-all" autocomplete="off" />
-                    <button type="submit" class="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl px-4 py-2.5 font-bold text-xs shadow-md shadow-orange-500/20 transition-all flex items-center gap-1">
+                    <input id="maxline-chat-input" type="text" placeholder="Type in Hindi, English, Hinglish..." class="flex-1 bg-slate-100 focus:bg-white text-slate-900 placeholder-slate-400 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-all" autocomplete="off" />
+                    <button type="submit" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl px-4 py-2.5 shadow-sm font-bold text-xs shadow-md shadow-amber-500/20 transition-all flex items-center gap-1">
                         Send 🚀
                     </button>
                 </form>
@@ -2318,7 +2318,7 @@
     <!-- 10. MOBILE FLOATING STICKY ACTION DOCK (VISIBLE ONLY ON MOBILE: md:hidden) -->
     <div id="mobile-sticky-dock" class="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-4 py-2.5 flex items-center gap-3">
         <!-- Calculate Rates CTA -->
-        <a href="#calculator" class="flex-1 py-2.5 px-3 rounded-xl font-extrabold text-xs text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-500/20 text-center flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+        <a href="#calculator" class="flex-1 py-2.5 px-3 rounded-xl font-extrabold text-xs text-white bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 shadow-md shadow-blue-500/20 text-center flex items-center justify-center gap-1.5 active:scale-95 transition-all">
             <span>📊</span>
             <span>Check Rates</span>
         </a>
@@ -2365,7 +2365,7 @@
             
             const msgHtml = `
                 <div class="flex items-start justify-end gap-2">
-                    <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl rounded-tr-none p-3 shadow-sm leading-relaxed max-w-[85%] font-medium">
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-none p-3 shadow-sm leading-relaxed max-w-[85%] font-medium">
                         ${escapeHtml(msgText)}
                     </div>
                 </div>
