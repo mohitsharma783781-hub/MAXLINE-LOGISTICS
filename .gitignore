@@ -151,3 +151,8 @@ vite.config.ts.timestamp-*
 desktop.ini
 
 package-lock.json
+
+# Local artifacts
+scratch/
+landing-deploy/
+maxline-landing-page.zip
