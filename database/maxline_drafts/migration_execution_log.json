@@ -1,0 +1,78 @@
+{
+  "timestamp": "2026-10-27T07:01:32.439Z",
+  "preFlightChecks": {
+    "projectRef": "lbldljgyusyqqcbyvmem",
+    "targetConfirmed": true,
+    "skeletonRowCounts": {
+      "users": 0,
+      "merchants": 0,
+      "merchant_members": 0
+    },
+    "backupVerified": true,
+    "scriptsVerified": true
+  },
+  "executionSteps": [
+    {
+      "step": 0,
+      "script": "000_prepare_maxline_baseline.sql",
+      "durationMs": 4608,
+      "status": "SUCCESS",
+      "output": "Script executed successfully."
+    },
+    {
+      "step": 1,
+      "script": "001_maxline_core_schema.sql",
+      "durationMs": 9115,
+      "status": "SUCCESS",
+      "output": "Script executed successfully."
+    },
+    {
+      "step": 2,
+      "script": "002_maxline_rls_policies.sql",
+      "durationMs": 4712,
+      "status": "SUCCESS",
+      "output": "Script executed successfully."
+    }
+  ],
+  "postVerification": {
+    "totalTablesCount": 24,
+    "tableNames": [
+      "_prisma_migrations",
+      "audit_logs",
+      "carrier_rate_cards",
+      "cod_receivables",
+      "cod_remittances",
+      "gst_invoices",
+      "manifest_items",
+      "manifests",
+      "merchant_bank_accounts",
+      "merchant_kyc_documents",
+      "merchant_members",
+      "merchant_rate_assignments",
+      "merchants",
+      "ndr_records",
+      "pickup_requests",
+      "rto_records",
+      "shipment_packages",
+      "shipment_tracking_events",
+      "shipments",
+      "users",
+      "wallet_transactions",
+      "wallets",
+      "warehouses",
+      "weight_discrepancies"
+    ],
+    "missingTables": [],
+    "all23TablesCreated": true,
+    "prismaMigrationsPreserved": true,
+    "tablesWithRLSEnabled": 23,
+    "tablesMissingRLS": [],
+    "expectedFunctionsPresent": true,
+    "creditWalletSecurity": {
+      "authenticatedDenied": true,
+      "serviceRoleGranted": true
+    },
+    "coreTablesAreUUID": true
+  },
+  "readyForIntegration": true
+}

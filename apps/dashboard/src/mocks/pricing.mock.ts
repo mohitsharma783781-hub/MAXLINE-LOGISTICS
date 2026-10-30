@@ -1,0 +1,141 @@
+import type {
+  PricingRule,
+  CustomerGroup,
+  CustomerPricingProfile,
+} from '../types/pricing';
+
+export const DEMO_CUSTOMER_GROUPS: CustomerGroup[] = [
+  {
+    id: 'grp-001',
+    tenantId: 'tenant-demo-01',
+    name: 'Retail Standard',
+    description: 'Default retail e-commerce merchants',
+    code: 'RETAIL',
+    status: 'ACTIVE',
+    createdAt: '2026-08-01',
+    updatedAt: '2026-08-01',
+  },
+  {
+    id: 'grp-002',
+    tenantId: 'tenant-demo-01',
+    name: 'Wholesale High-Volume',
+    description: 'Bulk shippers shipping >500 parcels/month',
+    code: 'WHOLESALE',
+    status: 'ACTIVE',
+    createdAt: '2026-08-01',
+    updatedAt: '2026-08-01',
+  },
+  {
+    id: 'grp-003',
+    tenantId: 'tenant-demo-01',
+    name: 'Enterprise VIP Accounts',
+    description: 'Enterprise contracted tier with discounted margins',
+    code: 'ENTERPRISE',
+    status: 'ACTIVE',
+    createdAt: '2026-08-05',
+    updatedAt: '2026-08-05',
+  },
+];
+
+export const DEMO_PRICING_RULES: PricingRule[] = [
+  {
+    id: 'rule-101',
+    tenantId: 'tenant-demo-01',
+    name: 'Default Platform Markup',
+    description: 'Standard 10% markup applied to all domestic shipments',
+    status: 'ACTIVE',
+    priority: 10,
+    scope: 'GLOBAL',
+    shipmentType: 'BOTH',
+    paymentMode: 'BOTH',
+    markupType: 'PERCENTAGE',
+    markupValue: 10, // 10%
+    discountType: 'NONE',
+    discountValue: 0,
+    codMarkupMinor: 500, // ₹5.00 extra COD surcharge
+    minimumSellingPriceMinor: 5000, // Min ₹50.00
+    minimumMarginMinor: 1000, // Min ₹10.00 margin
+    enabled: true,
+    createdAt: '2026-08-01',
+    updatedAt: '2026-08-01',
+  },
+  {
+    id: 'rule-102',
+    tenantId: 'tenant-demo-01',
+    name: 'BlueDart Air Premium Surcharge',
+    description: 'Fixed ₹15.00 markup on BlueDart Air Express priority dispatches',
+    status: 'ACTIVE',
+    priority: 5,
+    scope: 'COURIER',
+    courierId: 'bluedart',
+    shipmentType: 'BOTH',
+    paymentMode: 'BOTH',
+    markupType: 'FIXED',
+    markupValue: 1500, // ₹15.00
+    discountType: 'NONE',
+    discountValue: 0,
+    codMarkupMinor: 500,
+    minimumSellingPriceMinor: 8000,
+    minimumMarginMinor: 1500,
+    enabled: true,
+    createdAt: '2026-08-05',
+    updatedAt: '2026-08-05',
+  },
+  {
+    id: 'rule-103',
+    tenantId: 'tenant-demo-01',
+    name: 'Enterprise VIP Tier Discount',
+    description: '5% discount off standard selling rates for Enterprise tier merchants',
+    status: 'ACTIVE',
+    priority: 2,
+    scope: 'CUSTOMER_GROUP',
+    customerGroupId: 'grp-003',
+    shipmentType: 'BOTH',
+    paymentMode: 'BOTH',
+    markupType: 'PERCENTAGE',
+    markupValue: 5, // 5% markup for Enterprise tier
+    discountType: 'NONE',
+    discountValue: 0,
+    codMarkupMinor: 200, // ₹2.00 COD fee
+    minimumSellingPriceMinor: 4000,
+    minimumMarginMinor: 500,
+    enabled: true,
+    createdAt: '2026-08-10',
+    updatedAt: '2026-08-10',
+  },
+  {
+    id: 'rule-104',
+    tenantId: 'tenant-demo-01',
+    name: 'Heavy Parcel B2B Discount',
+    description: 'Fixed ₹20.00 discount on parcels weighing >5000g (5kg)',
+    status: 'ACTIVE',
+    priority: 3,
+    scope: 'GLOBAL',
+    shipmentType: 'B2B',
+    paymentMode: 'BOTH',
+    minWeightGrams: 5000,
+    markupType: 'PERCENTAGE',
+    markupValue: 8,
+    discountType: 'FIXED',
+    discountValue: 2000, // ₹20.00 discount
+    codMarkupMinor: 0,
+    minimumSellingPriceMinor: 10000,
+    minimumMarginMinor: 1000,
+    enabled: true,
+    createdAt: '2026-08-12',
+    updatedAt: '2026-08-12',
+  },
+];
+
+export const DEMO_CUSTOMER_PROFILES: CustomerPricingProfile[] = [
+  {
+    id: 'prof-001',
+    tenantId: 'tenant-demo-01',
+    customerId: 'cust-enterprise-99',
+    customerGroupId: 'grp-003',
+    pricingRuleIds: ['rule-103'],
+    status: 'ACTIVE',
+    createdAt: '2026-08-10',
+    updatedAt: '2026-08-10',
+  },
+];

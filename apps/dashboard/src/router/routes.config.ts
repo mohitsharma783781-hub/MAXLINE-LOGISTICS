@@ -1,0 +1,30 @@
+export const ROUTES = {
+  PUBLIC: {
+    HOME: '/',
+    LOGIN: '/login',
+    SIGNUP: '/signup',
+  },
+  APP: {
+    ROOT: '/app',
+    SHIPMENTS: '/app/shipments',
+    ORDERS: '/app/orders',
+    COURIERS: '/app/couriers',
+    TRACKING: '/app/tracking',
+    WALLET: '/app/wallet',
+    COD: '/app/cod',
+    NDR: '/app/ndr',
+    RTO: '/app/rto',
+    REPORTS: '/app/reports',
+    SETTINGS: '/app/settings',
+  },
+  ADMIN: {
+    ROOT: '/admin',
+    CUSTOMERS: '/admin/customers',
+    SHIPMENTS: '/admin/shipments',
+    COURIERS: '/admin/couriers',
+    PRICING: '/admin/pricing',
+    WALLET: '/admin/wallet',
+    REPORTS: '/admin/reports',
+    SETTINGS: '/admin/settings',
+  },
+} as const;

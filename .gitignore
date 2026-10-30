@@ -156,3 +156,6 @@ package-lock.json
 scratch/
 landing-deploy/
 maxline-landing-page.zip
+ 
+.backup_pre_sprint/
+*.zip

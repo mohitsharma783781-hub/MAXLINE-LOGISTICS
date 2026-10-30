@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-navy-main: #0f172a;
+    --color-navy-dark: #0b132b;
+    --color-navy-hover: #1e293b;
+    --color-blue-main: #2563eb;
+    --color-blue-hover: #1d4ed8;
+    --color-blue-active: #1e40af;
+    --color-blue-light: #eff6ff;
+    --color-sky-main: #0284c7;
+    --color-sky-hover: #0369a1;
+    --color-sky-light: #e0f2fe;
+    --color-background: #f8fafc;
+    --color-surface: #ffffff;
+    --color-sidebar-bg: #0f172a;
+    --color-sidebar-hover: #1e293b;
+    --color-sidebar-active: #2563eb;
+  }
+
+  html {
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    zoom: 0.94;
+    font-size: 13px;
+    line-height: 1.4;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Fine-stroke sleek aesthetic for all Lucide SVG icons */
+  svg.lucide {
+    stroke-width: 1.5px;
+  }
+
+  /* Custom focus style for accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-blue-600/70 ring-offset-1;
+  }
+}
+
+/* Thin modern scrollbar for high-density tables */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300;
+}
+
+@layer utilities {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}

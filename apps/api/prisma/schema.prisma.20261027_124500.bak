@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum MerchantRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id           String           @id @default(uuid())
+  name         String
+  email        String           @unique
+  passwordHash String           // Placeholder for future secure password storage
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  memberships  MerchantMember[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Merchant {
+  id           String           @id @default(uuid())
+  businessName String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  members      MerchantMember[]
+
+  @@map("merchants")
+}
+
+model MerchantMember {
+  id         String       @id @default(uuid())
+  userId     String
+  merchantId String
+  role       MerchantRole @default(MEMBER)
+  createdAt  DateTime     @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, merchantId], name: "userId_merchantId_unique")
+  @@index([userId])
+  @@index([merchantId])
+  @@map("merchant_members")
+}
