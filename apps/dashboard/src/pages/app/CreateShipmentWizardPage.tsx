@@ -1595,7 +1595,7 @@ export const CreateShipmentWizardPage: React.FC = () => {
                 }}>
                   <Input
                     label="Company / Enterprise Name *"
-                    placeholder="e.g. Apex Retail Private Limited"
+                    placeholder="e.g. Acme Enterprises Private Limited"
                     value={receiverCompany}
                     onChange={(e) => setReceiverCompany(e.target.value)}
                   />

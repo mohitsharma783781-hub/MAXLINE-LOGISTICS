@@ -31,10 +31,12 @@ import {
 } from '../../services/bulkOrderService';
 import { WalletService } from '../../mocks/wallet.mock';
 import { formatCurrency } from '../../utils/formatters';
+import { useTenant } from '../../context/TenantContext';
 
 export const BulkOrderImportPage: React.FC = () => {
   const navigate = useNavigate();
-  const tenantId = 'tenant-demo-01';
+  const { activeTenantId } = useTenant();
+  const tenantId = activeTenantId && activeTenantId !== 'ALL' ? activeTenantId : 'tenant-demo-01';
 
   // Submenu Tabs: UPLOAD | HISTORY | LABELS | MANIFESTS | FAILED
   const [activeSubmenu, setActiveSubmenu] = useState<'UPLOAD' | 'HISTORY' | 'LABELS' | 'MANIFESTS' | 'FAILED'>('UPLOAD');

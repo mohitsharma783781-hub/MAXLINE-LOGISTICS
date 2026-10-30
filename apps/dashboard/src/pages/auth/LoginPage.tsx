@@ -30,7 +30,7 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    if (email.toLowerCase().includes('admin@courrier3.com') || email.toLowerCase().includes('admin@skyonship.com')) {
+    if (email.toLowerCase().includes('admin@maxline.in') || email.toLowerCase().includes('admin@courrier3.com')) {
       setErrorMessage('Admin Account Detected: Super Admin users must log in via the dedicated Admin Login Portal (/admin/login).');
       return;
     }

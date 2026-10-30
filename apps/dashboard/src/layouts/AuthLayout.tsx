@@ -116,7 +116,7 @@ export const AuthLayout: React.FC = () => {
                 ))}
               </div>
               <p style={{ fontSize: '13px', color: '#cbd5e1', fontStyle: 'italic', margin: 0, lineHeight: 1.5 }}>
-                "Courrier3 AI rate allocation saved our D2C brand ₹42,000 in monthly freight costs during our first 30 days."
+                "MAXLINE AI rate allocation saved our D2C brand ₹42,000 in monthly freight costs during our first 30 days."
               </p>
               <span style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', marginTop: '6px', display: 'block' }}>
                 — Founder, UrbanFit D2C

@@ -174,7 +174,7 @@ export const SignupPage: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
             <Input
               label="Company Name *"
-              placeholder="Apex Logistics Pvt Ltd"
+              placeholder="e.g. Acme Logistics Pvt Ltd"
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
               leadingIcon={<Building size={16} />}
@@ -183,7 +183,7 @@ export const SignupPage: React.FC = () => {
 
             <Input
               label="Contact Person Name *"
-              placeholder="John Doe"
+              placeholder="e.g. Rahul Sharma"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               leadingIcon={<User size={16} />}
@@ -196,7 +196,7 @@ export const SignupPage: React.FC = () => {
             <Input
               label="Work Email Address *"
               type="email"
-              placeholder="john@apexlogistics.com"
+              placeholder="name@company.com"
               value={workEmail}
               onChange={(e) => setWorkEmail(e.target.value)}
               leadingIcon={<Mail size={16} />}

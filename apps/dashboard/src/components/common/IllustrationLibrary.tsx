@@ -143,7 +143,7 @@ export const DeliveryVan3D: React.FC<IllustrationProps> = ({
 
     {/* Enterprise Text */}
     <text x="210" y="125" fill="#ffffff" fontSize="17" fontWeight="900" fontFamily="sans-serif" letterSpacing="1">
-      COURRIER3
+      MAXLINE
     </text>
 
     {/* 3D Wheels */}

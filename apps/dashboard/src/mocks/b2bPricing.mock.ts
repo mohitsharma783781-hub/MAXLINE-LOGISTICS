@@ -52,7 +52,7 @@ export const DEMO_B2B_RATE_CARDS: B2BRateCard[] = [
     serviceId: 'DEL_SURFACE_B2B',
     serviceName: 'Delhivery B2B Freight Surface',
     tenantId: 'tenant-demo-01',
-    merchantName: 'Apex Logistics & Retail',
+    merchantName: 'MAXLINE Merchant Network',
     isCustomerSellingCard: true,
     volumetricDivisor: 5000,
     minBillableWeightGrams: 20000, // 20 KG min

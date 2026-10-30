@@ -31,10 +31,12 @@ import type {
   CreditDebitNoteRecord,
 } from '../../../types/gstInvoice';
 import { formatCurrency } from '../../../utils/formatters';
+import { useTenant } from '../../../context/TenantContext';
 
 export const CustomerGstInvoicesPage: React.FC = () => {
   const navigate = useNavigate();
-  const tenantId = 'tenant-demo-01';
+  const { activeTenantId } = useTenant();
+  const tenantId = activeTenantId && activeTenantId !== 'ALL' ? activeTenantId : 'tenant-demo-01';
 
   // Navigation Tabs: DASHBOARD | B2B_INVOICES | B2C_INVOICES | AWB_LEDGER | STATEMENTS | CREDIT_NOTES
   const [activeTab, setActiveTab] = useState<

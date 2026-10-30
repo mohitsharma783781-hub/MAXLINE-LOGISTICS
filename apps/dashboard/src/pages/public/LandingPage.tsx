@@ -173,9 +173,9 @@ export const LandingPage: React.FC = () => {
   const faqItems: AccordionItem[] = [
     {
       id: 'faq-1',
-      title: 'What is Courrier3 multi-courier platform?',
+      title: 'What is MAXLINE LOGISTICS multi-courier platform?',
       content:
-        'Courrier3 consolidates 12+ top logistics providers (Delhivery, Bluedart, Xpressbees, Shadowfax, etc.) into a single enterprise dashboard with automated rate optimization, doorstep pickup, 0 hidden surcharges, and instant WhatsApp tracking alerts.',
+        'MAXLINE LOGISTICS consolidates 12+ top logistics providers (Delhivery, Bluedart, Xpressbees, Shadowfax, etc.) into a single enterprise dashboard with automated rate optimization, doorstep pickup, 0 hidden surcharges, and instant WhatsApp tracking alerts.',
     },
     {
       id: 'faq-2',
@@ -191,7 +191,7 @@ export const LandingPage: React.FC = () => {
     },
     {
       id: 'faq-4',
-      title: 'How does Courrier3 cut NDR & RTO losses?',
+      title: 'How does MAXLINE LOGISTICS cut NDR & RTO losses?',
       content:
         'Our integrated NDR workflow dispatches instant WhatsApp verification messages to buyers upon failed delivery attempts, allowing them to re-schedule or update address in 1 click—cutting RTO rates by up to 40%.',
     },
@@ -702,7 +702,7 @@ export const LandingPage: React.FC = () => {
               <Sparkles size={14} style={{ marginRight: '6px' }} /> Trusted By 5,000+ D2C Brands
             </Badge>
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 2.75rem)', fontWeight: '900', color: '#0f172a', letterSpacing: '-0.02em' }}>
-              Why Online Sellers Choose Courrier3
+              Why Online Sellers Choose MAXLINE LOGISTICS
             </h2>
             <p style={{ fontSize: '16px', color: '#64748b', maxWidth: '640px', margin: '10px auto 0 auto', fontWeight: '500' }}>
               Streamline your e-commerce logistics with automated multi-courier routing, instant COD payouts, and zero setup fees.
@@ -731,7 +731,7 @@ export const LandingPage: React.FC = () => {
                 }}>
                   <img
                     src="/images/seller_woman_laptop_transparent_4k.png"
-                    alt="Courrier3 Enterprise Seller Portal"
+                    alt="MAXLINE LOGISTICS Enterprise Seller Portal"
                     style={{
                       width: '100%',
                       height: 'auto',
@@ -863,7 +863,7 @@ export const LandingPage: React.FC = () => {
                   </h3>
                 </div>
                 <p style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6', margin: 0, fontWeight: '500' }}>
-                  Use many courier partners from one Courrier3 account. Compare live freight rates, check pincode coverage, book pickups, and track packages without jumping between different courier websites.
+                  Use many courier partners from one MAXLINE LOGISTICS account. Compare live freight rates, check pincode coverage, book pickups, and track packages without jumping between different courier websites.
                 </p>
               </div>
 
@@ -931,7 +931,7 @@ export const LandingPage: React.FC = () => {
               Live Courier Rate & ROI Savings Calculator
             </h2>
             <p style={{ fontSize: '16px', color: '#64748b', maxWidth: '650px', margin: '8px auto 0 auto' }}>
-              Estimate live shipping costs across India or calculate your business monthly freight savings with Courrier3 Smart Auto-Routing.
+              Estimate live shipping costs across India or calculate your business monthly freight savings with MAXLINE LOGISTICS Smart Auto-Routing.
             </p>
           </div>
 
@@ -1393,7 +1393,7 @@ export const LandingPage: React.FC = () => {
           <div style={{ textAlign: 'center' }}>
             <Badge variant="brand">Competitive Advantage</Badge>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)', fontWeight: '900', marginTop: 'var(--space-2)' }}>
-              Why Choose Courrier3?
+              Why Choose MAXLINE LOGISTICS?
             </h2>
           </div>
 
@@ -1437,7 +1437,7 @@ export const LandingPage: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-6)' }}>
           {[
             {
-              quote: "Courrier3's AI rate recommendation reduced our shipping expenses by 35% in our very first month of switching.",
+              quote: "MAXLINE's AI rate recommendation reduced our shipping expenses by 35% in our very first month of switching.",
               author: 'Rahul Sharma',
               role: 'Founder, UrbanFit D2C',
             },

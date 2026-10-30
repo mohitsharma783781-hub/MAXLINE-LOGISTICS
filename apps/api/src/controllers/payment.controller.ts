@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
 import { razorpayInstance, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } from '../config/razorpay.config';
+import { prisma } from '../db';
 
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -100,12 +101,77 @@ export const verifyPayment = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Signature verified successfully
+    // Signature verified successfully — Atomically credit merchant wallet in PostgreSQL
+    let creditedBalanceINR: number | null = null;
+    try {
+      const rzpOrder = await razorpayInstance.orders.fetch(razorpay_order_id);
+      const amountMinor = BigInt(rzpOrder.amount);
+      const merchantId = req.body.merchantId || rzpOrder.notes?.merchantId || rzpOrder.notes?.tenantId;
+
+      if (merchantId) {
+        const idempotencyKey = `rzp_${razorpay_payment_id}`;
+        const existingTx = await prisma.wallet_transactions.findUnique({
+          where: { idempotency_key: idempotencyKey },
+        });
+
+        if (!existingTx) {
+          const updatedWallet = await prisma.$transaction(async (tx) => {
+            const wallet = await tx.wallets.findFirst({
+              where: { merchant_id: merchantId },
+            });
+
+            if (wallet) {
+              const balanceBefore = wallet.available_balance_minor;
+              const balanceAfter = balanceBefore + amountMinor;
+
+              const updated = await tx.wallets.update({
+                where: { id: wallet.id },
+                data: {
+                  available_balance_minor: balanceAfter,
+                  total_recharged_minor: wallet.total_recharged_minor + amountMinor,
+                  version: { increment: 1 },
+                  updated_at: new Date(),
+                },
+              });
+
+              await tx.wallet_transactions.create({
+                data: {
+                  merchant_id: merchantId,
+                  wallet_id: wallet.id,
+                  type: 'RECHARGE',
+                  direction: 'CREDIT',
+                  amount_minor: amountMinor,
+                  balance_before_minor: balanceBefore,
+                  balance_after_minor: balanceAfter,
+                  currency: 'INR',
+                  idempotency_key: idempotencyKey,
+                  reference_type: 'RAZORPAY',
+                  reference_id: razorpay_payment_id,
+                  description: `Wallet recharge via Razorpay (Payment ID: ${razorpay_payment_id})`,
+                  is_system_generated: true,
+                },
+              });
+
+              return updated;
+            }
+            return null;
+          });
+
+          if (updatedWallet) {
+            creditedBalanceINR = Number(updatedWallet.available_balance_minor) / 100;
+          }
+        }
+      }
+    } catch (dbErr: any) {
+      console.warn('[Payment Wallet Sync Warning]:', dbErr?.message || dbErr);
+    }
+
     res.status(200).json({
       success: true,
       message: 'Payment signature verified successfully.',
       order_id: razorpay_order_id,
       payment_id: razorpay_payment_id,
+      creditedBalanceINR,
       verified_at: new Date().toISOString(),
     });
   } catch (error: any) {

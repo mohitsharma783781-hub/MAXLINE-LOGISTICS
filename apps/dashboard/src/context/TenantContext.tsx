@@ -70,7 +70,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         createdAt: '2026-01-01',
         assignedRateCards: [],
         assignedManager: 'HQ Administrator',
-        contactEmail: 'admin@skyonship.com',
+        contactEmail: 'admin@maxline.in',
         contactMobile: '',
         gstNumber: '',
       };

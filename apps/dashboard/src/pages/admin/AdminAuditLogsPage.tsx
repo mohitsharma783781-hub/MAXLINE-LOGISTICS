@@ -20,7 +20,7 @@ export interface AuditLogItem extends Record<string, unknown> {
 
 export const DEMO_AUDIT_LOGS: AuditLogItem[] = [
   { id: 'aud-101', timestamp: '2026-08-21 12:45 PM', actor: 'Super Admin (admin@shipping-saas.com)', role: 'SUPER_ADMIN', action: 'COST_RATE_CARD_PUBLISHED', target: 'RateCard: CRC_DEL_B2C_2026', details: 'Published Delhivery B2C Surface Rate Card v1.0', ipAddress: '192.168.1.10' },
-  { id: 'aud-102', timestamp: '2026-08-21 11:30 AM', actor: 'Billing Service', role: 'SYSTEM', action: 'WALLET_CREDIT_ADJUSTMENT', target: 'Tenant: tenant-demo-01', details: 'Credited ₹50,000 to Apex Retail Merchant Wallet', ipAddress: '10.0.0.1' },
+  { id: 'aud-102', timestamp: '2026-08-21 11:30 AM', actor: 'Billing Service', role: 'SYSTEM', action: 'WALLET_CREDIT_ADJUSTMENT', target: 'Tenant: tenant-demo-01', details: 'Credited ₹50,000 to MAXLINE Merchant Wallet', ipAddress: '10.0.0.1' },
   { id: 'aud-103', timestamp: '2026-08-21 10:15 AM', actor: 'Courier Admin', role: 'PLATFORM_ADMIN', action: 'COURIER_SERVICE_UPDATED', target: 'CourierService: DEL_EXPRESS_B2C', details: 'Enabled Express Air for DTDC Account DTDC-ACC-1102', ipAddress: '192.168.1.14' },
   { id: 'aud-104', timestamp: '2026-08-21 09:00 AM', actor: 'Tenant Manager', role: 'PLATFORM_ADMIN', action: 'CUSTOMER_CREATED', target: 'Tenant: tenant-demo-04', details: 'Registered new merchant: Urban Krafts Handicrafts', ipAddress: '192.168.1.22' },
   { id: 'aud-105', timestamp: '2026-08-20 04:20 PM', actor: 'Super Admin (admin@shipping-saas.com)', role: 'SUPER_ADMIN', action: 'ZONE_SCHEME_CREATED', target: 'ZoneScheme: DEL_B2B_2026', details: 'Created Delhivery B2B Freight Commercial Zone Scheme v1.0', ipAddress: '192.168.1.10' },

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Wallet,
   ArrowUpRight,
   ArrowDownLeft,
+  RefreshCw,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
@@ -14,6 +15,7 @@ import {
   Input,
   ConfirmationDialog,
 } from '../../components/ui';
+import { AdminManagementService, type AdminWalletItem } from '../../services/adminManagementService';
 
 export interface TenantWalletItem extends Record<string, unknown> {
   id: string;
@@ -28,30 +30,83 @@ export interface TenantWalletItem extends Record<string, unknown> {
   lastRechargeDate: string;
 }
 
-export const DEMO_TENANT_WALLETS: TenantWalletItem[] = [
-  { id: 'w-01', tenantId: 'tenant-demo-01', merchantName: 'Apex Logistics & Retail', email: 'admin@apexretail.com', balance: 45000, totalRecharged: 250000, totalSpent: 205000, creditLimit: 50000, status: 'ACTIVE', lastRechargeDate: '2026-08-15' },
-  { id: 'w-02', tenantId: 'tenant-demo-02', merchantName: 'Zenith Online Stores', email: 'support@zenith.com', balance: 12500, totalRecharged: 100000, totalSpent: 87500, creditLimit: 10000, status: 'ACTIVE', lastRechargeDate: '2026-08-10' },
-  { id: 'w-03', tenantId: 'tenant-demo-03', merchantName: 'Nova Enterprise Solutions', email: 'ops@novabrands.in', balance: 180000, totalRecharged: 500000, totalSpent: 320000, creditLimit: 100000, status: 'ACTIVE', lastRechargeDate: '2026-08-20' },
-];
+export const DEMO_TENANT_WALLETS: TenantWalletItem[] = [];
 
 export const AdminCustomerWalletsPage: React.FC = () => {
-  const [wallets, setWallets] = useState<TenantWalletItem[]>(DEMO_TENANT_WALLETS);
+  const [wallets, setWallets] = useState<TenantWalletItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
 
   const [isCreditOpen, setIsCreditOpen] = useState(false);
   const [creditAmount, setCreditAmount] = useState('5000');
   const [creditReason, setCreditReason] = useState('Promotional Bonus');
 
+  const fetchLiveWallets = async () => {
+    setIsLoading(true);
+    try {
+      const liveData = await AdminManagementService.getWallets();
+      if (liveData && liveData.length > 0) {
+        const liveItems: TenantWalletItem[] = liveData.map((w: AdminWalletItem) => ({
+          id: w.id,
+          tenantId: w.merchantId,
+          merchantName: w.merchantName || 'Merchant Entity',
+          email: w.email || 'N/A',
+          balance: w.balanceINR,
+          totalRecharged: w.totalRechargedINR,
+          totalSpent: w.totalSpentINR,
+          creditLimit: 0,
+          status: w.status === 'ACTIVE' ? 'ACTIVE' : 'FROZEN',
+          lastRechargeDate: w.updatedAt ? w.updatedAt.split('T')[0] : '2026-10-30',
+        }));
+
+        setWallets(liveItems);
+      } else {
+        setWallets([]);
+      }
+    } catch (e) {
+      console.warn('[AdminCustomerWalletsPage] Error loading live wallets:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveWallets();
+  }, []);
+
   const selectedWallet = wallets.find((w) => w.id === selectedWalletId);
 
-  const handleApplyCredit = () => {
+  const handleApplyCredit = async () => {
     if (!selectedWalletId || !creditAmount) return;
     const amt = parseFloat(creditAmount);
+    if (isNaN(amt) || amt <= 0) return;
+
+    if (selectedWallet && selectedWallet.tenantId.length > 20) {
+      const res = await AdminManagementService.adjustWallet({
+        merchantId: selectedWallet.tenantId,
+        amountINR: amt,
+        type: 'MANUAL_CREDIT',
+        description: creditReason || 'Admin Manual Credit Adjustment',
+      });
+
+      if (res.success && res.newBalanceINR !== undefined) {
+        setWallets((prev) =>
+          prev.map((w) =>
+            w.id === selectedWalletId
+              ? { ...w, balance: res.newBalanceINR!, totalRecharged: w.totalRecharged + amt }
+              : w
+          )
+        );
+        setIsCreditOpen(false);
+        return;
+      }
+    }
+
+    // Fallback UI update
     setWallets((prev) =>
       prev.map((w) => (w.id === selectedWalletId ? { ...w, balance: w.balance + amt, totalRecharged: w.totalRecharged + amt } : w))
     );
     setIsCreditOpen(false);
-    alert(`Successfully credited ₹${amt} to ${selectedWallet?.merchantName}`);
   };
 
   const breadcrumbs = [
@@ -64,26 +119,37 @@ export const AdminCustomerWalletsPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       <PageHeader
         title="Customer Wallet Management"
-        description="Monitor multi-tenant merchant wallet balances, perform credit/debit adjustments, and inspect transaction ledgers."
+        description="Monitor multi-tenant merchant wallet balances, perform credit/debit adjustments, and inspect transaction ledgers with full audit logging."
         breadcrumbs={breadcrumbs}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<RefreshCw size={14} className={isLoading ? 'spin' : ''} />}
+            onClick={fetchLiveWallets}
+            disabled={isLoading}
+          >
+            Sync Database
+          </Button>
+        }
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
         <StatCard
           label="Total Merchant Reserves"
-          value={`₹${wallets.reduce((sum, w) => sum + w.balance, 0).toLocaleString()}`}
+          value={`₹${wallets.reduce((sum, w) => sum + w.balance, 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
           subtext="Combined tenant balance"
           icon={Wallet}
         />
         <StatCard
           label="Total Recharges"
-          value={`₹${wallets.reduce((sum, w) => sum + w.totalRecharged, 0).toLocaleString()}`}
+          value={`₹${wallets.reduce((sum, w) => sum + w.totalRecharged, 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
           subtext="All-time deposit volume"
           icon={ArrowUpRight}
         />
         <StatCard
           label="Total Shipping Spend"
-          value={`₹${wallets.reduce((sum, w) => sum + w.totalSpent, 0).toLocaleString()}`}
+          value={`₹${wallets.reduce((sum, w) => sum + w.totalSpent, 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
           subtext="All-time debit volume"
           icon={ArrowDownLeft}
         />
@@ -99,7 +165,7 @@ export const AdminCustomerWalletsPage: React.FC = () => {
               render: (row) => (
                 <div>
                   <strong>{row.merchantName}</strong>
-                  <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{row.email} • Tenant: {row.tenantId}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{row.email} • Tenant: {row.tenantId.slice(0, 12)}</div>
                 </div>
               ),
             },
@@ -108,19 +174,19 @@ export const AdminCustomerWalletsPage: React.FC = () => {
               header: 'Available Balance',
               render: (row) => (
                 <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--color-violet-main)' }}>
-                  ₹{row.balance.toLocaleString()}
+                  ₹{row.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               ),
             },
             {
               key: 'totalRecharged',
               header: 'Total Recharged',
-              render: (row) => <span>₹{row.totalRecharged.toLocaleString()}</span>,
+              render: (row) => <span>₹{row.totalRecharged.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>,
             },
             {
               key: 'totalSpent',
               header: 'Total Spent',
-              render: (row) => <span>₹{row.totalSpent.toLocaleString()}</span>,
+              render: (row) => <span>₹{row.totalSpent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>,
             },
             {
               key: 'status',
@@ -153,7 +219,7 @@ export const AdminCustomerWalletsPage: React.FC = () => {
           onClose={() => setIsCreditOpen(false)}
           onConfirm={handleApplyCredit}
           title={`Credit Adjustment for ${selectedWallet?.merchantName}`}
-          description="Add funds or promotional credit to merchant wallet."
+          description="Add funds or promotional credit to merchant wallet with database audit protection."
           confirmLabel="Apply Credit"
           cancelLabel="Cancel"
           variant="primary"

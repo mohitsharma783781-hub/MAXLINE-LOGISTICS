@@ -113,7 +113,7 @@ export const ServiceAgreementPage: React.FC = () => {
           <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ height: '360px', overflowY: 'auto', padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '12px', fontFamily: 'serif', lineHeight: 1.6 }}>
               <h4>1. PARTIES & RECITALS</h4>
-              <p>This Agreement is entered into between Courrier3 SaaS Logistics Platform and Apex Logistics Pvt Ltd. The parties agree to the terms governing courier aggregation, rate cards, and billing.</p>
+              <p>This Agreement is entered into between MAXLINE LOGISTICS Platform and the registered Merchant Entity. The parties agree to the terms governing courier aggregation, rate cards, and automated billing.</p>
               <h4>2. OBLIGATIONS OF THE MERCHANT</h4>
               <p>Merchant agrees to accurately measure dead weight and volumetric dimensions. Any deliberate misdeclaration will incur weight discrepancy penalties.</p>
               <h4>3. PAYMENT & WALLET DEBITS</h4>

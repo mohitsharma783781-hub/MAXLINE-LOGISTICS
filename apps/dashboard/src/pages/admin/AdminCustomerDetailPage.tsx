@@ -80,10 +80,12 @@ export const AdminCustomerDetailPage: React.FC = () => {
     }
   };
 
+  const merchantName = 'XYZ LOGISTICS';
+
   const breadcrumbs = [
     { label: 'Super Admin Portal', path: '/admin' },
     { label: 'Customer Management Center', path: '/admin/customers' },
-    { label: id || 'Apex Logistics Pvt Ltd', path: `/admin/customers/${id}` },
+    { label: id || merchantName, path: `/admin/customers/${id}` },
   ];
 
   return (
@@ -91,7 +93,7 @@ export const AdminCustomerDetailPage: React.FC = () => {
       
       {/* 1. PAGE HEADER */}
       <PageHeader
-        title={`Customer Master Profile — Apex Logistics Pvt Ltd`}
+        title={`Customer Master Profile — ${merchantName}`}
         description="Comprehensive 360-degree control panel for account info, KYC, wallet balances, rate cards, credit limits, and audit logs."
         breadcrumbs={breadcrumbs}
         actions={
@@ -113,13 +115,13 @@ export const AdminCustomerDetailPage: React.FC = () => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: '56px', height: '56px', borderRadius: '14px', backgroundColor: '#0f172a', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold' }}>
-              AP
+              XYZ
             </div>
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <h2 style={{ fontSize: '22px', fontWeight: '800', margin: 0, color: '#0f172a' }}>
-                  Apex Logistics Pvt Ltd
+                  {merchantName}
                 </h2>
                 <Badge variant={customerStatus === 'ACTIVE' ? 'success' : customerStatus === 'PENDING' ? 'warning' : 'danger'}>
                   {customerStatus}
@@ -212,10 +214,10 @@ export const AdminCustomerDetailPage: React.FC = () => {
               <Card style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
                 <h4 style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a', margin: '0 0 10px 0' }}>Company Profile & Business Segment</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#334155' }}>
-                  <div>Company Name: <strong style={{ color: '#0f172a' }}>Apex Logistics Pvt Ltd</strong></div>
+                  <div>Company Name: <strong style={{ color: '#0f172a' }}>{merchantName}</strong></div>
                   <div>Business Type: <strong>D2C eCommerce & B2B Cargo</strong></div>
                   <div>Registration Date: <strong>20 Aug 2026</strong></div>
-                  <div>Website: <strong style={{ color: '#0284c7' }}>https://apexlogistics.com</strong></div>
+                  <div>Website: <strong style={{ color: '#0284c7' }}>https://maxlinelogistics.com</strong></div>
                 </div>
               </Card>
 
@@ -223,7 +225,7 @@ export const AdminCustomerDetailPage: React.FC = () => {
                 <h4 style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a', margin: '0 0 10px 0' }}>Primary Contact & Account Management</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#334155' }}>
                   <div>Contact Person: <strong style={{ color: '#0f172a' }}>Mohit Sharma</strong></div>
-                  <div>Email Address: <strong>mohit@apexlogistics.com</strong></div>
+                  <div>Email Address: <strong>mohitsharma99229@gmail.com</strong></div>
                   <div>Mobile Number: <strong>+91 98765 43210</strong></div>
                   <div>Assigned KAM: <strong style={{ color: '#16a34a' }}>{assignedManager}</strong></div>
                 </div>
@@ -262,10 +264,10 @@ export const AdminCustomerDetailPage: React.FC = () => {
                 },
               ]}
               data={[
-                { id: '1', docType: 'GST Certificate', fileName: 'apex_gst_certificate.pdf', uploadDate: '01 Sep 2026', status: 'Verified' },
-                { id: '2', docType: 'PAN Card', fileName: 'apex_pan_card.pdf', uploadDate: '01 Sep 2026', status: 'Verified' },
-                { id: '3', docType: 'Cancelled Cheque', fileName: 'cancelled_cheque_hdfc.pdf', uploadDate: '02 Sep 2026', status: 'Verified' },
-                { id: '4', docType: 'Address Proof', fileName: 'office_lease_agreement.pdf', uploadDate: '02 Sep 2026', status: 'Verified' },
+                { id: '1', docType: 'GST Certificate', fileName: 'gst_certificate.pdf', uploadDate: '01 Sep 2026', status: 'Verified' },
+                { id: '2', docType: 'PAN Card', fileName: 'pan_card.pdf', uploadDate: '01 Sep 2026', status: 'Verified' },
+                { id: '3', docType: 'Cancelled Cheque', fileName: 'cancelled_cheque.pdf', uploadDate: '02 Sep 2026', status: 'Verified' },
+                { id: '4', docType: 'Address Proof', fileName: 'office_address_proof.pdf', uploadDate: '02 Sep 2026', status: 'Verified' },
               ]}
             />
           </div>

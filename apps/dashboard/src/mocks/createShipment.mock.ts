@@ -58,7 +58,7 @@ export const DEFAULT_CREATE_SHIPMENT_FORM: CreateShipmentForm = {
     customerName: 'Rahul Sharma',
     customerPhone: '+91 98765 43210',
     customerEmail: 'rahul.sharma@example.com',
-    companyName: 'Apex Retail Store',
+    companyName: 'MAXLINE Retail Merchant',
     shipmentType: 'b2c',
   },
   pickupAddress: {

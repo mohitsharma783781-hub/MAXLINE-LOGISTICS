@@ -35,7 +35,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         id={checkboxId}
         checked={checked}
         disabled={disabled}
-        onChange={onChange}
+        onChange={onChange || (() => {})}
         style={{
           width: '16px',
           height: '16px',

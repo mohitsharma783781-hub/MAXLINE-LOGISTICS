@@ -10,20 +10,21 @@ import { PageHeader } from '../../../components/common/PageHeader';
 import { Button, Card, Badge, Alert, Input } from '../../../components/ui';
 
 export const BankDetailsPage: React.FC = () => {
-  const [accountHolder, setAccountHolder] = useState('Apex Logistics & Retail Pvt Ltd');
-  const [bankName, setBankName] = useState('HDFC Bank');
-  const [accountNumber, setAccountNumber] = useState('50200098765432');
-  const [ifscCode, setIfscCode] = useState('HDFC0000123');
-  const [branchName, setBranchName] = useState('Okhla Phase 3, New Delhi');
+  const [accountHolder, setAccountHolder] = useState('XYZ LOGISTICS');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [ifscCode, setIfscCode] = useState('');
+  const [branchName, setBranchName] = useState('');
   const [accountType, setAccountType] = useState('Current Account');
   
-  const [chequeFileName, setChequeFileName] = useState<string | null>('cancelled_cheque_hdfc.pdf');
-  const [verificationStatus] = useState<'Verified' | 'Under Review' | 'Pending'>('Verified');
+  const [chequeFileName, setChequeFileName] = useState<string | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<'Verified' | 'Under Review' | 'Pending'>('Pending');
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const handleSaveBank = (e: React.FormEvent) => {
     e.preventDefault();
-    setSuccessMsg('Bank account remittance details updated successfully! Verification status set to Under Review.');
+    setVerificationStatus('Under Review');
+    setSuccessMsg('Bank account remittance details saved successfully! Submitted for verification.');
     setTimeout(() => setSuccessMsg(null), 4000);
   };
 

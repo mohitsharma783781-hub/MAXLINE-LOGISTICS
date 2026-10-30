@@ -396,7 +396,7 @@ export const TrackingPageSettings: React.FC = () => {
               <div style={{ marginTop: 'auto', textAlign: 'center', fontSize: '10px', color: '#64748b', borderTop: '1px solid #e2e8f0', paddingTop: '8px' }}>
                 <div>Need help? Email {branding.supportEmail}</div>
                 <div style={{ fontSize: '9px', marginTop: '2px', color: '#94a3b8' }}>
-                  Powered by Courrier3 Post-Purchase Engine
+                  Powered by MAXLINE LOGISTICS Post-Purchase Engine
                 </div>
               </div>
             </div>

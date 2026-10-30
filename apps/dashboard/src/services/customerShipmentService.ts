@@ -235,7 +235,7 @@ export const CustomerShipmentService = {
     } = params;
 
     return SHIPMENT_STORE.filter((s) => {
-      if (tenantId && tenantId !== 'all' && s.tenantId !== tenantId) return false;
+      if (tenantId && tenantId.toLowerCase() !== 'all' && s.tenantId !== tenantId) return false;
 
       // Status Filter
       if (statusFilter !== 'all') {
@@ -275,7 +275,9 @@ export const CustomerShipmentService = {
   },
 
   getShipmentSummaryStats: (tenantId = 'tenant-demo-01') => {
-    const list = SHIPMENT_STORE.filter((s) => s.tenantId === tenantId);
+    const list = (!tenantId || tenantId.toLowerCase() === 'all')
+      ? SHIPMENT_STORE
+      : SHIPMENT_STORE.filter((s) => s.tenantId === tenantId);
     let booked = 0;
     let inTransit = 0;
     let delivered = 0;
@@ -317,7 +319,7 @@ export const CustomerShipmentService = {
       s.orderId?.toLowerCase() === target;
 
     const isTenantMatch = (s: CustomerShipmentDetail) =>
-      !tenantId || tenantId === 'all' || s.tenantId === tenantId;
+      !tenantId || tenantId.toLowerCase() === 'all' || s.tenantId === tenantId;
 
     // 1. Try matching with strict tenantId boundary
     let found = SHIPMENT_STORE.find((s) => isTenantMatch(s) && matches(s));

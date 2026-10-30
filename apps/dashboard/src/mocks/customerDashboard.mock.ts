@@ -6,10 +6,10 @@ import type {
 } from '../types/customerDashboard';
 
 export const DEMO_MERCHANT_PROFILE = {
-  companyName: 'Apex Retail Store',
-  userName: 'Alex Mercer',
+  companyName: 'XYZ LOGISTICS',
+  userName: 'Mohit Sharma',
   userRole: 'Merchant Administrator',
-  tenantId: 'tnt-demo-apex-01',
+  tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
 };
 
 export const DEMO_KPI_METRICS: DashboardKpiMetrics = {

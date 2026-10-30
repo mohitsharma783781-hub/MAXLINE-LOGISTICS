@@ -715,11 +715,11 @@ export const AdminB2BRateCardsPage: React.FC = () => {
                     render: (c) => (
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <strong style={{ color: 'var(--color-violet-main)', fontSize: '14px' }}>{c.name}</strong>
-                          <Badge variant="neutral">v{c.version}</Badge>
+                          <strong style={{ color: 'var(--color-violet-main)', fontSize: '14px' }}>{c.name || 'B2B Commercial Rate Card'}</strong>
+                          <Badge variant="neutral">v{c.version || 1}</Badge>
                         </div>
                         <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                          {c.service_name} • ID: {c.id.slice(0, 12)}...
+                          {c.service_name || 'Surface Cargo'} • ID: {c.id ? c.id.slice(0, 12) : 'B2B'}...
                         </div>
                       </div>
                     ),
@@ -729,8 +729,10 @@ export const AdminB2BRateCardsPage: React.FC = () => {
                     header: 'Courier Partner',
                     render: (c) => (
                       <div>
-                        <strong style={{ color: '#1e293b' }}>{c.courier_name}</strong>
-                        <div style={{ fontSize: '11px', color: '#64748b' }}>Code: {c.courier_id.toUpperCase()}</div>
+                        <strong style={{ color: '#1e293b' }}>{c.courier_name || (c as any).courierName || 'Commercial Partner'}</strong>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>
+                          Code: {String(c.courier_id || (c as any).courierId || 'B2B').toUpperCase()}
+                        </div>
                       </div>
                     ),
                   },
@@ -751,9 +753,9 @@ export const AdminB2BRateCardsPage: React.FC = () => {
                     header: 'Freight & Surcharges',
                     render: (c) => (
                       <div>
-                        <span style={{ fontSize: '12px' }}>Min: ₹{(c.min_freight_charge_minor / 100).toFixed(0)}</span>
+                        <span style={{ fontSize: '12px' }}>Min: ₹{((c.min_freight_charge_minor || 0) / 100).toFixed(0)}</span>
                         <div style={{ fontSize: '11px', color: '#64748b' }}>
-                          Fuel: {c.fuel_surcharge_percent}% • Docket: ₹{(c.docket_charge_minor / 100).toFixed(0)}
+                          Fuel: {c.fuel_surcharge_percent || 0}% • Docket: ₹{((c.docket_charge_minor || 0) / 100).toFixed(0)}
                         </div>
                       </div>
                     ),

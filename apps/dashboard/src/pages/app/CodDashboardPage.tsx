@@ -21,9 +21,11 @@ import {
   type PayoutDestinationType,
 } from '../../services/customerCodService';
 import { formatCurrency } from '../../utils/formatters';
+import { useTenant } from '../../context/TenantContext';
 
 export const CodDashboardPage: React.FC = () => {
-  const tenantId = 'tenant-demo-01';
+  const { activeTenantId } = useTenant();
+  const tenantId = activeTenantId && activeTenantId !== 'ALL' ? activeTenantId : 'tenant-demo-01';
   const [activeTab, setActiveTab] = useState<'transactions' | 'remittances' | 'settings'>('transactions');
   const [selectedRemittance, setSelectedRemittance] = useState<CodRemittanceRecord | null>(null);
 

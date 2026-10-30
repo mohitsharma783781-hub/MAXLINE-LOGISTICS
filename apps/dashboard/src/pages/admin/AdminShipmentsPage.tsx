@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import {
   Card,
@@ -28,6 +28,12 @@ export const AdminShipmentsPage: React.FC = () => {
   const refreshShipments = () => {
     setShipments(CustomerShipmentService.getShipments('all', searchQuery, statusFilter));
   };
+
+  useEffect(() => {
+    CustomerShipmentService.syncFromSupabase('all').then(() => {
+      refreshShipments();
+    });
+  }, []);
 
   const handleExecuteManualStatusUpdate = () => {
     if (!selectedShipmentId || !updateReason.trim()) return;

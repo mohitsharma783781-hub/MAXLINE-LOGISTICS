@@ -1,12 +1,19 @@
 {
-  "name": "kds-postal-service",
+  "name": "maxline-logistics",
   "version": "1.0.0",
-  "description": "KDS Postal Service - Door-to-Door Courier & Cargo Aggregator Website",
+  "description": "MAXLINE LOGISTICS - Door-to-Door Courier & Cargo Aggregator SaaS Platform",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "build": "cd apps/dashboard && npm install && npm run build",
+    "build:api": "cd apps/api && npm install && npm run build",
+    "start": "cd apps/dashboard && npm run preview"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "logistics",
+    "courier-aggregator",
+    "maxline",
+    "delhivery",
+    "bluedart"
+  ],
+  "author": "MAXLINE LOGISTICS",
   "license": "ISC"
 }

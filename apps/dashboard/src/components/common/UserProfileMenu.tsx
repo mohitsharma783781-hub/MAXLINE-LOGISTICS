@@ -49,6 +49,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     return null;
   })();
 
+  const isSuperAdminInSeller = !isAdmin && (currentUser?.role === 'super_admin' || currentUser?.role === 'admin_operator');
+
   const resolvedName = userName || currentUser?.fullName || (isAdmin ? 'Platform Super Admin' : 'Merchant');
   const rawBusinessName = currentUser?.businessName || activeTenant?.companyName || '';
   const isGenericOrMissing =
@@ -59,7 +61,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   const merchantDisplayName = isAdmin
     ? 'Super Admin Portal'
-    : (!isGenericOrMissing ? rawBusinessName.trim() : 'Merchant Setup Pending');
+    : (isSuperAdminInSeller ? 'Super Admin Preview' : (!isGenericOrMissing ? rawBusinessName.trim() : 'Merchant Setup Pending'));
 
   const resolvedCompany = merchantDisplayName;
   const resolvedEmail = userEmail || currentUser?.workEmail || (isAdmin ? 'admin@maxline.in' : 'support@maxline.in');
@@ -364,6 +366,37 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               {resolvedEmail}
             </div>
           </div>
+
+          {/* Super Admin Quick Switcher Banner */}
+          {isSuperAdminInSeller && (
+            <div style={{ padding: '4px 6px 8px 6px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate('/admin');
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  backgroundColor: '#0f172a',
+                  color: '#f8fafc',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '7px 10px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                }}
+              >
+                <span>Switch to Admin Control Center &rarr;</span>
+              </button>
+            </div>
+          )}
 
           {/* Nav Items List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>

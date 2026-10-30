@@ -20,28 +20,28 @@ export const SellerOnboardingWizardPage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Step 1 Form Data
-  const [companyName, setCompanyName] = useState('Apex Logistics Pvt Ltd');
-  const [brandName, setBrandName] = useState('Apex Express');
-  const [gstNo, setGstNo] = useState('22AAAAA0000A1Z5');
-  const [panNo, setPanNo] = useState('ABCDE1234F');
+  const [companyName, setCompanyName] = useState('XYZ LOGISTICS');
+  const [brandName, setBrandName] = useState('XYZ LOGISTICS');
+  const [gstNo, setGstNo] = useState('');
+  const [panNo, setPanNo] = useState('');
   const [businessType, setBusinessType] = useState('D2C Brand');
 
   // Step 2 Form Data
-  const [billingAddress, setBillingAddress] = useState('Plot 45, Okhla Industrial Area Phase 3');
-  const [city, setCity] = useState('New Delhi');
-  const [state, setState] = useState('Delhi');
-  const [pincode, setPincode] = useState('110020');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [pincode, setPincode] = useState('');
 
   // Step 3 Form Data (KYC Uploads)
-  const [gstFile, setGstFile] = useState<string | null>('gst_certificate_apex.pdf');
-  const [panFile, setPanFile] = useState<string | null>('pan_card_apex.pdf');
-  const [chequeFile, setChequeFile] = useState<string | null>('cancelled_cheque.pdf');
+  const [gstFile, setGstFile] = useState<string | null>(null);
+  const [panFile, setPanFile] = useState<string | null>(null);
+  const [chequeFile, setChequeFile] = useState<string | null>(null);
 
   // Step 4 Form Data (Bank Details)
-  const [accountHolder, setAccountHolder] = useState('Apex Logistics Pvt Ltd');
-  const [bankName, setBankName] = useState('HDFC Bank');
-  const [accountNo, setAccountNo] = useState('50200012345678');
-  const [ifscCode, setIfscCode] = useState('HDFC0000123');
+  const [accountHolder, setAccountHolder] = useState('XYZ LOGISTICS');
+  const [bankName, setBankName] = useState('');
+  const [accountNo, setAccountNo] = useState('');
+  const [ifscCode, setIfscCode] = useState('');
 
   const handleNext = () => {
     if (currentStep < 5) {

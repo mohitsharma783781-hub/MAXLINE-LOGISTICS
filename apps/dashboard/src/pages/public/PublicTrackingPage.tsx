@@ -378,7 +378,7 @@ export const PublicTrackingPage: React.FC = () => {
         {branding.showAggregatorFooter && (
           <div style={{ textAlign: 'center', padding: '16px 0', fontSize: '11px', color: '#94a3b8', borderTop: '1px solid #e2e8f0' }}>
             <ShieldCheck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-            Powered by Courrier3 Branded Logistics Experience Engine • Verified Secure Tracking
+            Powered by MAXLINE LOGISTICS Branded Logistics Experience Engine • Verified Secure Tracking
           </div>
         )}
       </div>

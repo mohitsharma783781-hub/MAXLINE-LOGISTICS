@@ -34,7 +34,7 @@ export const Radio: React.FC<RadioProps> = ({
         id={radioId}
         checked={checked}
         disabled={disabled}
-        onChange={onChange}
+        onChange={onChange || (() => {})}
         style={{
           width: '16px',
           height: '16px',

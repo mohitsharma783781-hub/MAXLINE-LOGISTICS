@@ -6,7 +6,7 @@ export const DEFAULT_CREATE_ORDER_FORM: CreateOrderForm = {
     phone: '+91 98765 43210',
     email: 'rahul.sharma@example.com',
     customerReference: 'CUST-REF-8902',
-    companyName: 'Apex Retail Store',
+    companyName: 'MAXLINE Customer Store',
   },
   items: [
     {
@@ -69,7 +69,7 @@ export const DEFAULT_CREATE_ORDER_FORM: CreateOrderForm = {
   },
   shipmentType: 'b2c',
   b2bDetails: {
-    companyName: 'Apex Retail Store',
+    companyName: 'MAXLINE Customer Store',
     gstin: '29ABCDE1234F1Z5',
     businessContact: '+91 98765 43210',
     businessReference: 'B2B-PO-2026-99',

@@ -32,9 +32,11 @@ import {
   type EvidenceFileType,
 } from '../../services/weightDiscrepancyService';
 import { formatCurrency } from '../../utils/formatters';
+import { useTenant } from '../../context/TenantContext';
 
 export const WeightDiscrepancyPage: React.FC = () => {
-  const tenantId = 'tenant-demo-01';
+  const { activeTenantId } = useTenant();
+  const tenantId = activeTenantId && activeTenantId !== 'ALL' ? activeTenantId : 'tenant-demo-01';
 
   // Submenu Tabs: ALL | OPEN | APPROVED | REJECTED | AUDIT_HISTORY
   const [activeSubmenu, setActiveSubmenu] = useState<'ALL' | 'OPEN' | 'APPROVED' | 'REJECTED' | 'AUDIT_HISTORY'>('ALL');

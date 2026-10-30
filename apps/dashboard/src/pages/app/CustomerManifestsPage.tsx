@@ -12,9 +12,11 @@ import {
 import { ManifestEngine } from '../../services/manifestEngine';
 import type { Manifest } from '../../types/manifests';
 import { formatCurrency } from '../../utils/formatters';
+import { useTenant } from '../../context/TenantContext';
 
 export const CustomerManifestsPage: React.FC = () => {
-  const tenantId = 'tenant-demo-01';
+  const { activeTenantId } = useTenant();
+  const tenantId = activeTenantId && activeTenantId !== 'ALL' ? activeTenantId : 'tenant-demo-01';
   const manifests = ManifestEngine.getAllManifests(tenantId);
   const [selectedManifest, setSelectedManifest] = useState<Manifest | null>(null);
 

@@ -151,11 +151,70 @@ export const AppLayout: React.FC = () => {
 
   const isOnboardingRoute = location.pathname.startsWith('/app/onboarding');
 
+  const superAdminPreviewBanner = currentUser?.role === 'super_admin' ? (
+    <div
+      style={{
+        backgroundColor: '#0f172a',
+        color: '#f8fafc',
+        padding: '7px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        fontSize: '12px',
+        fontWeight: '500',
+        borderBottom: '1px solid #334155',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <span
+          style={{
+            backgroundColor: '#f59e0b',
+            color: '#0f172a',
+            fontWeight: '800',
+            fontSize: '10px',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
+          }}
+        >
+          Super Admin Preview
+        </span>
+        <span style={{ color: '#cbd5e1' }}>
+          Viewing Merchant Portal in <strong>Super Admin Preview Mode</strong> (Platform Headquarters). Merchant-specific live data remains strictly isolated.
+        </span>
+      </div>
+      <button
+        onClick={() => navigate('/admin')}
+        style={{
+          backgroundColor: '#2563eb',
+          color: '#ffffff',
+          border: 'none',
+          borderRadius: '6px',
+          padding: '4px 12px',
+          fontSize: '11px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          transition: 'background-color 0.15s ease',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#1d4ed8'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; }}
+      >
+        Admin Control Center &rarr;
+      </button>
+    </div>
+  ) : null;
+
   return (
     <AppShell
       navigationGroups={filteredNavGroups}
       brandName="MAXLINE LOGISTICS"
       portalLabel="Merchant Portal"
+      topBanner={superAdminPreviewBanner}
     >
       <div key={location.pathname} className="animate-fade-in" style={{ width: '100%' }}>
         {isMerchantSetupRequired && !isOnboardingRoute ? (

@@ -15,13 +15,13 @@ import { useRbac } from '../../../context/RbacContext';
 
 export const CompanyProfilePage: React.FC = () => {
   const { logActivity } = useRbac();
-  const [companyName, setCompanyName] = useState('Apex Logistics Pvt Ltd');
+  const [companyName, setCompanyName] = useState('XYZ LOGISTICS');
   const [gstNumber, setGstNumber] = useState('22AAAAA0000A1Z5');
   const [panNumber, setPanNumber] = useState('ABCDE1234F');
   const [businessType, setBusinessType] = useState('D2C Brand');
-  const [website, setWebsite] = useState('https://apexlogistics.com');
+  const [website, setWebsite] = useState('https://maxlinelogistics.com');
 
-  const [supportEmail, setSupportEmail] = useState('support@apexlogistics.com');
+  const [supportEmail, setSupportEmail] = useState('mohitsharma99229@gmail.com');
   const [supportMobile, setSupportMobile] = useState('+91 98765 43210');
 
   const [billingAddress, setBillingAddress] = useState('Plot 45, Okhla Industrial Area Phase 3, New Delhi - 110020');

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   Upload,
@@ -9,11 +9,13 @@ import {
   Eye,
   RefreshCw,
   FileCheck,
+  ShieldCheck,
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { Button, Card, Badge, Alert, Input, Modal } from '../../../components/ui';
 import { OnboardingService } from '../../../services/onboardingService';
 import { useRbac } from '../../../context/RbacContext';
+import { useTenant } from '../../../context/TenantContext';
 
 export interface KycDocRecord {
   id: string;
@@ -27,25 +29,45 @@ export interface KycDocRecord {
 }
 
 export const INITIAL_KYC_DOCS: KycDocRecord[] = [
-  { id: 'doc-gst', type: 'GST Certificate', name: 'GST Identification Certificate', required: true, fileName: 'apex_gst_certificate.pdf', uploadDate: '01 Sep 2026', status: 'Verified' },
-  { id: 'doc-pan', type: 'PAN Card', name: 'Company / Proprietor PAN Card', required: true, fileName: 'apex_pan_card.pdf', uploadDate: '01 Sep 2026', status: 'Verified' },
-  { id: 'doc-aadhaar', type: 'Aadhaar Card', name: 'Authorized Signatory Aadhaar Card', required: true, fileName: 'aadhaar_signatory.pdf', uploadDate: '02 Sep 2026', status: 'Uploaded' },
-  { id: 'doc-cheque', type: 'Cancelled Cheque', name: 'Bank Cancelled Cheque for Remittances', required: true, fileName: 'cancelled_cheque_hdfc.pdf', uploadDate: '02 Sep 2026', status: 'Uploaded' },
+  { id: 'doc-gst', type: 'GST Certificate', name: 'GST Identification Certificate', required: true, fileName: null, uploadDate: null, status: 'Pending' },
+  { id: 'doc-pan', type: 'PAN Card', name: 'Company / Proprietor PAN Card', required: true, fileName: null, uploadDate: null, status: 'Pending' },
+  { id: 'doc-aadhaar', type: 'Aadhaar Card', name: 'Authorized Signatory Aadhaar Card', required: true, fileName: null, uploadDate: null, status: 'Pending' },
+  { id: 'doc-cheque', type: 'Cancelled Cheque', name: 'Bank Cancelled Cheque for Remittances', required: true, fileName: null, uploadDate: null, status: 'Pending' },
   { id: 'doc-reg', type: 'Company Registration', name: 'Certificate of Incorporation / MSME Udyam', required: false, fileName: null, uploadDate: null, status: 'Pending' },
-  { id: 'doc-address', type: 'Address Proof', name: 'Electricity Bill / Lease Agreement', required: true, fileName: 'office_lease_agreement.pdf', uploadDate: '02 Sep 2026', status: 'Uploaded' },
+  { id: 'doc-address', type: 'Address Proof', name: 'Electricity Bill / Lease Agreement', required: true, fileName: null, uploadDate: null, status: 'Pending' },
 ];
 
 export const SellerKycVerificationPage: React.FC = () => {
   const { logActivity } = useRbac();
-  const [kycStatus] = useState<'Not Started' | 'Pending Documents' | 'Under Review' | 'Approved' | 'Rejected' | 'Suspended'>('Under Review');
+  const { activeTenant, activeTenantId } = useTenant();
+
+  const currentUser = (() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = localStorage.getItem('courrier3_current_user');
+        if (raw) return JSON.parse(raw);
+      }
+    } catch {}
+    return null;
+  })();
+
+  const resolvedCompanyName = activeTenant?.companyName || currentUser?.businessName || 'XYZ LOGISTICS';
+
+  const [kycStatus, setKycStatus] = useState<'Not Started' | 'Pending Documents' | 'Under Review' | 'Approved' | 'Rejected' | 'Suspended'>('Pending Documents');
   const [kycDocs, setKycDocs] = useState<KycDocRecord[]>(INITIAL_KYC_DOCS);
   
   // Bank Verification State
-  const [bankHolder, setBankHolder] = useState('Apex Logistics Pvt Ltd');
-  const [bankName, setBankName] = useState('HDFC Bank');
-  const [accountNumber, setAccountNumber] = useState('50200012345678');
-  const [ifscCode, setIfscCode] = useState('HDFC0000123');
-  const [bankStatus] = useState<'Pending' | 'Verified' | 'Rejected'>('Verified');
+  const [bankHolder, setBankHolder] = useState(resolvedCompanyName);
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [ifscCode, setIfscCode] = useState('');
+  const [bankStatus, setBankStatus] = useState<'Pending' | 'Verified' | 'Rejected'>('Pending');
+
+  useEffect(() => {
+    if (resolvedCompanyName && (!bankHolder || bankHolder === 'Apex Logistics Pvt Ltd')) {
+      setBankHolder(resolvedCompanyName);
+    }
+  }, [resolvedCompanyName]);
 
   const [previewDocName, setPreviewDocName] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);

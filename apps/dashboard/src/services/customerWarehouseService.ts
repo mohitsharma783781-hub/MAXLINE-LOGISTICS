@@ -61,74 +61,8 @@ export interface CustomerWarehouseInput extends Record<string, unknown> {
   status?: 'ACTIVE' | 'INACTIVE';
 }
 
-// Initial Demo Multi-Warehouse Locations (Delhi, Mumbai, Bangalore)
-export const INITIAL_CUSTOMER_WAREHOUSES: CustomerWarehouse[] = [
-  {
-    id: 'wh-01',
-    tenantId: 'tenant-demo-01',
-    warehouseCode: 'DEL-WH-01',
-    warehouseName: 'Delhi Connaught Primary Warehouse',
-    contactPerson: 'Rajesh Kumar',
-    phone: '+91 98765 43210',
-    email: 'delhi.wh@acmestore.com',
-    addressLine1: 'Plot 42, Block B, Connaught Place',
-    addressLine2: 'Near Central Park Ring Road',
-    pincode: '110001',
-    city: 'New Delhi',
-    state: 'Delhi',
-    country: 'India',
-    pickupStartTime: '10:00 AM',
-    pickupEndTime: '06:00 PM',
-    isDefault: true, // Delhi is Default
-    status: 'ACTIVE',
-    totalShipmentsCount: 420,
-    createdAt: '2026-08-01 10:00 AM',
-    updatedAt: '2026-08-01 10:00 AM',
-  },
-  {
-    id: 'wh-02',
-    tenantId: 'tenant-demo-01',
-    warehouseCode: 'MUM-WH-01',
-    warehouseName: 'Mumbai Lower Parel Fulfillment Center',
-    contactPerson: 'Rahul Sharma',
-    phone: '+91 98112 99887',
-    email: 'mumbai.wh@acmestore.com',
-    addressLine1: 'Unit 102, Gala Industrial Estate, Lower Parel',
-    addressLine2: 'Opposite Railway Station West',
-    pincode: '400001',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    country: 'India',
-    pickupStartTime: '09:30 AM',
-    pickupEndTime: '07:00 PM',
-    isDefault: false,
-    status: 'ACTIVE',
-    totalShipmentsCount: 310,
-    createdAt: '2026-08-10 14:30 PM',
-    updatedAt: '2026-08-10 14:30 PM',
-  },
-  {
-    id: 'wh-03',
-    tenantId: 'tenant-demo-01',
-    warehouseCode: 'BLR-WH-01',
-    warehouseName: 'Bangalore Electronic City Warehouse',
-    contactPerson: 'Venkatesh Rao',
-    phone: '+91 99001 12233',
-    email: 'blr.wh@acmestore.com',
-    addressLine1: 'Plot 88, Phase 2, Electronic City Tech Zone',
-    pincode: '560001',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    country: 'India',
-    pickupStartTime: '10:00 AM',
-    pickupEndTime: '05:30 PM',
-    isDefault: false,
-    status: 'ACTIVE',
-    totalShipmentsCount: 150,
-    createdAt: '2026-08-15 11:00 AM',
-    updatedAt: '2026-08-15 11:00 AM',
-  },
-];
+// Initial Multi-Warehouse Locations (Fresh production state for new merchants)
+export const INITIAL_CUSTOMER_WAREHOUSES: CustomerWarehouse[] = [];
 
 const WAREHOUSE_KEY = 'COURRIER3_WAREHOUSE_STORE';
 

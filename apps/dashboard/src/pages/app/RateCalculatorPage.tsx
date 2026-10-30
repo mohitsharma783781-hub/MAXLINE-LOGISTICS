@@ -15,6 +15,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { Button, Card, Input, Badge, Drawer } from '../../components/ui';
 import { B2BPricingEngine } from '../../services/b2bPricingEngine';
 import { B2CPricingEngine } from '../../services/b2cPricingEngine';
+import { useTenant } from '../../context/TenantContext';
 
 export interface CourierRateItem {
   id: string;
@@ -64,7 +65,8 @@ export interface CourierRateItem {
 
 export const RateCalculatorPage: React.FC = () => {
   const navigate = useNavigate();
-  const tenantId = 'tenant-demo-01';
+  const { activeTenantId } = useTenant();
+  const tenantId = activeTenantId && activeTenantId !== 'ALL' ? activeTenantId : 'tenant-demo-01';
 
   // Mode Selection: B2C vs B2B
   const [activeTab, setActiveTab] = useState<'B2C' | 'B2B'>('B2C');

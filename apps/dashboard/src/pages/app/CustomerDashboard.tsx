@@ -399,13 +399,22 @@ export const CustomerDashboard: React.FC = () => {
             <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', margin: 0 }}>
               Merchant Dashboard
             </h1>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 9px', borderRadius: '12px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: '600', color: '#475569' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#94a3b8' }} />
-              System Operational
-            </div>
+            {currentUser?.role === 'super_admin' ? (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 9px', borderRadius: '12px', backgroundColor: '#fef3c7', border: '1px solid #fde68a', fontSize: '11px', fontWeight: '700', color: '#92400e' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
+                Super Admin Preview
+              </div>
+            ) : (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 9px', borderRadius: '12px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: '600', color: '#475569' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                System Operational
+              </div>
+            )}
           </div>
           <p style={{ fontSize: '13px', color: '#475569', margin: '4px 0 0 0', lineHeight: 1.4 }}>
-            Real-time shipping operations, wallet balance, and delivery metrics.
+            {currentUser?.role === 'super_admin'
+              ? 'Previewing logistics flight-control as Platform Super Admin (Platform Headquarters).'
+              : 'Real-time shipping operations, wallet balance, and delivery metrics.'}
           </p>
         </div>
 
@@ -530,12 +539,12 @@ export const CustomerDashboard: React.FC = () => {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <Button
-                  variant="outline"
+                  variant="primary"
                   size="sm"
-                  disabled
-                  style={{ height: '30px', fontSize: '12px', fontWeight: '600', borderColor: '#fca5a5', color: '#991b1b', backgroundColor: '#ffffff', borderRadius: '6px', cursor: 'not-allowed' }}
+                  onClick={() => navigate('/app/wallet')}
+                  style={{ height: '30px', fontSize: '12px', fontWeight: '600', backgroundColor: '#dc2626', borderColor: '#dc2626', color: '#ffffff', borderRadius: '6px' }}
                 >
-                  Recharge Unavailable
+                  + Recharge Wallet
                 </Button>
                 <button
                   type="button"
@@ -875,25 +884,26 @@ export const CustomerDashboard: React.FC = () => {
           {/* Recharge CTA */}
           <div style={{ marginTop: '16px' }}>
             <Button
-              variant="outline"
+              variant="primary"
               size="md"
-              disabled
+              onClick={() => navigate('/app/wallet')}
               style={{
                 width: '100%',
-                backgroundColor: '#f8fafc',
-                borderColor: '#e2e8f0',
-                color: '#64748b',
+                backgroundColor: '#0284c7',
+                borderColor: '#0284c7',
+                color: '#ffffff',
                 fontWeight: '600',
                 height: '38px',
-                cursor: 'not-allowed',
-                boxShadow: 'none',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(2, 132, 199, 0.2)',
+                cursor: 'pointer',
               }}
-              title="Online payment gateway integration is currently in setup mode"
+              title="Add balance instantly via UPI, NetBanking or Cards"
             >
-              Recharge Unavailable
+              + Add Money to Wallet
             </Button>
-            <span style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center', display: 'block', marginTop: '6px' }}>
-              Payment gateway not live • Automated credit disabled
+            <span style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', display: 'block', marginTop: '6px' }}>
+              Instant 24x7 recharge via UPI, NetBanking &amp; Cards (Razorpay)
             </span>
           </div>
         </div>

@@ -288,7 +288,8 @@ export const CustomerOrdersPage: React.FC = () => {
     const dynamicShipments = CustomerShipmentService.getShipments(activeTenantId);
     const dynamicOrders: OrderRecord[] = dynamicShipments.map(mapShipmentToOrderRecord);
 
-    const combinedList = activeTenantId === 'tenant-demo-01' ? [...dynamicOrders, ...DEMO_ORDERS_DATA] : dynamicOrders;
+    const isPreviewOrDemo = activeTenantId === 'tenant-demo-01' || activeTenantId.toLowerCase() === 'all';
+    const combinedList = isPreviewOrDemo ? [...dynamicOrders, ...DEMO_ORDERS_DATA] : dynamicOrders;
 
     let list = combinedList.filter((item) => {
       // Global Search
