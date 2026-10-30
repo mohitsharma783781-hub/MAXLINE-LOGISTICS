@@ -55,25 +55,18 @@ export const PublicHeader: React.FC = () => {
             textDecoration: 'none',
           }}
         >
-          <div
+          <img
+            src="/images/maxline_icon.png"
+            alt="MAXLINE LOGISTICS"
             style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #2563eb 0%, #0284c7 100%)',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: '900',
-              fontSize: '20px',
-              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+              width: '36px',
+              height: '36px',
+              objectFit: 'contain',
+              borderRadius: '8px',
             }}
-          >
-            C
-          </div>
-          <span style={{ fontSize: '22px', fontWeight: '900', color: '#0f172a', letterSpacing: '-0.03em' }}>
-            {APP_CONFIG.name}<span style={{ color: '#2563eb' }}>3</span>
+          />
+          <span style={{ fontSize: '20px', fontWeight: '900', color: '#0f172a', letterSpacing: '-0.03em' }}>
+            MAXLINE <span style={{ color: '#2563eb' }}>LOGISTICS</span>
           </span>
         </Link>
 

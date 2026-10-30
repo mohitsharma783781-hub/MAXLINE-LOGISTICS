@@ -77,7 +77,7 @@ export const AdminCustomerRateAssignmentsPage: React.FC = () => {
 
     CustomerRateAssignmentService.assignRateCard({
       tenantId,
-      tenantName: 'Acme Logistics Pvt Ltd',
+      tenantName: 'MAXLINE Partner Merchant',
       mode: assignMode,
       courierId: courierObj.id,
       courierName: courierObj.name,
@@ -174,8 +174,8 @@ export const AdminCustomerRateAssignmentsPage: React.FC = () => {
               value={tenantId}
               onChange={(e) => setTenantId(e.target.value)}
               options={[
-                { value: 'tenant-demo-01', label: 'Acme Logistics Pvt Ltd (tenant-demo-01)' },
-                { value: 'tenant-acme-02', label: 'Zomato Merchant Partner (tenant-acme-02)' },
+                { value: 'tenant-demo-01', label: 'MAXLINE Partner Merchant (tenant-demo-01)' },
+                { value: 'tenant-acme-02', label: 'MAXLINE Retail Partner (tenant-acme-02)' },
                 { value: 'tenant-vip-03', label: 'Nexus Tech B2B (tenant-vip-03)' },
               ]}
             />

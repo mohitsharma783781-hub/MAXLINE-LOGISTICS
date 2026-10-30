@@ -28,7 +28,7 @@ export const PublicTrackingPage: React.FC = () => {
 
   const [searchTokenInput, setSearchTokenInput] = useState<string>(awb || '');
   const [branding, setBranding] = useState<MerchantBrandingConfig>(() =>
-    BrandingService.getBrandingBySlug(merchantSlug || 'acme-store')
+    BrandingService.getBrandingBySlug(merchantSlug || 'maxline-logistics')
   );
   const [trackingData, setTrackingData] = useState<ShipmentTrackingSummary | null>(null);
   const [trackingSource, setTrackingSource] = useState<'LIVE_CARRIER' | 'PORTAL_DB' | 'DEMO' | 'NOT_FOUND'>('DEMO');

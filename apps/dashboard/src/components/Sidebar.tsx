@@ -47,7 +47,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
     defaultExpanded: true,
     items: [
       { key: 'create-order', label: 'Create Shipment', isCreateAction: true },
-      { key: 'orders', label: 'All Orders', badge: '12 Demo' },
+      { key: 'orders', label: 'All Orders' },
       { key: 'orders', label: 'Bulk Upload' },
       { key: 'pickup', label: 'Pickups & Manifests' }
     ]
@@ -58,8 +58,8 @@ const NAV_SECTIONS: NavSectionDef[] = [
     icon: Truck,
     defaultExpanded: true,
     items: [
-      { key: 'shipments', label: 'Live Tracking Board', badge: '312 Demo' },
-      { key: 'ndr-rto', label: 'NDR & RTO Shield', badge: '3 Action' }
+      { key: 'shipments', label: 'Live Tracking Board' },
+      { key: 'ndr-rto', label: 'NDR & RTO Shield' }
     ]
   },
   {
@@ -68,7 +68,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
     icon: Wallet,
     defaultExpanded: true,
     items: [
-      { key: 'cod-wallet', label: 'COD & Wallet', badge: '₹48.6k' },
+      { key: 'cod-wallet', label: 'COD & Wallet' },
       { key: 'reports', label: 'Invoices & Billing' },
       { key: 'rate-card', label: 'Rate Cards' }
     ]
@@ -79,7 +79,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
     icon: SlidersHorizontal,
     defaultExpanded: true,
     items: [
-      { key: 'rate-calculator', label: 'Rate Calculator', badge: 'Quote Tool' },
+      { key: 'rate-calculator', label: 'Rate Calculator' },
       { key: 'courier-partners', label: 'Courier Partners' }
     ]
   },
@@ -277,9 +277,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-6 h-6 rounded-md bg-[#2563EB] text-white font-bold text-[10px] flex items-center justify-center shrink-0 shadow-2xs">
-                  AR
+                  ML
                 </div>
-                <span className="font-semibold text-white truncate text-xs">Acme Retail</span>
+                <span className="font-semibold text-white truncate text-xs">MAXLINE SELLER</span>
               </div>
               <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800/60 font-semibold shrink-0">
                 <ShieldCheck className="w-3 h-3 text-emerald-400" />
@@ -287,7 +287,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </span>
             </div>
             <div className="text-[10px] text-slate-400 flex items-center justify-between font-mono pt-1.5 border-t border-[#1E293B]">
-              <span className="tracking-tight">GSTIN: 27AABCM8471Q1Z8</span>
+              <span className="tracking-tight">Portal Active</span>
               <span className="font-sans font-semibold text-blue-400">Gold Tier</span>
             </div>
           </div>

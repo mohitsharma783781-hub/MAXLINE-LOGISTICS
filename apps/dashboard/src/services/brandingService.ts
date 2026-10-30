@@ -57,37 +57,28 @@ let GLOBAL_ADMIN_CONTROL: AdminBrandingGlobalControl = {
 const DEFAULT_BRANDING_STORE: Record<string, MerchantBrandingConfig> = {
   'tenant-demo-01': {
     tenantId: 'tenant-demo-01',
-    merchantSlug: 'acme-store',
-    brandName: 'Acme Electronics Store',
-    logoUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200',
-    primaryColor: '#7c3aed', // Violet
+    merchantSlug: 'maxline-logistics',
+    brandName: 'MAXLINE LOGISTICS Track & Trace',
+    logoUrl: '/images/maxline_icon.png',
+    primaryColor: '#2563eb', // Brand blue
     secondaryColor: '#0f172a', // Dark slate
-    supportEmail: 'support@acmestore.com',
+    supportEmail: 'support@maxlinelogistics.com',
     supportPhone: '+91 98765 43210',
     showCourierBranding: true,
     showAggregatorFooter: true,
     promotionalBanner: {
-      enabled: true,
-      imageUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800',
-      headline: 'Summer Festive Offer — Flat 40% Off!',
-      description: 'Upgrade your tech gear today. Use code FESTIVE40 at checkout.',
-      ctaText: 'Shop Electronics Now',
-      ctaUrl: 'https://acmestore.com/festive-sale',
+      enabled: false,
+      imageUrl: '',
+      headline: '',
+      description: '',
+      ctaText: '',
+      ctaUrl: '',
       disabledByAdmin: false,
     },
-    customDomain: 'track.acmestore.com',
+    customDomain: 'track.maxlinelogistics.com',
     customDomainVerified: true,
-    auditLogs: [
-      {
-        id: 'log-1',
-        timestamp: '2026-08-01 10:00 AM',
-        actor: 'Acme Merchant Admin',
-        role: 'MERCHANT',
-        action: 'INITIAL_BRANDING_CREATED',
-        details: 'Configured Acme Electronics brand colors and promo banner.',
-      },
-    ],
-    updatedAt: '2026-08-20 14:30 PM',
+    auditLogs: [],
+    updatedAt: new Date().toISOString(),
   },
 };
 

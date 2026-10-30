@@ -106,7 +106,7 @@ export const AdminAllRateCardsPage: React.FC = () => {
     selectedTenants.forEach((tId) => {
       CustomerRateAssignmentService.assignRateCard({
         tenantId: tId,
-        tenantName: tId === 'tenant-demo-01' ? 'Acme Logistics Pvt Ltd' : tId === 'tenant-acme-02' ? 'Zomato Merchant' : 'Nexus Tech B2B',
+        tenantName: 'MAXLINE Partner Merchant',
         mode: assigningCard.type,
         courierId: assigningCard.courierId,
         courierName: assigningCard.courierName,
@@ -267,8 +267,8 @@ export const AdminAllRateCardsPage: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', backgroundColor: 'var(--color-surface-secondary)', borderRadius: 'var(--radius-default)' }}>
               {[
-                { id: 'tenant-demo-01', name: 'Acme Logistics Pvt Ltd (tenant-demo-01)' },
-                { id: 'tenant-acme-02', name: 'Zomato Merchant Partner (tenant-acme-02)' },
+                { id: 'tenant-demo-01', name: 'MAXLINE Partner Merchant (tenant-demo-01)' },
+                { id: 'tenant-acme-02', name: 'MAXLINE Retail Partner (tenant-acme-02)' },
                 { id: 'tenant-vip-03', name: 'Nexus Tech B2B (tenant-vip-03)' },
               ].map((t) => {
                 const checked = selectedTenants.includes(t.id);

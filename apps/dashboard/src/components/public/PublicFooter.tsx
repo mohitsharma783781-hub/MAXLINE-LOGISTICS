@@ -34,25 +34,18 @@ export const PublicFooter: React.FC = () => {
           {/* Brand Column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', gridColumn: 'span 2' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-              <div
+              <img
+                src="/images/maxline_icon.png"
+                alt="MAXLINE LOGISTICS"
                 style={{
                   width: '36px',
                   height: '36px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #2563eb 0%, #0284c7 100%)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: '900',
-                  fontSize: '18px',
-                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
                 }}
-              >
-                C
-              </div>
+              />
               <span style={{ fontSize: '20px', fontWeight: '900', color: '#ffffff' }}>
-                {APP_CONFIG.name}<span style={{ color: '#38bdf8' }}>3</span>
+                MAXLINE <span style={{ color: '#38bdf8' }}>LOGISTICS</span>
               </span>
             </div>
             <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--color-neutral-400)', maxWidth: '320px', lineHeight: 1.5 }}>

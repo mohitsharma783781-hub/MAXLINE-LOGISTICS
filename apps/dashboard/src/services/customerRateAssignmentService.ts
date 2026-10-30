@@ -11,7 +11,7 @@ export const INITIAL_RATE_ASSIGNMENTS: CustomerRateAssignment[] = [
   {
     id: 'assign-b2c-01',
     tenantId: 'tenant-demo-01',
-    tenantName: 'Acme Logistics Pvt Ltd',
+    tenantName: 'MAXLINE Partner Merchant',
     mode: 'B2C',
     courierId: 'delhivery',
     courierName: 'Delhivery Surface',
@@ -29,7 +29,7 @@ export const INITIAL_RATE_ASSIGNMENTS: CustomerRateAssignment[] = [
   {
     id: 'assign-b2c-02',
     tenantId: 'tenant-demo-01',
-    tenantName: 'Acme Logistics Pvt Ltd',
+    tenantName: 'MAXLINE Partner Merchant',
     mode: 'B2C',
     courierId: 'bluedart',
     courierName: 'Blue Dart Air',
@@ -47,7 +47,7 @@ export const INITIAL_RATE_ASSIGNMENTS: CustomerRateAssignment[] = [
   {
     id: 'assign-b2b-01',
     tenantId: 'tenant-demo-01',
-    tenantName: 'Acme Logistics Pvt Ltd',
+    tenantName: 'MAXLINE Partner Merchant',
     mode: 'B2B',
     courierId: 'delhivery',
     courierName: 'Delhivery Surface',

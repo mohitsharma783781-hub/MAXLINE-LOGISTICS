@@ -38,25 +38,18 @@ export const AuthLayout: React.FC = () => {
                 textDecoration: 'none',
               }}
             >
-              <div
+              <img
+                src="/images/maxline_icon.png"
+                alt="MAXLINE LOGISTICS"
                 style={{
                   width: '38px',
                   height: '38px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #2563eb 0%, #0284c7 100%)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: '900',
-                  fontSize: '20px',
-                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
                 }}
-              >
-                C
-              </div>
+              />
               <span style={{ fontSize: '22px', fontWeight: '900', color: '#ffffff', letterSpacing: '-0.03em' }}>
-                {APP_CONFIG.name}<span style={{ color: '#38bdf8' }}>3</span>
+                MAXLINE <span style={{ color: '#38bdf8' }}>LOGISTICS</span>
               </span>
             </Link>
 
