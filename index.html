@@ -2,6 +2,12 @@
 <html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
+    <script>
+        // Automatic routing for Auth Recovery / Password Reset tokens landing on root
+        if (window.location.hash && window.location.hash.includes('type=recovery')) {
+            window.location.replace('/reset-password' + window.location.hash);
+        }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MAXLINE LOGISTICS | Door-to-Door Courier & Cargo Aggregator</title>
     <meta name="description" content="MAXLINE LOGISTICS Enterprise Multi-Courier Logistics. Connect 12+ top courier partners in 1 click. Compare live rates, automate doorstep pickups, cut RTOs by 40%.">

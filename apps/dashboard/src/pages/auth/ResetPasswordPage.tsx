@@ -15,6 +15,17 @@ export const ResetPasswordPage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    // Check if error is passed in the URL hash
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const errorMsg = params.get('error_description');
+      if (errorMsg) {
+        setErrorMessage(decodeURIComponent(errorMsg.replace(/\+/g, ' ')));
+      }
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
