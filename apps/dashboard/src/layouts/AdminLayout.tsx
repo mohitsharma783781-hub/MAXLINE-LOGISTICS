@@ -190,7 +190,11 @@ export const AdminLayout: React.FC = () => {
       portalLabel="Super Admin Portal"
       topBanner={topBanner}
     >
-      <div key={location.pathname} className="animate-fade-in" style={{ width: '100%' }}>
+      <div
+        key={location.pathname}
+        className="animate-fade-in"
+        style={{ width: '100%', minHeight: '100%', display: 'flex', flexDirection: 'column', flex: 1 }}
+      >
         <React.Suspense fallback={<PageFallback />}>
           <Outlet />
         </React.Suspense>

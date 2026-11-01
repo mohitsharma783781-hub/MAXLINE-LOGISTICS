@@ -45,6 +45,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
+        inset: 0,
         width: '100vw',
         height: '100vh',
         minHeight: '100vh',

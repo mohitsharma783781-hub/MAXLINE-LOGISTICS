@@ -11,10 +11,18 @@ import {
 
 export const FloatingQuickAction: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isOverlayActive, setIsOverlayActive] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const checkOverlay = () => {
+      setIsOverlayActive(document.body.style.overflow === 'hidden');
+    };
+    checkOverlay();
+    const observer = new MutationObserver(checkOverlay);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
@@ -28,6 +36,7 @@ export const FloatingQuickAction: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleKeyDown);
     return () => {
+      observer.disconnect();
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
@@ -80,9 +89,10 @@ export const FloatingQuickAction: React.FC = () => {
         bottom: '24px',
         right: '24px',
         zIndex: 900,
-        display: 'flex',
+        display: isOverlayActive ? 'none' : 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
+        transition: 'opacity 0.2s ease',
       }}
     >
       {/* EXPANDABLE QUICK ACTIONS FLOATING MENU */}

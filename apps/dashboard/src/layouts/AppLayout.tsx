@@ -216,7 +216,11 @@ export const AppLayout: React.FC = () => {
       portalLabel="Merchant Portal"
       topBanner={superAdminPreviewBanner}
     >
-      <div key={location.pathname} className="animate-fade-in" style={{ width: '100%' }}>
+      <div
+        key={location.pathname}
+        className="animate-fade-in"
+        style={{ width: '100%', minHeight: '100%', display: 'flex', flexDirection: 'column', flex: 1 }}
+      >
         {isMerchantSetupRequired && !isOnboardingRoute ? (
           <MerchantSetupRequired user={currentUser} onRefresh={refreshTenantProfile} />
         ) : (
