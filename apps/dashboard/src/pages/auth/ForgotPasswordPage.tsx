@@ -27,7 +27,9 @@ export const ForgotPasswordPage: React.FC = () => {
       setIsLoading(true);
       const res = await authService.requestPasswordReset(email);
       if (res.success) {
-        setSuccessMessage(`Password reset link simulated for ${email}. Please check your inbox.`);
+        setSuccessMessage(res.message || `Password reset instructions sent to ${email}. Please check your inbox.`);
+      } else {
+        setErrorMessage(res.message || 'Unable to process password reset request. Please try again.');
       }
     } catch (err: any) {
       setErrorMessage('Unable to process password reset request. Please try again.');
