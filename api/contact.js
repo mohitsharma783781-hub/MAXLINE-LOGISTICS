@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
         },
         body: JSON.stringify({
           from: 'MAXLINE LOGISTICS <support@maxlinelogistics.com>',
-          to: ['support@maxlinelogistics.com', 'mohitsharma99229@gmail.com'],
+          to: ['support@maxlinelogistics.com', 'maxlinelogistic@gmail.com'],
           subject: `[MAXLINE Contact] ${subject || 'New Inquiry'} from ${fullName}`,
           html: emailHtml,
           reply_to: email,
