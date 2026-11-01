@@ -13,6 +13,7 @@ import { Button, Card, Badge, Alert, Table, Modal, Input } from '../../component
 import { OnboardingService } from '../../services/onboardingService';
 import { AdminManagementService } from '../../services/adminManagementService';
 import { KycService, type UploadedKycDoc } from '../../services/kycService';
+import { supabase } from '../../lib/supabaseClient';
 
 export interface AdminKycCustomerRecord extends Record<string, unknown> {
   id: string;
@@ -107,6 +108,28 @@ export const AdminKycVerificationPage: React.FC = () => {
     if (selectedRecord.id.length > 20) {
       const dbStatus = newStatus === 'Approved' ? 'ACTIVE' : newStatus === 'Rejected' ? 'SUSPENDED' : 'PENDING_KYC';
       await AdminManagementService.updateMerchantStatus(selectedRecord.id, dbStatus as any);
+
+      // Also update verification_status of all documents for this merchant
+      if (newStatus === 'Approved') {
+        await supabase
+          .from('merchant_kyc_documents')
+          .update({
+            verification_status: 'VERIFIED',
+            rejection_reason: null,
+            verified_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('merchant_id', selectedRecord.id);
+      } else if (newStatus === 'Rejected') {
+        await supabase
+          .from('merchant_kyc_documents')
+          .update({
+            verification_status: 'REJECTED',
+            rejection_reason: adminRemarks || 'KYC Rejected by Super Admin compliance desk',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('merchant_id', selectedRecord.id);
+      }
     }
 
     setKycRecords(updated);

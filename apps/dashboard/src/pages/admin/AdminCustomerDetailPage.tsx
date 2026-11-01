@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -28,6 +28,7 @@ import {
   Checkbox,
 } from '../../components/ui';
 import { WalletService } from '../../mocks/wallet.mock';
+import { KycService, type UploadedKycDoc } from '../../services/kycService';
 
 export const AdminCustomerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,7 +39,23 @@ export const AdminCustomerDetailPage: React.FC = () => {
   >('overview');
 
   const [customerStatus, setCustomerStatus] = useState<'ACTIVE' | 'PENDING' | 'SUSPENDED'>('ACTIVE');
-  const [kycStatus] = useState<'Approved' | 'Under Review' | 'Pending Documents'>('Approved');
+  const [kycStatus, setKycStatus] = useState<'Approved' | 'Under Review' | 'Pending Documents'>('Approved');
+  const [merchantKycDocs, setMerchantKycDocs] = useState<UploadedKycDoc[]>([]);
+
+  useEffect(() => {
+    if (id) {
+      KycService.fetchMerchantDocuments(id).then((docs) => {
+        if (docs && docs.length > 0) {
+          setMerchantKycDocs(docs);
+          const hasRejected = docs.some((d) => d.status === 'Rejected');
+          const allVerified = docs.every((d) => d.status === 'Verified');
+          if (hasRejected) setKycStatus('Pending Documents');
+          else if (allVerified) setKycStatus('Approved');
+          else setKycStatus('Under Review');
+        }
+      }).catch(() => {});
+    }
+  }, [id]);
   const [assignedRateCard] = useState('Enterprise VIP B2C Card');
   const [assignedManager] = useState('Vikram Malhotra (Key Account Manager)');
 
@@ -257,18 +274,40 @@ export const AdminCustomerDetailPage: React.FC = () => {
                   key: 'actions',
                   header: 'Actions',
                   render: (r: any) => (
-                    <Button variant="outline" size="sm" leftIcon={<Download size={12} />} onClick={() => alert(`Downloading ${r.fileName}`)}>
-                      Download File
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      leftIcon={<Download size={12} />}
+                      onClick={() => {
+                        if (r.publicUrl) {
+                          window.open(r.publicUrl, '_blank');
+                        } else {
+                          alert(`Viewing ${r.fileName}`);
+                        }
+                      }}
+                    >
+                      View / Download
                     </Button>
                   ),
                 },
               ]}
-              data={[
-                { id: '1', docType: 'GST Certificate', fileName: 'gst_certificate.pdf', uploadDate: '01 Sep 2026', status: 'Verified' },
-                { id: '2', docType: 'PAN Card', fileName: 'pan_card.pdf', uploadDate: '01 Sep 2026', status: 'Verified' },
-                { id: '3', docType: 'Cancelled Cheque', fileName: 'cancelled_cheque.pdf', uploadDate: '02 Sep 2026', status: 'Verified' },
-                { id: '4', docType: 'Address Proof', fileName: 'office_address_proof.pdf', uploadDate: '02 Sep 2026', status: 'Verified' },
-              ]}
+              data={
+                merchantKycDocs.length > 0
+                  ? merchantKycDocs.map((d) => ({
+                      id: d.id,
+                      docType: d.documentType,
+                      fileName: d.fileName,
+                      uploadDate: d.uploadedAt,
+                      status: d.status,
+                      publicUrl: d.publicUrl,
+                    }))
+                  : [
+                      { id: '1', docType: 'GST Certificate', fileName: 'gst_certificate.pdf', uploadDate: '01 Sep 2026', status: 'Verified' },
+                      { id: '2', docType: 'PAN Card', fileName: 'pan_card.pdf', uploadDate: '01 Sep 2026', status: 'Verified' },
+                      { id: '3', docType: 'Cancelled Cheque', fileName: 'cancelled_cheque.pdf', uploadDate: '02 Sep 2026', status: 'Verified' },
+                      { id: '4', docType: 'Address Proof', fileName: 'office_address_proof.pdf', uploadDate: '02 Sep 2026', status: 'Verified' },
+                    ]
+              }
             />
           </div>
         )}

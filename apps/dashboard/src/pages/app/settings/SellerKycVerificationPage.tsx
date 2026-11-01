@@ -18,6 +18,8 @@ import { OnboardingService } from '../../../services/onboardingService';
 import { useRbac } from '../../../context/RbacContext';
 import { useTenant } from '../../../context/TenantContext';
 import { KycService, type UploadedKycDoc } from '../../../services/kycService';
+import { supabase } from '../../../lib/supabaseClient';
+import { toValidTenantUUID } from '../../../utils/uuidHelper';
 
 export interface KycDocRecord {
   id: string;
@@ -77,27 +79,77 @@ export const SellerKycVerificationPage: React.FC = () => {
     }
   }, [resolvedCompanyName]);
 
-  // Load authoritative KYC documents from Supabase cloud database
+  // Load authoritative KYC documents & merchant status from Supabase cloud database
   useEffect(() => {
     if (!activeTenantId) return;
+
+    // 1. Check merchant status in Supabase
+    supabase
+      .from('merchants')
+      .select('status')
+      .eq('id', toValidTenantUUID(activeTenantId))
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.status === 'ACTIVE') {
+          setKycStatus('Approved');
+        } else if (data?.status === 'SUSPENDED') {
+          setKycStatus('Suspended');
+        }
+      })
+      .catch(() => {});
+
+    // 2. Load Bank details from localStorage
+    try {
+      const savedBank = localStorage.getItem('MAXLINE_SELLER_BANK_' + activeTenantId);
+      if (savedBank) {
+        const parsed = JSON.parse(savedBank);
+        if (parsed.bankHolder) setBankHolder(parsed.bankHolder);
+        if (parsed.bankName) setBankName(parsed.bankName);
+        if (parsed.accountNumber) setAccountNumber(parsed.accountNumber);
+        if (parsed.ifscCode) setIfscCode(parsed.ifscCode);
+        if (parsed.bankStatus) setBankStatus(parsed.bankStatus);
+      }
+    } catch {}
+
+    // 3. Load uploaded KYC documents
     KycService.fetchMerchantDocuments(activeTenantId).then((cloudDocs) => {
       if (cloudDocs && cloudDocs.length > 0) {
-        setKycDocs((prev) =>
-          prev.map((doc) => {
-            const found = cloudDocs.find((c) => c.documentType.toLowerCase() === doc.type.toLowerCase());
-            if (found) {
-              return {
-                ...doc,
-                fileName: found.fileName,
-                publicUrl: found.publicUrl,
-                uploadDate: found.uploadedAt,
-                status: found.status,
-                remarks: found.rejectionReason,
-              };
+        let hasRejected = false;
+        let allVerified = true;
+        let allUploaded = true;
+
+        const updatedDocs = INITIAL_KYC_DOCS.map((doc) => {
+          const found = cloudDocs.find((c) => c.documentType.toLowerCase() === doc.type.toLowerCase());
+          if (found) {
+            if (found.status === 'Rejected') hasRejected = true;
+            if (found.status !== 'Verified') allVerified = false;
+            return {
+              ...doc,
+              fileName: found.fileName,
+              publicUrl: found.publicUrl,
+              uploadDate: found.uploadedAt,
+              status: found.status,
+              remarks: found.rejectionReason,
+            };
+          } else {
+            if (doc.required) {
+              allVerified = false;
+              allUploaded = false;
             }
             return doc;
-          })
-        );
+          }
+        });
+
+        setKycDocs(updatedDocs);
+
+        // Update kycStatus if not already locked by active merchant status
+        setKycStatus((current) => {
+          if (current === 'Approved' || current === 'Suspended') return current;
+          if (hasRejected) return 'Rejected';
+          if (allVerified) return 'Approved';
+          if (allUploaded) return 'Under Review';
+          return 'Pending Documents';
+        });
       }
     }).catch(() => {});
   }, [activeTenantId]);
@@ -363,18 +415,39 @@ export const SellerKycVerificationPage: React.FC = () => {
 
       {/* 3. BANK VERIFICATION CARD */}
       <Card style={{ padding: '24px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <CreditCard size={18} style={{ color: '#16a34a' }} /> Bank Account Verification for COD Remittance
-          </h3>
-          <Badge variant="success">Bank Account {bankStatus}</Badge>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CreditCard size={18} style={{ color: '#16a34a' }} /> Remittance Settlement Bank Details
+            </h3>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+              Official registered bank account for automated doorstep COD payouts & freight adjustments.
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Badge variant={bankStatus === 'Verified' ? 'success' : 'neutral'}>Bank Account {bankStatus}</Badge>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                const data = { bankHolder, bankName, accountNumber, ifscCode, bankStatus: 'Verified' };
+                localStorage.setItem('MAXLINE_SELLER_BANK_' + activeTenantId, JSON.stringify(data));
+                setBankStatus('Verified');
+                setAlertMessage('✓ Settlement bank details saved and linked for automated COD remittances.');
+                setTimeout(() => setAlertMessage(null), 4000);
+              }}
+              style={{ backgroundColor: '#0f172a', borderColor: '#0f172a' }}
+            >
+              Save Bank Details
+            </Button>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
           <Input label="Account Holder Name *" value={bankHolder} onChange={(e) => setBankHolder(e.target.value)} />
-          <Input label="Bank Name *" value={bankName} onChange={(e) => setBankName(e.target.value)} />
-          <Input label="Bank Account Number *" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
-          <Input label="Bank IFSC Code *" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} />
+          <Input label="Bank Name *" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. HDFC Bank, SBI, ICICI" />
+          <Input label="Bank Account Number *" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="e.g. 502000491823019" />
+          <Input label="Bank IFSC Code *" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} placeholder="e.g. HDFC0000128" />
         </div>
       </Card>
 
