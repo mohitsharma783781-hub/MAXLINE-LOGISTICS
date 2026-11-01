@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FileText,
   Upload,
@@ -10,12 +10,14 @@ import {
   RefreshCw,
   FileCheck,
   ShieldCheck,
+  Loader2,
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { Button, Card, Badge, Alert, Input, Modal } from '../../../components/ui';
 import { OnboardingService } from '../../../services/onboardingService';
 import { useRbac } from '../../../context/RbacContext';
 import { useTenant } from '../../../context/TenantContext';
+import { KycService, type UploadedKycDoc } from '../../../services/kycService';
 
 export interface KycDocRecord {
   id: string;
@@ -23,6 +25,7 @@ export interface KycDocRecord {
   name: string;
   required: boolean;
   fileName: string | null;
+  publicUrl?: string | null;
   uploadDate: string | null;
   status: 'Pending' | 'Uploaded' | 'Verified' | 'Rejected';
   remarks?: string;
@@ -63,37 +66,94 @@ export const SellerKycVerificationPage: React.FC = () => {
   const [ifscCode, setIfscCode] = useState('');
   const [bankStatus, setBankStatus] = useState<'Pending' | 'Verified' | 'Rejected'>('Pending');
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [activeUploadDoc, setActiveUploadDoc] = useState<{ id: string; type: string } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewDocUrl, setPreviewDocUrl] = useState<string | null>(null);
+
   useEffect(() => {
     if (resolvedCompanyName && (!bankHolder || bankHolder === 'Apex Logistics Pvt Ltd')) {
       setBankHolder(resolvedCompanyName);
     }
   }, [resolvedCompanyName]);
 
-  const [previewDocName, setPreviewDocName] = useState<string | null>(null);
+  // Load authoritative KYC documents from Supabase cloud database
+  useEffect(() => {
+    if (!activeTenantId) return;
+    KycService.fetchMerchantDocuments(activeTenantId).then((cloudDocs) => {
+      if (cloudDocs && cloudDocs.length > 0) {
+        setKycDocs((prev) =>
+          prev.map((doc) => {
+            const found = cloudDocs.find((c) => c.documentType.toLowerCase() === doc.type.toLowerCase());
+            if (found) {
+              return {
+                ...doc,
+                fileName: found.fileName,
+                publicUrl: found.publicUrl,
+                uploadDate: found.uploadedAt,
+                status: found.status,
+                remarks: found.rejectionReason,
+              };
+            }
+            return doc;
+          })
+        );
+      }
+    }).catch(() => {});
+  }, [activeTenantId]);
+
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   const uploadedCount = kycDocs.filter((d) => d.status === 'Uploaded' || d.status === 'Verified').length;
   const totalRequiredCount = kycDocs.filter((d) => d.required).length;
   const completionPercentage = Math.round((uploadedCount / totalRequiredCount) * 100);
 
-  const handleSimulateUpload = (docId: string, docType: string) => {
-    const updated = kycDocs.map((doc) => {
-      if (doc.id === docId) {
-        return {
-          ...doc,
-          fileName: `${docType.toLowerCase().replace(/\s+/g, '_')}_new.pdf`,
-          uploadDate: 'Today, Just Now',
-          status: 'Uploaded' as const,
-        };
-      }
-      return doc;
-    });
+  const handleTriggerUpload = (docId: string, docType: string) => {
+    setActiveUploadDoc({ id: docId, type: docType });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
 
-    setKycDocs(updated);
-    OnboardingService.markStageComplete('CUST-1001', 5, `Uploaded compliance document: ${docType}`);
-    logActivity('KYC Actions', docType, `Submitted KYC document "${docType}" for verification`);
-    setAlertMessage(`Uploaded document for ${docType}. Sent to Admin for review. Onboarding Stage 5 marked complete.`);
-    setTimeout(() => setAlertMessage(null), 4000);
+  const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeUploadDoc) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setAlertMessage('File size exceeds 10MB limit. Please upload a smaller file.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const res = await KycService.uploadDocument(activeTenantId, activeUploadDoc.type, file);
+      if (res.success && res.doc) {
+        setKycDocs((prev) =>
+          prev.map((d) =>
+            d.id === activeUploadDoc.id
+              ? {
+                  ...d,
+                  fileName: res.doc!.fileName,
+                  publicUrl: res.doc!.publicUrl,
+                  uploadDate: res.doc!.uploadedAt,
+                  status: 'Uploaded',
+                }
+              : d
+          )
+        );
+        logActivity('KYC Actions', activeUploadDoc.type, `Uploaded real document: ${file.name}`);
+        setAlertMessage(`✓ ${activeUploadDoc.type} (${file.name}) uploaded to secure cloud storage.`);
+      } else {
+        setAlertMessage(res.message || 'Failed to upload document.');
+      }
+    } catch (err: any) {
+      setAlertMessage(err?.message || 'Error uploading file.');
+    } finally {
+      setIsUploading(false);
+      setActiveUploadDoc(null);
+      setTimeout(() => setAlertMessage(null), 5000);
+    }
   };
 
   const getKycStatusVariant = (status: string) => {
@@ -120,6 +180,15 @@ export const SellerKycVerificationPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' }}>
       
+      {/* Hidden File Input for Real Document Upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={onFileSelected}
+        accept=".pdf,.png,.jpg,.jpeg,.webp"
+        style={{ display: 'none' }}
+      />
+
       <PageHeader
         title="Seller KYC Verification Center"
         description="Upload official company compliance documents, bank verification details, and track verification status."
@@ -234,30 +303,56 @@ export const SellerKycVerificationPage: React.FC = () => {
                   </div>
 
                   <div style={{ display: 'flex', gap: '4px' }}>
-                    <Button variant="outline" size="sm" style={{ padding: '2px 6px' }} title="Preview Document" onClick={() => setPreviewDocName(doc.fileName)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      style={{ padding: '2px 6px' }}
+                      title="View / Download Document"
+                      onClick={() => {
+                        if (doc.publicUrl) {
+                          window.open(doc.publicUrl, '_blank');
+                        }
+                      }}
+                    >
                       <Eye size={13} />
                     </Button>
-                    <Button variant="outline" size="sm" style={{ padding: '2px 6px' }} title="Replace Document" onClick={() => handleSimulateUpload(doc.id, doc.type)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      style={{ padding: '2px 6px' }}
+                      title="Replace Document"
+                      onClick={() => handleTriggerUpload(doc.id, doc.type)}
+                      disabled={isUploading}
+                    >
                       <RefreshCw size={13} />
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div
-                  onClick={() => handleSimulateUpload(doc.id, doc.type)}
+                  onClick={() => !isUploading && handleTriggerUpload(doc.id, doc.type)}
                   style={{
                     border: '2px dashed #cbd5e1',
                     borderRadius: '8px',
                     padding: '16px',
                     textAlign: 'center',
-                    backgroundColor: '#f8fafc',
-                    cursor: 'pointer',
-                    transition: 'border-color 0.15s ease',
+                    backgroundColor: isUploading && activeUploadDoc?.id === doc.id ? '#eff6ff' : '#f8fafc',
+                    cursor: isUploading ? 'wait' : 'pointer',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  <Upload size={20} style={{ color: '#0284c7', marginBottom: '4px' }} />
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a', display: 'block' }}>Drag & Drop or Click to Upload</span>
-                  <span style={{ fontSize: '10px', color: '#64748b' }}>PDF, JPG, PNG max 5MB</span>
+                  {isUploading && activeUploadDoc?.id === doc.id ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                      <Loader2 size={22} className="animate-spin" style={{ color: '#0284c7' }} />
+                      <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7' }}>Uploading to Cloud Storage...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload size={20} style={{ color: '#0284c7', marginBottom: '4px' }} />
+                      <span style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a', display: 'block' }}>Click to Upload Document</span>
+                      <span style={{ fontSize: '10px', color: '#64748b' }}>PDF, PNG, JPG max 10MB</span>
+                    </>
+                  )}
                 </div>
               )}
 

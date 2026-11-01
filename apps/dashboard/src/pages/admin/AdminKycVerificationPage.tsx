@@ -5,11 +5,14 @@ import {
   RefreshCw,
   Download,
   Search,
+  ExternalLink,
+  FileText,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Button, Card, Badge, Alert, Table, Modal, Input } from '../../components/ui';
 import { OnboardingService } from '../../services/onboardingService';
 import { AdminManagementService } from '../../services/adminManagementService';
+import { KycService, type UploadedKycDoc } from '../../services/kycService';
 
 export interface AdminKycCustomerRecord extends Record<string, unknown> {
   id: string;
@@ -27,6 +30,8 @@ export const DEMO_ADMIN_KYC_CUSTOMERS: AdminKycCustomerRecord[] = [];
 export const AdminKycVerificationPage: React.FC = () => {
   const [kycRecords, setKycRecords] = useState<AdminKycCustomerRecord[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<AdminKycCustomerRecord | null>(null);
+  const [merchantDocs, setMerchantDocs] = useState<UploadedKycDoc[]>([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
   const [adminRemarks, setAdminRemarks] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -250,6 +255,12 @@ export const AdminKycVerificationPage: React.FC = () => {
                   onClick={() => {
                     setSelectedRecord(r);
                     setAdminRemarks(r.remarks);
+                    setMerchantDocs([]);
+                    setIsLoadingDocs(true);
+                    KycService.fetchMerchantDocuments(r.id)
+                      .then((docs) => setMerchantDocs(docs))
+                      .catch(() => {})
+                      .finally(() => setIsLoadingDocs(false));
                   }}
                   style={{ backgroundColor: '#0f172a', borderColor: '#0f172a', fontSize: '11px', padding: '4px 10px' }}
                 >
@@ -277,21 +288,39 @@ export const AdminKycVerificationPage: React.FC = () => {
 
             {/* Submitted Documents Checklist */}
             <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>Submitted Files ({selectedRecord.submittedDocsCount}):</span>
-              {[
-                { name: 'GST_Certificate.pdf', type: 'GST Certificate' },
-                { name: 'PAN_Card.pdf', type: 'PAN Card Copy' },
-                { name: 'Signatory_Aadhaar.pdf', type: 'Aadhaar Card' },
-                { name: 'Cancelled_Cheque_HDFC.pdf', type: 'Cancelled Cheque' },
-                { name: 'Office_Lease_Agreement.pdf', type: 'Address Proof' },
-              ].map((file, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f1f5f9', padding: '8px 12px', borderRadius: '6px', fontSize: '12px' }}>
-                  <span>📄 <strong>{file.type}:</strong> {file.name}</span>
-                  <Button variant="outline" size="sm" style={{ padding: '2px 6px' }} onClick={() => alert(`Downloading ${file.name}`)}>
-                    <Download size={12} /> Download
-                  </Button>
+              <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>
+                Uploaded Compliance Files ({merchantDocs.length}):
+              </span>
+
+              {isLoadingDocs ? (
+                <div style={{ textAlign: 'center', padding: '16px', color: '#64748b', fontSize: '12px' }}>
+                  Loading uploaded documents from cloud storage...
                 </div>
-              ))}
+              ) : merchantDocs.length === 0 ? (
+                <div style={{ backgroundColor: '#fffbeb', border: '1px solid #fef3c7', padding: '12px', borderRadius: '8px', color: '#b45309', fontSize: '12px' }}>
+                  No compliance files have been uploaded by this merchant yet.
+                </div>
+              ) : (
+                merchantDocs.map((file) => (
+                  <div key={file.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f1f5f9', padding: '8px 12px', borderRadius: '6px', fontSize: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FileText size={16} style={{ color: '#0284c7' }} />
+                      <div>
+                        <strong>{file.documentType}:</strong> <span style={{ color: '#334155' }}>{file.fileName}</span>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>Uploaded: {file.uploadedAt}</div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      style={{ padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      onClick={() => window.open(file.publicUrl, '_blank')}
+                    >
+                      <ExternalLink size={12} /> View Document
+                    </Button>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Admin Remarks Input */}
