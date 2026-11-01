@@ -8,12 +8,17 @@ export const SupabaseWarehouseService = {
    */
   async fetchWarehouses(tenantId?: string): Promise<CustomerWarehouse[]> {
     try {
-      const validTid = toValidTenantUUID(tenantId);
-      const { data, error } = await supabase
+      let query = supabase
         .from('warehouses')
         .select('*')
-        .eq('merchant_id', validTid)
         .order('is_default', { ascending: false });
+
+      if (tenantId && tenantId.toLowerCase() !== 'all') {
+        const validTid = toValidTenantUUID(tenantId);
+        query = query.eq('merchant_id', validTid);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.warn('[SupabaseWarehouseService] Fetch warehouses warning:', error.message);

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -46,11 +46,23 @@ export const ShipmentsPage: React.FC = () => {
   const [actionAlert, setActionAlert] = useState<string | null>(null);
 
   const { activeTenantId, scopeData } = useTenant();
+  const [syncVersion, setSyncVersion] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    if (activeTenantId) {
+      setIsSyncing(true);
+      CustomerShipmentService.syncFromSupabase(activeTenantId)
+        .then(() => setSyncVersion((v) => v + 1))
+        .catch(() => {})
+        .finally(() => setIsSyncing(false));
+    }
+  }, [activeTenantId]);
 
   const shipments = useMemo(() => {
     const raw = CustomerShipmentService.getShipments(activeTenantId, searchQuery, activeTab);
     return scopeData(raw);
-  }, [activeTenantId, searchQuery, activeTab, scopeData]);
+  }, [activeTenantId, searchQuery, activeTab, scopeData, syncVersion]);
 
   const handleCancelShipment = () => {
     if (!cancelTargetId) return;

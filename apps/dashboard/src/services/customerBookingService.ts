@@ -253,9 +253,9 @@ export const CustomerBookingService = {
       };
     }
 
-    // 5. Persist Shipment Record in CustomerShipmentService
+    // 5. Persist Shipment Record in CustomerShipmentService & Supabase Cloud DB
     const nowStr = new Date().toLocaleString();
-    CustomerShipmentService.addShipmentRecord({
+    await CustomerShipmentService.addShipmentRecordAsync({
       id: `shp-${Date.now()}`,
       shipmentId,
       tenantId,

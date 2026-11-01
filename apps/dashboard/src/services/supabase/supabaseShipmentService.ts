@@ -8,12 +8,17 @@ export const SupabaseShipmentService = {
    */
   async fetchShipments(tenantId?: string): Promise<CustomerShipmentDetail[]> {
     try {
-      const validTid = toValidTenantUUID(tenantId);
-      const { data, error } = await supabase
+      let query = supabase
         .from('shipments')
         .select('*')
-        .eq('merchant_id', validTid)
         .order('created_at', { ascending: false });
+
+      if (tenantId && tenantId.toLowerCase() !== 'all') {
+        const validTid = toValidTenantUUID(tenantId);
+        query = query.eq('merchant_id', validTid);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.warn('[SupabaseShipmentService] Fetch shipments warning:', error.message);
@@ -112,7 +117,7 @@ export const SupabaseShipmentService = {
         courier_id: shipment.courierId,
         courier_name: shipment.courierName,
         service_type: shipment.serviceName || 'Surface',
-        mode: shipment.mode || 'B2C',
+        mode: (String(shipment.mode || 'B2C')).toUpperCase() === 'B2B' ? 'B2B' : 'B2C',
         pickup_warehouse_id: isValidUUID(shipment.pickupWarehouseId) ? shipment.pickupWarehouseId : null,
         pickup_contact_person: shipment.pickupContact || 'Sender',
         pickup_phone: shipment.pickupPhone || '9999999999',
@@ -133,7 +138,7 @@ export const SupabaseShipmentService = {
         package_contents_summary: shipment.dimensionsCm || 'Package',
         invoice_value_minor: Math.round(Number(shipment.invoiceValueINR || 0) * 100),
         invoice_number: shipment.invoiceNumber || null,
-        payment_mode: shipment.paymentMode || 'PREPAID',
+        payment_mode: (String(shipment.paymentMode || 'PREPAID')).toUpperCase() === 'COD' ? 'COD' : 'PREPAID',
         cod_amount_minor: Math.round(Number(shipment.codAmountINR || 0) * 100),
         freight_charge_minor: Math.round(Number(shipment.baseFreightINR || 0) * 100),
         fuel_surcharge_minor: Math.round(Number(shipment.fuelSurchargeINR || 0) * 100),

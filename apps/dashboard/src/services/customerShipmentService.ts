@@ -449,32 +449,43 @@ export const CustomerShipmentService = {
     saveShipmentsToStorage(SHIPMENT_STORE);
 
     // Asynchronously synchronize new shipment with Supabase Cloud DB
-    SupabaseShipmentService.insertShipment(shipment).catch(() => {});
+    SupabaseShipmentService.insertShipment(shipment).then((res) => {
+      if (res.success && res.recordId) {
+        shipment.id = res.recordId;
+        saveShipmentsToStorage(SHIPMENT_STORE);
+      }
+    }).catch((err) => {
+      console.warn('[CustomerShipmentService] Supabase insert warning:', err?.message);
+    });
 
     return shipment;
   },
 
+  addShipmentRecordAsync: async (shipment: CustomerShipmentDetail): Promise<{ success: boolean; shipment: CustomerShipmentDetail }> => {
+    try {
+      const cloudRes = await SupabaseShipmentService.insertShipment(shipment);
+      if (cloudRes.success && cloudRes.recordId) {
+        shipment.id = cloudRes.recordId;
+      }
+    } catch (err: any) {
+      console.warn('[CustomerShipmentService] Supabase insert exception:', err?.message);
+    }
+    SHIPMENT_STORE.unshift(shipment);
+    saveShipmentsToStorage(SHIPMENT_STORE);
+    return { success: true, shipment };
+  },
+
   // Synchronize latest shipments from Supabase PostgreSQL Cloud DB
   syncFromSupabase: async (tenantId = 'tenant-demo-01'): Promise<CustomerShipmentDetail[]> => {
+    if (!tenantId) return CustomerShipmentService.getShipments(tenantId);
     try {
       const cloudShipments = await SupabaseShipmentService.fetchShipments(tenantId);
-      if (cloudShipments && cloudShipments.length > 0) {
-        // Merge cloud shipments with local cache (cloud shipments take priority)
-        const cloudMap = new Map<string, CustomerShipmentDetail>();
-        cloudShipments.forEach((s) => {
-          cloudMap.set(s.shipmentId, s);
-        });
-
-        // Retain any local shipments not yet on cloud
-        const merged: CustomerShipmentDetail[] = [...cloudShipments];
-        SHIPMENT_STORE.forEach((local) => {
-          if (!cloudMap.has(local.shipmentId)) {
-            merged.push(local);
-          }
-        });
-
-        SHIPMENT_STORE = merged;
+      if (Array.isArray(cloudShipments)) {
+        // Retain other tenants' records if any
+        const otherTenants = SHIPMENT_STORE.filter((s) => s.tenantId !== tenantId);
+        SHIPMENT_STORE = [...cloudShipments, ...otherTenants];
         saveShipmentsToStorage(SHIPMENT_STORE);
+        return cloudShipments;
       }
     } catch (err: any) {
       console.warn('[CustomerShipmentService] Supabase sync warning:', err?.message);
