@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { RotateCcw, Truck, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
@@ -13,9 +13,17 @@ import { useTenant } from '../../context/TenantContext';
 export const RtoManagementPage: React.FC = () => {
   const { activeTenantId } = useTenant();
   const tenantId = activeTenantId;
+  const [refreshTick, setRefreshTick] = useState<number>(0);
+
+  useEffect(() => {
+    ShipmentTrackingNdrRtoService.syncFromSupabase(tenantId).then(() => {
+      setRefreshTick((v) => v + 1);
+    });
+  }, [tenantId]);
+
   const rtoRecords = useMemo(() => {
     return ShipmentTrackingNdrRtoService.getRtoRecords(tenantId);
-  }, [tenantId]);
+  }, [tenantId, refreshTick]);
 
   const breadcrumbs = [
     { label: 'Customer Portal', path: '/app' },

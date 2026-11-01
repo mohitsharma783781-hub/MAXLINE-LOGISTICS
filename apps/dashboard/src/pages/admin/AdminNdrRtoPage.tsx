@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, RotateCcw, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
@@ -20,14 +20,22 @@ export const AdminNdrRtoPage: React.FC = () => {
   const [ndrRecords, setNdrRecords] = useState<NdrRecord[]>(() =>
     ShipmentTrackingNdrRtoService.getNdrRecords()
   );
-  const [rtoRecords] = useState<RtoRecord[]>(() =>
+  const [rtoRecords, setRtoRecords] = useState<RtoRecord[]>(() =>
     ShipmentTrackingNdrRtoService.getRtoRecords()
   );
 
   const [selectedNdr, setSelectedNdr] = useState<NdrRecord | null>(null);
 
+  useEffect(() => {
+    ShipmentTrackingNdrRtoService.syncFromSupabase('all').then((res) => {
+      setNdrRecords([...res.ndr]);
+      setRtoRecords([...res.rto]);
+    });
+  }, []);
+
   const refreshData = () => {
-    setNdrRecords(ShipmentTrackingNdrRtoService.getNdrRecords());
+    setNdrRecords([...ShipmentTrackingNdrRtoService.getNdrRecords()]);
+    setRtoRecords([...ShipmentTrackingNdrRtoService.getRtoRecords()]);
   };
 
   const handleInitiateRto = () => {

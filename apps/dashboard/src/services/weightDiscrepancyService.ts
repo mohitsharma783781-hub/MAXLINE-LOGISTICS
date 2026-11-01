@@ -1,6 +1,8 @@
 import { WalletService } from '../mocks/wallet.mock';
 import { GstInvoiceService } from './gstInvoiceService';
 import { RealtimeNotificationService } from './realtimeNotificationService';
+import { supabase } from '../lib/supabaseClient';
+import { toValidTenantUUID } from '../utils/uuidHelper';
 
 export type DiscrepancyStatus =
   | 'DISCREPANCY_DETECTED'
@@ -558,9 +560,134 @@ export const INITIAL_WEIGHT_DISCREPANCIES: WeightDiscrepancyRecord[] = [
   },
 ];
 
-let DISCREPANCY_STORE: WeightDiscrepancyRecord[] = [...INITIAL_WEIGHT_DISCREPANCIES];
+const STORAGE_KEY_WD = 'MAXLINE_WEIGHT_DISCREPANCIES_STORE';
+
+function loadDiscrepanciesFromStorage(): WeightDiscrepancyRecord[] {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(STORAGE_KEY_WD);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    }
+  } catch {}
+  return [...INITIAL_WEIGHT_DISCREPANCIES];
+}
+
+function saveDiscrepanciesToStorage(list: WeightDiscrepancyRecord[]) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(STORAGE_KEY_WD, JSON.stringify(list));
+    }
+  } catch {}
+}
+
+let DISCREPANCY_STORE: WeightDiscrepancyRecord[] = loadDiscrepanciesFromStorage();
 
 export const WeightDiscrepancyService = {
+  syncFromSupabase: async (tenantId?: string): Promise<WeightDiscrepancyRecord[]> => {
+    try {
+      let query = supabase
+        .from('weight_discrepancies')
+        .select('*, shipments(*)')
+        .order('created_at', { ascending: false });
+
+      if (tenantId && tenantId.toLowerCase() !== 'all') {
+        const validTid = toValidTenantUUID(tenantId);
+        query = query.eq('merchant_id', validTid);
+      }
+
+      const { data, error } = await query;
+      if (!error && data && Array.isArray(data) && data.length > 0) {
+        const cloudRecords: WeightDiscrepancyRecord[] = data.map((row: any) => {
+          const shp = row.shipments || {};
+          const bookedKg = Number(row.entered_weight_kg || 1.0);
+          const auditedKg = Number(row.carrier_scanned_weight_kg || 2.0);
+          const addCharge = Number(row.additional_charge_minor || 0) / 100;
+
+          return {
+            id: row.id,
+            discrepancyId: `WD-${row.id.slice(0, 8).toUpperCase()}`,
+            shipmentId: shp.shipment_number || row.shipment_id,
+            awbNumber: shp.awb_number || 'N/A',
+            lrnNumber: `LRN-${row.id.slice(0, 5).toUpperCase()}`,
+            orderId: shp.order_id || 'ORD-REF',
+            tenantId: row.merchant_id,
+            merchantName: 'MAXLINE Partner Merchant',
+            merchantCompany: 'Partner Logistics',
+            pickupWarehouse: shp.pickup_city || 'Origin Hub',
+            destinationCity: shp.delivery_city || 'Destination Hub',
+            bookedSnapshot: {
+              actualWeightKg: bookedKg,
+              lengthCm: 25,
+              widthCm: 20,
+              heightCm: 15,
+              volumetricWeightKg: bookedKg,
+              chargeableWeightKg: bookedKg,
+              appliedRateCardId: 'rc-standard',
+              appliedRateCardName: 'Standard Rate Card',
+              appliedFreightINR: 150,
+              appliedAdditionalChargesINR: 0,
+              appliedGstINR: 27,
+              finalShipmentChargeINR: 177,
+            },
+            courierAudit: {
+              auditDate: row.created_at ? row.created_at.split('T')[0] : '2026-10-30',
+              auditTime: '10:00 AM',
+              courierId: shp.courier_id || 'delhivery',
+              courierName: shp.courier_name || 'Delhivery',
+              courierAwb: shp.awb_number || 'N/A',
+              auditedActualWeightKg: auditedKg,
+              auditedLengthCm: 30,
+              auditedWidthCm: 25,
+              auditedHeightCm: 20,
+              auditedVolumetricWeightKg: auditedKg,
+              auditedChargeableWeightKg: auditedKg,
+              auditSource: 'HUB_SCAN',
+              courierDiscrepancyRef: `AUD-${row.id.slice(0, 6).toUpperCase()}`,
+              courierProofUrls: row.carrier_proof_image_url ? [row.carrier_proof_image_url] : [],
+            },
+            weightDiffKg: Number(row.excess_weight_kg || 1.0),
+            additionalChargeINR: addCharge,
+            financialImpact: {
+              originalFreightChargeINR: 150,
+              additionalChargeINR: addCharge,
+              disputedAmountINR: addCharge,
+              approvedRefundINR: 0,
+              finalAdjustedChargeINR: 150 + addCharge,
+            },
+            discrepancyNoticeDate: row.created_at ? row.created_at.split('T')[0] : '2026-10-30',
+            disputeDeadline: row.auto_settlement_deadline || '2026-11-10',
+            status: row.status || 'DETECTED',
+            disputeReason: row.merchant_dispute_reason || undefined,
+            proofAttachments: row.merchant_proof_image_url ? [{ id: 'p1', name: 'Merchant Proof', type: 'PACKAGE_PHOTO', url: row.merchant_proof_image_url, sizeKb: 200, uploadedAt: 'Recent' }] : [],
+            auditTimeline: [
+              {
+                id: `evt-cloud-${row.id}`,
+                timestamp: row.created_at ? new Date(row.created_at).toLocaleString() : 'Recent',
+                event: `Weight Discrepancy Audited (${row.status})`,
+                actor: 'Courier Reweigh System',
+                role: 'COURIER_SYSTEM',
+                status: row.status || 'DETECTED',
+              },
+            ],
+            createdAt: row.created_at ? new Date(row.created_at).toLocaleString() : new Date().toLocaleString(),
+            updatedAt: row.updated_at ? new Date(row.updated_at).toLocaleString() : new Date().toLocaleString(),
+          };
+        });
+
+        const seenIds = new Set(cloudRecords.map((r) => r.id));
+        const nonDup = DISCREPANCY_STORE.filter((r) => !seenIds.has(r.id));
+        DISCREPANCY_STORE = [...cloudRecords, ...nonDup];
+        saveDiscrepanciesToStorage(DISCREPANCY_STORE);
+        return DISCREPANCY_STORE;
+      }
+    } catch (err: any) {
+      console.warn('[WeightDiscrepancyService] Supabase sync warning:', err?.message);
+    }
+    return DISCREPANCY_STORE;
+  },
   // Config Management
   getConfig: (): DisputeWindowConfig => {
     return { ...DISPUTE_CONFIG };
@@ -636,6 +763,21 @@ export const WeightDiscrepancyService = {
       awbNumber: record.awbNumber,
       orderId: record.orderId,
     });
+
+    saveDiscrepanciesToStorage(DISCREPANCY_STORE);
+
+    if (record.id && record.id.length > 20) {
+      supabase
+        .from('weight_discrepancies')
+        .update({
+          status: 'DISPUTE_RAISED',
+          merchant_dispute_reason: input.disputeReason,
+          merchant_proof_image_url: record.proofAttachments[0]?.url || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', record.id)
+        .catch(() => {});
+    }
 
     return {
       success: true,
@@ -741,6 +883,20 @@ export const WeightDiscrepancyService = {
       awbNumber: record.awbNumber,
     });
 
+    saveDiscrepanciesToStorage(DISCREPANCY_STORE);
+
+    if (record.id && record.id.length > 20) {
+      supabase
+        .from('weight_discrepancies')
+        .update({
+          status: 'RESOLVED_IN_FAVOR_MERCHANT',
+          resolved_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', record.id)
+        .catch(() => {});
+    }
+
     return {
       success: true,
       message: `Dispute Approved! Credit Note ${record.creditNoteNumber || ''} generated and ₹${approvedRefundINR.toFixed(2)} credited to merchant wallet.`,
@@ -790,6 +946,20 @@ export const WeightDiscrepancyService = {
       message: `Dispute rejected after verification. Reason: ${rejectionReason}`,
       awbNumber: record.awbNumber,
     });
+
+    saveDiscrepanciesToStorage(DISCREPANCY_STORE);
+
+    if (record.id && record.id.length > 20) {
+      supabase
+        .from('weight_discrepancies')
+        .update({
+          status: 'RESOLVED_IN_FAVOR_CARRIER',
+          resolved_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', record.id)
+        .catch(() => {});
+    }
 
     return { success: true, message: `Dispute ${record.discrepancyId} rejected. Original billing maintained.` };
   },

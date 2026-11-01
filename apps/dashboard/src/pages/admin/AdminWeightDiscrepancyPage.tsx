@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Scale,
   CheckCircle2,
@@ -34,6 +34,12 @@ export const AdminWeightDiscrepancyPage: React.FC = () => {
   const [discrepancies, setDiscrepancies] = useState<WeightDiscrepancyRecord[]>(() =>
     WeightDiscrepancyService.getDiscrepancies('all')
   );
+
+  useEffect(() => {
+    WeightDiscrepancyService.syncFromSupabase('all').then((synced) => {
+      setDiscrepancies([...synced]);
+    });
+  }, []);
 
   // Filters
   const [filterStatus, setFilterStatus] = useState<string>('all');

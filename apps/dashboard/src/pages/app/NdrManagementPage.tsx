@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   AlertTriangle,
   Clock,
@@ -58,16 +58,25 @@ export const NdrManagementPage: React.FC = () => {
   const [internalNoteText, setInternalNoteText] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [refreshTick, setRefreshTick] = useState<number>(0);
 
-  const handleRefreshNdr = () => {
+  useEffect(() => {
+    ShipmentTrackingNdrRtoService.syncFromSupabase(tenantId).then(() => {
+      setRefreshTick((v) => v + 1);
+    });
+  }, [tenantId]);
+
+  const handleRefreshNdr = async () => {
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 300);
+    await ShipmentTrackingNdrRtoService.syncFromSupabase(tenantId);
+    setRefreshTick((v) => v + 1);
+    setIsLoading(false);
   };
 
   // Operational Summary Stats
   const summaryStats = useMemo(() => {
     return ShipmentTrackingNdrRtoService.getNdrSummaryStats(tenantId);
-  }, [tenantId]);
+  }, [tenantId, refreshTick]);
 
   // Query Filtered NDR Cases
   const filteredRecords = useMemo(() => {
@@ -78,7 +87,7 @@ export const NdrManagementPage: React.FC = () => {
       reasonFilter,
       courierFilter,
     });
-  }, [tenantId, searchQuery, activeStatusFilter, reasonFilter, courierFilter]);
+  }, [tenantId, searchQuery, activeStatusFilter, reasonFilter, courierFilter, refreshTick]);
 
   // Pagination Math
   const totalPages = Math.ceil(filteredRecords.length / pageSize) || 1;

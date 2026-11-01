@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Scale,
   Clock,
@@ -48,6 +48,12 @@ export const WeightDiscrepancyPage: React.FC = () => {
   const [discrepancies, setDiscrepancies] = useState<WeightDiscrepancyRecord[]>(() =>
     WeightDiscrepancyService.getDiscrepancies(tenantId)
   );
+
+  useEffect(() => {
+    WeightDiscrepancyService.syncFromSupabase(tenantId).then((synced) => {
+      setDiscrepancies([...synced]);
+    });
+  }, [tenantId]);
 
   // Selected Record & Details Modal
   const [selectedRecord, setSelectedRecord] = useState<WeightDiscrepancyRecord | null>(null);

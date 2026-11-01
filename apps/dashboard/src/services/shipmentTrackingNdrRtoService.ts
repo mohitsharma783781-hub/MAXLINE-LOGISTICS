@@ -1,4 +1,6 @@
 import { NotificationService } from './notificationService';
+import { supabase } from '../lib/supabaseClient';
+import { toValidTenantUUID } from '../utils/uuidHelper';
 
 export type PlatformStandardStatus =
   | 'BOOKED'
@@ -128,13 +130,172 @@ export interface CourierTrackingAdapter {
 // Initial Data Seed
 export const INITIAL_TRACKING_EVENTS: TrackingEventRecord[] = [];
 
-export const INITIAL_NDR_RECORDS: NdrRecord[] = [];
+export const INITIAL_NDR_RECORDS: NdrRecord[] = [
+  {
+    id: 'ndr-rec-001',
+    ndrId: 'NDR-58201',
+    shipmentId: 'SHP-99201',
+    awbNumber: 'DEL-992817263',
+    tenantId: 'tenant-demo-01',
+    courierId: 'delhivery',
+    courierName: 'Delhivery Surface',
+    recipientName: 'Vikram Malhotra',
+    recipientPhone: '+91 98112 34567',
+    ndrReason: 'Customer unavailable',
+    ndrDate: '2026-10-30, 02:45 PM',
+    attemptNumber: 1,
+    status: 'CUSTOMER_ACTION_REQUIRED',
+    nextAction: 'Customer door locked upon rider arrival. Awaiting re-attempt instructions.',
+    attemptsHistory: [
+      {
+        attemptNumber: 1,
+        attemptDate: '2026-10-30, 02:45 PM',
+        rawStatus: 'Undelivered - Premises Closed',
+        reason: 'Customer unavailable',
+        location: 'Connaught Place Hub, New Delhi',
+      },
+    ],
+    createdAt: '2026-10-30, 02:45 PM',
+    updatedAt: '2026-10-30, 02:45 PM',
+  },
+  {
+    id: 'ndr-rec-002',
+    ndrId: 'NDR-61402',
+    shipmentId: 'SHP-99202',
+    awbNumber: 'BLR-551092831',
+    tenantId: 'tenant-demo-01',
+    courierId: 'bluedart',
+    courierName: 'Blue Dart Air',
+    recipientName: 'Priya Sharma',
+    recipientPhone: '+91 99204 88312',
+    ndrReason: 'Phone unreachable',
+    ndrDate: '2026-10-29, 05:10 PM',
+    attemptNumber: 2,
+    status: 'REATTEMPT_REQUESTED',
+    preferredDeliveryDate: 'Tomorrow Morning',
+    deliveryInstructions: 'Call alternate number +91 99204 88313 before attempting',
+    nextAction: 'Reattempt scheduled for next business slot.',
+    attemptsHistory: [
+      {
+        attemptNumber: 1,
+        attemptDate: '2026-10-28, 04:30 PM',
+        rawStatus: 'Failed - Unreachable',
+        reason: 'Phone unreachable',
+        location: 'Koramangala Hub, Bengaluru',
+      },
+      {
+        attemptNumber: 2,
+        attemptDate: '2026-10-29, 05:10 PM',
+        rawStatus: 'Failed - Switched Off',
+        reason: 'Phone unreachable',
+        location: 'Koramangala Hub, Bengaluru',
+      },
+    ],
+    createdAt: '2026-10-28, 04:30 PM',
+    updatedAt: '2026-10-29, 06:00 PM',
+  },
+];
 
-export const INITIAL_RTO_RECORDS: RtoRecord[] = [];
+export const INITIAL_RTO_RECORDS: RtoRecord[] = [
+  {
+    id: 'rto-rec-001',
+    rtoId: 'RTO-77102',
+    shipmentId: 'SHP-88312',
+    awbNumber: 'EKR-883192019',
+    tenantId: 'tenant-demo-01',
+    courierId: 'ekart',
+    courierName: 'Ekart Logistics',
+    rtoReason: 'Maximum delivery attempts reached',
+    initiatedAt: '2026-10-28, 11:20 AM',
+    status: 'RTO_IN_TRANSIT',
+    rtoChargeINR: 65.0,
+  },
+  {
+    id: 'rto-rec-002',
+    rtoId: 'RTO-99304',
+    shipmentId: 'SHP-77401',
+    awbNumber: 'DEL-441092812',
+    tenantId: 'tenant-demo-01',
+    courierId: 'delhivery',
+    courierName: 'Delhivery Surface',
+    rtoReason: 'Customer refused',
+    initiatedAt: '2026-10-25, 03:15 PM',
+    completedAt: '2026-10-29, 04:30 PM',
+    status: 'RTO_DELIVERED',
+    rtoChargeINR: 72.0,
+  },
+];
 
-let TRACKING_STORE = [...INITIAL_TRACKING_EVENTS];
-let NDR_STORE = [...INITIAL_NDR_RECORDS];
-let RTO_STORE = [...INITIAL_RTO_RECORDS];
+const STORAGE_KEY_NDR = 'MAXLINE_NDR_STORE';
+const STORAGE_KEY_RTO = 'MAXLINE_RTO_STORE';
+const STORAGE_KEY_TRK = 'MAXLINE_TRACKING_STORE';
+
+function loadNdrFromStorage(): NdrRecord[] {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(STORAGE_KEY_NDR);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    }
+  } catch {}
+  return [...INITIAL_NDR_RECORDS];
+}
+
+function saveNdrToStorage(list: NdrRecord[]) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(STORAGE_KEY_NDR, JSON.stringify(list));
+    }
+  } catch {}
+}
+
+function loadRtoFromStorage(): RtoRecord[] {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(STORAGE_KEY_RTO);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    }
+  } catch {}
+  return [...INITIAL_RTO_RECORDS];
+}
+
+function saveRtoToStorage(list: RtoRecord[]) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(STORAGE_KEY_RTO, JSON.stringify(list));
+    }
+  } catch {}
+}
+
+function loadTrackingFromStorage(): TrackingEventRecord[] {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(STORAGE_KEY_TRK);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    }
+  } catch {}
+  return [...INITIAL_TRACKING_EVENTS];
+}
+
+function saveTrackingToStorage(list: TrackingEventRecord[]) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(STORAGE_KEY_TRK, JSON.stringify(list));
+    }
+  } catch {}
+}
+
+let TRACKING_STORE: TrackingEventRecord[] = loadTrackingFromStorage();
+let NDR_STORE: NdrRecord[] = loadNdrFromStorage();
+let RTO_STORE: RtoRecord[] = loadRtoFromStorage();
 
 const PROCESSED_TRACKING_HASHES = new Set<string>(
   INITIAL_TRACKING_EVENTS.map((e) => `${e.shipmentId}_${e.rawStatus}_${e.eventTime}_${e.location}`)
@@ -161,6 +322,107 @@ const VALID_TRACKING_TRANSITIONS: Record<PlatformStandardStatus, PlatformStandar
 };
 
 export const ShipmentTrackingNdrRtoService = {
+  // Cloud Sync Method for NDR & RTO
+  syncFromSupabase: async (tenantId?: string): Promise<{ ndr: NdrRecord[]; rto: RtoRecord[] }> => {
+    try {
+      // 1. Sync NDR Records
+      let ndrQuery = supabase
+        .from('ndr_records')
+        .select('*, shipments(*)')
+        .order('created_at', { ascending: false });
+
+      if (tenantId && tenantId.toLowerCase() !== 'all') {
+        const validTid = toValidTenantUUID(tenantId);
+        ndrQuery = ndrQuery.eq('merchant_id', validTid);
+      }
+
+      const { data: ndrData, error: ndrError } = await ndrQuery;
+      if (!ndrError && ndrData && Array.isArray(ndrData) && ndrData.length > 0) {
+        const cloudNdr: NdrRecord[] = ndrData.map((row: any) => {
+          const shp = row.shipments || {};
+          return {
+            id: row.id,
+            ndrId: row.ndr_id || `NDR-${row.id.slice(0, 8).toUpperCase()}`,
+            shipmentId: shp.shipment_number || row.shipment_id,
+            awbNumber: shp.awb_number || row.awb_number || 'N/A',
+            tenantId: row.merchant_id || row.tenant_id,
+            courierId: shp.courier_id || row.courier_id || 'delhivery',
+            courierName: shp.courier_name || row.courier_name || 'Delhivery',
+            recipientName: shp.recipient_name || row.recipient_name || 'Customer',
+            recipientPhone: shp.recipient_phone || row.recipient_phone || '9876543210',
+            ndrReason: (row.ndr_reason || 'Customer unavailable') as NdrReason,
+            ndrDate: row.created_at ? new Date(row.created_at).toLocaleString() : 'Recent',
+            attemptNumber: row.attempt_number || 1,
+            status: (row.status === 'BUYER_ACTION_REQUIRED' ? 'CUSTOMER_ACTION_REQUIRED' : (row.status || 'CUSTOMER_ACTION_REQUIRED')) as NdrStatus,
+            nextAction: row.carrier_comment || row.next_action || 'Awaiting customer re-attempt instructions',
+            updatedAddress: row.updated_delivery_address || row.updated_address,
+            updatedPhone: row.updated_phone,
+            preferredDeliveryDate: row.reschedule_date,
+            paymentTypeChange: row.payment_type_change,
+            paymentLinkUrl: row.payment_link_url,
+            attemptsHistory: [
+              {
+                attemptNumber: row.attempt_number || 1,
+                attemptDate: row.created_at ? new Date(row.created_at).toLocaleString() : 'Recent',
+                rawStatus: 'Undelivered',
+                reason: (row.ndr_reason || 'Customer unavailable') as NdrReason,
+                location: shp.delivery_city || 'Destination Hub',
+              },
+            ],
+            createdAt: row.created_at ? new Date(row.created_at).toLocaleString() : new Date().toLocaleString(),
+            updatedAt: row.updated_at ? new Date(row.updated_at).toLocaleString() : new Date().toLocaleString(),
+          };
+        });
+
+        const seenNdrIds = new Set(cloudNdr.map((r) => r.id));
+        const nonDupNdr = NDR_STORE.filter((r) => !seenNdrIds.has(r.id));
+        NDR_STORE = [...cloudNdr, ...nonDupNdr];
+        saveNdrToStorage(NDR_STORE);
+      }
+
+      // 2. Sync RTO Records
+      let rtoQuery = supabase
+        .from('rto_records')
+        .select('*, shipments(*)')
+        .order('created_at', { ascending: false });
+
+      if (tenantId && tenantId.toLowerCase() !== 'all') {
+        const validTid = toValidTenantUUID(tenantId);
+        rtoQuery = rtoQuery.eq('merchant_id', validTid);
+      }
+
+      const { data: rtoData, error: rtoError } = await rtoQuery;
+      if (!rtoError && rtoData && Array.isArray(rtoData) && rtoData.length > 0) {
+        const cloudRto: RtoRecord[] = rtoData.map((row: any) => {
+          const shp = row.shipments || {};
+          return {
+            id: row.id,
+            rtoId: row.rto_id || `RTO-${row.id.slice(0, 8).toUpperCase()}`,
+            shipmentId: shp.shipment_number || row.shipment_id,
+            awbNumber: row.rto_awb_number || shp.awb_number || row.awb_number || 'N/A',
+            tenantId: row.merchant_id || row.tenant_id,
+            courierId: shp.courier_id || row.courier_id || 'delhivery',
+            courierName: shp.courier_name || row.courier_name || 'Delhivery',
+            rtoReason: (row.rto_reason || 'Maximum delivery attempts reached') as RtoReason,
+            initiatedAt: row.initiated_at ? new Date(row.initiated_at).toLocaleString() : 'Recent',
+            status: (row.status || 'RTO_INITIATED') as RtoStatus,
+            completedAt: row.delivered_at || row.completed_at ? new Date(row.delivered_at || row.completed_at).toLocaleString() : undefined,
+            rtoChargeINR: row.rto_charge_minor ? Number(row.rto_charge_minor) / 100 : Number(row.rto_charge_inr || 65.0),
+          };
+        });
+
+        const seenRtoIds = new Set(cloudRto.map((r) => r.id));
+        const nonDupRto = RTO_STORE.filter((r) => !seenRtoIds.has(r.id));
+        RTO_STORE = [...cloudRto, ...nonDupRto];
+        saveRtoToStorage(RTO_STORE);
+      }
+    } catch (err: any) {
+      console.warn('[ShipmentTrackingNdrRtoService] Supabase sync warning:', err?.message);
+    }
+
+    return { ndr: NDR_STORE, rto: RTO_STORE };
+  },
+
   // 1. Configurable Courier Status Normalizer
   normalizeCourierStatus: (rawStatus: string, _courierId = 'default'): PlatformStandardStatus => {
     const s = rawStatus.toLowerCase();
@@ -237,6 +499,7 @@ export const ShipmentTrackingNdrRtoService = {
     };
 
     TRACKING_STORE.unshift(newEvent);
+    saveTrackingToStorage(TRACKING_STORE);
 
     // Auto-create NDR or RTO if status matches
     if (internalStatus === 'NDR') {
@@ -361,6 +624,7 @@ export const ShipmentTrackingNdrRtoService = {
       timestamp: new Date().toLocaleString(),
     });
     ndr.updatedAt = new Date().toLocaleString();
+    saveNdrToStorage(NDR_STORE);
 
     return { success: true, message: 'Internal contact note saved successfully.' };
   },
@@ -427,6 +691,7 @@ export const ShipmentTrackingNdrRtoService = {
     };
 
     NDR_STORE.unshift(newNdr);
+    saveNdrToStorage(NDR_STORE);
 
     NotificationService.createNotification({
       recipientId: input.tenantId,
@@ -459,6 +724,7 @@ export const ShipmentTrackingNdrRtoService = {
       ndr.status = 'RTO_INITIATED';
       ndr.nextAction = 'Merchant requested Return To Origin (RTO). Parcel being routed back.';
       ndr.updatedAt = new Date().toLocaleString();
+      saveNdrToStorage(NDR_STORE);
 
       ShipmentTrackingNdrRtoService.initiateRto({
         shipmentId: ndr.shipmentId,
@@ -480,6 +746,7 @@ export const ShipmentTrackingNdrRtoService = {
       ndr.paymentLinkUrl = payUrl;
       ndr.nextAction = `Converted COD to Prepaid. Instant Payment Link sent via SMS (${payUrl}).`;
       ndr.updatedAt = new Date().toLocaleString();
+      saveNdrToStorage(NDR_STORE);
 
       return {
         success: true,
@@ -496,6 +763,7 @@ export const ShipmentTrackingNdrRtoService = {
       if (input.deliveryInstructions) ndr.deliveryInstructions = input.deliveryInstructions;
       ndr.nextAction = 'Buyer phone and delivery address updated. Re-attempt scheduled.';
       ndr.updatedAt = new Date().toLocaleString();
+      saveNdrToStorage(NDR_STORE);
 
       return { success: true, message: `Buyer address and phone number updated for ${ndr.shipmentId}. Re-attempt scheduled with courier.` };
     }
@@ -506,6 +774,26 @@ export const ShipmentTrackingNdrRtoService = {
     if (input.deliveryInstructions) ndr.deliveryInstructions = input.deliveryInstructions;
     ndr.nextAction = `Re-attempt scheduled for ${input.preferredDeliveryDate || 'Next Business Day'}. Rider notified.`;
     ndr.updatedAt = new Date().toLocaleString();
+
+    saveNdrToStorage(NDR_STORE);
+
+    if (ndr.id && ndr.id.length > 20) {
+      supabase
+        .from('ndr_records')
+        .update({
+          status: ndr.status,
+          reschedule_date: input.preferredDeliveryDate ? new Date().toISOString().split('T')[0] : null,
+          updated_delivery_address: ndr.updatedAddress || null,
+          updated_phone: ndr.updatedPhone || null,
+          carrier_comment: ndr.deliveryInstructions || null,
+          buyer_action_requested: input.actionType,
+          payment_link_url: ndr.paymentLinkUrl || null,
+          payment_link_status: ndr.paymentTypeChange === 'CONVERT_TO_PREPAID' ? 'GENERATED' : 'NONE',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', ndr.id)
+        .catch(() => {});
+    }
 
     NotificationService.createNotification({
       recipientId: 'admin',
@@ -545,6 +833,20 @@ export const ShipmentTrackingNdrRtoService = {
     if (newStatus === 'RTO_DELIVERED') {
       record.completedAt = new Date().toLocaleString();
     }
+    saveRtoToStorage(RTO_STORE);
+
+    if (record.id && record.id.length > 20) {
+      supabase
+        .from('rto_records')
+        .update({
+          status: newStatus,
+          delivered_at: newStatus === 'RTO_DELIVERED' ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', record.id)
+        .catch(() => {});
+    }
+
     return { success: true, message: `RTO status updated to ${newStatus}.`, record };
   },
 
@@ -575,6 +877,22 @@ export const ShipmentTrackingNdrRtoService = {
     };
 
     RTO_STORE.unshift(newRto);
+    saveRtoToStorage(RTO_STORE);
+
+    if (input.tenantId && input.shipmentId && input.shipmentId.length > 20) {
+      supabase
+        .from('rto_records')
+        .upsert({
+          merchant_id: toValidTenantUUID(input.tenantId),
+          shipment_id: input.shipmentId,
+          rto_reason: input.rtoReason,
+          status: 'RTO_INITIATED',
+          rto_awb_number: input.awbNumber,
+          rto_charge_minor: Math.round((newRto.rtoChargeINR || 65) * 100),
+          updated_at: new Date().toISOString(),
+        })
+        .catch(() => {});
+    }
 
     NotificationService.createNotification({
       recipientId: input.tenantId,
