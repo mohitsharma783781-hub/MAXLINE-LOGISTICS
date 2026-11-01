@@ -311,7 +311,13 @@ export class AuthService implements IAuthService {
   async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
     try {
       const cleanEmail = email.trim().toLowerCase();
-      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail);
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/reset-password`
+        : 'https://www.maxlinelogistics.com/reset-password';
+
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: redirectUrl,
+      });
       if (error) {
         return {
           success: false,
@@ -326,6 +332,35 @@ export class AuthService implements IAuthService {
       return {
         success: false,
         message: err.message || 'Failed to request password reset. Please try again.',
+      };
+    }
+  }
+
+  async updatePassword(newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      if (!newPassword || newPassword.length < 8) {
+        return {
+          success: false,
+          message: 'Password must be at least 8 characters long.',
+        };
+      }
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (error) {
+        return {
+          success: false,
+          message: error.message,
+        };
+      }
+      return {
+        success: true,
+        message: 'Password updated successfully! You can now sign in with your new password.',
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err.message || 'Failed to update password. Please try again.',
       };
     }
   }

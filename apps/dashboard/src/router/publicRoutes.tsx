@@ -12,6 +12,7 @@ const AdminLoginPage = lazy(() => import('../pages/admin/AdminLoginPage').then((
 const SignupPage = lazy(() => import('../pages/auth/SignupPage').then((m) => ({ default: m.SignupPage })));
 const VerificationPage = lazy(() => import('../pages/auth/VerificationPage').then((m) => ({ default: m.VerificationPage })));
 const ForgotPasswordPage = lazy(() => import('../pages/auth/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('../pages/auth/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })));
 const PublicTrackingPage = lazy(() => import('../pages/public/PublicTrackingPage').then((m) => ({ default: m.PublicTrackingPage })));
 
 const withSuspense = (Component: React.ComponentType) => (
@@ -108,6 +109,14 @@ export const publicRoutes: RouteObject = {
         {
           path: '/forgot-password',
           element: <ForgotPasswordPage />,
+        },
+        {
+          path: '/reset-password',
+          element: <ResetPasswordPage />,
+        },
+        {
+          path: '/auth/reset-password',
+          element: <ResetPasswordPage />,
         },
       ],
     },
