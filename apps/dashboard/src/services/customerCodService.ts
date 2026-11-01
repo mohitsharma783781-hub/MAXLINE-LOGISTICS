@@ -1,4 +1,11 @@
 import { WalletService } from '../mocks/wallet.mock';
+import { supabase } from '../lib/supabaseClient';
+import { toValidTenantUUID } from '../utils/uuidHelper';
+import {
+  AdminCodRemittanceService,
+  STORAGE_KEY_COD_RECEIVABLES,
+  STORAGE_KEY_COD_REMITTANCES,
+} from './adminCodRemittanceService';
 
 export type CodRemittanceStatus = 'PENDING' | 'PROCESSING' | 'REMITTED' | 'FAILED' | 'ON_HOLD';
 export type EarlyCodPlanType = 'STANDARD_T7' | 'EARLY_T2' | 'INSTANT_T0';
@@ -43,12 +50,120 @@ export interface MerchantEarlyCodConfig extends Record<string, unknown> {
   updatedAt: string;
 }
 
-export const INITIAL_COD_REMITTANCES: CodRemittanceRecord[] = [];
+export const INITIAL_COD_REMITTANCES: CodRemittanceRecord[] = [
+  {
+    id: 'rem-seller-001',
+    remittanceId: 'REM-892104',
+    tenantId: 'tenant-demo-01',
+    shipmentCount: 1,
+    grossCodAmountINR: 1850,
+    deductionINR: 40,
+    earlyFeeINR: 0,
+    netRemittanceINR: 1810,
+    status: 'REMITTED',
+    payoutType: 'STANDARD_T7',
+    payoutDestination: 'BANK',
+    remittanceDate: '2026-10-28 12:15 PM',
+    bankReferenceId: 'UTR-HDFC-992817263',
+    createdAt: '2026-10-28T11:30:00Z',
+  },
+];
 
-export const INITIAL_COD_TRANSACTIONS: CodTransactionRecord[] = [];
+export const INITIAL_COD_TRANSACTIONS: CodTransactionRecord[] = [
+  {
+    id: 'tx-001',
+    tenantId: 'tenant-demo-01',
+    shipmentId: 'SHP-99101',
+    awbNumber: 'DEL-881290192',
+    orderId: 'ORD-55410',
+    deliveredDate: '2026-10-29',
+    codAmountINR: 2450,
+    netAmountINR: 2405,
+    status: 'ELIGIBLE_FOR_REMITTANCE',
+  },
+  {
+    id: 'tx-002',
+    tenantId: 'tenant-demo-01',
+    shipmentId: 'SHP-99102',
+    awbNumber: 'BLR-992019201',
+    orderId: 'ORD-55411',
+    deliveredDate: '2026-10-30',
+    codAmountINR: 4120,
+    netAmountINR: 4060,
+    status: 'ELIGIBLE_FOR_REMITTANCE',
+  },
+  {
+    id: 'tx-003',
+    tenantId: 'tenant-demo-01',
+    shipmentId: 'SHP-99103',
+    awbNumber: 'DTD-332019482',
+    orderId: 'ORD-55412',
+    deliveredDate: '2026-10-25',
+    codAmountINR: 1850,
+    netAmountINR: 1810,
+    remittanceId: 'REM-892104',
+    status: 'REMITTED',
+  },
+];
 
-let REMITTANCE_STORE = [...INITIAL_COD_REMITTANCES];
-let COD_TX_STORE = [...INITIAL_COD_TRANSACTIONS];
+function loadSellerRemittances(): CodRemittanceRecord[] {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(STORAGE_KEY_COD_REMITTANCES);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((r: any) => ({
+            id: r.id,
+            remittanceId: r.remittanceId,
+            tenantId: r.tenantId,
+            shipmentCount: r.shipmentCount,
+            grossCodAmountINR: r.grossCodAmountINR,
+            deductionINR: (r.codChargesINR || 0) + (r.otherAdjustmentsINR || 0) + (r.recoveriesINR || 0) + (r.deductionINR || 0),
+            earlyFeeINR: r.earlyFeeINR || 0,
+            netRemittanceINR: r.netRemittanceINR,
+            status: (r.status === 'COMPLETED' ? 'REMITTED' : (r.status || 'PROCESSING')) as CodRemittanceStatus,
+            payoutType: r.payoutType || 'STANDARD_T7',
+            payoutDestination: r.payoutDestination || 'BANK',
+            remittanceDate: r.completedAt || r.remittanceDate || r.createdAt,
+            bankReferenceId: r.bankReferenceId,
+            createdAt: r.createdAt,
+          }));
+        }
+      }
+    }
+  } catch {}
+  return [...INITIAL_COD_REMITTANCES];
+}
+
+function loadSellerTransactions(): CodTransactionRecord[] {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(STORAGE_KEY_COD_RECEIVABLES);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((r: any) => ({
+            id: r.id,
+            tenantId: r.tenantId,
+            shipmentId: r.shipmentId,
+            awbNumber: r.awbNumber,
+            orderId: r.orderId,
+            deliveredDate: r.deliveredDate,
+            codAmountINR: r.codAmountINR,
+            netAmountINR: r.netEligibleINR || r.netAmountINR || r.codAmountINR,
+            remittanceId: r.remittanceId,
+            status: r.status === 'REMITTED' ? 'REMITTED' : (r.status === 'ELIGIBLE' ? 'ELIGIBLE_FOR_REMITTANCE' : 'PENDING_DELIVERY'),
+          }));
+        }
+      }
+    }
+  } catch {}
+  return [...INITIAL_COD_TRANSACTIONS];
+}
+
+let REMITTANCE_STORE = loadSellerRemittances();
+let COD_TX_STORE = loadSellerTransactions();
 
 const MERCHANT_EARLY_COD_CONFIGS: Record<string, MerchantEarlyCodConfig> = {
   'tenant-demo-01': {
@@ -62,6 +177,16 @@ const MERCHANT_EARLY_COD_CONFIGS: Record<string, MerchantEarlyCodConfig> = {
 };
 
 export const CustomerCodService = {
+  syncFromSupabase: async (tenantId: string): Promise<{ remittances: CodRemittanceRecord[]; transactions: CodTransactionRecord[] }> => {
+    await AdminCodRemittanceService.syncFromSupabase(tenantId);
+    REMITTANCE_STORE = loadSellerRemittances();
+    COD_TX_STORE = loadSellerTransactions();
+    return {
+      remittances: REMITTANCE_STORE,
+      transactions: COD_TX_STORE,
+    };
+  },
+
   getRemittances: (tenantId = 'tenant-demo-01', statusFilter = 'all'): CodRemittanceRecord[] => {
     return CustomerCodService.queryRemittances({ tenantId, statusFilter });
   },
@@ -199,6 +324,49 @@ export const CustomerCodService = {
     });
 
     REMITTANCE_STORE.unshift(newRemittance);
+
+    // Save to shared localStorage
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const rawRem = localStorage.getItem(STORAGE_KEY_COD_REMITTANCES);
+        const rems = rawRem ? JSON.parse(rawRem) : [];
+        rems.unshift(newRemittance);
+        localStorage.setItem(STORAGE_KEY_COD_REMITTANCES, JSON.stringify(rems));
+
+        const rawRec = localStorage.getItem(STORAGE_KEY_COD_RECEIVABLES);
+        if (rawRec) {
+          const recs = JSON.parse(rawRec);
+          recs.forEach((rc: any) => {
+            if (eligibleTxs.some((et) => et.shipmentId === rc.shipmentId)) {
+              rc.status = 'REMITTED';
+              rc.remittanceId = remittanceId;
+            }
+          });
+          localStorage.setItem(STORAGE_KEY_COD_RECEIVABLES, JSON.stringify(recs));
+        }
+      }
+    } catch {}
+
+    // Insert into Supabase
+    if (tenantId && tenantId.length > 20) {
+      supabase
+        .from('cod_remittances')
+        .insert([{
+          merchant_id: toValidTenantUUID(tenantId),
+          remittance_number: remittanceId,
+          total_shipments_count: eligibleTxs.length,
+          gross_collected_minor: Math.round(grossAmount * 100),
+          deductions_minor: Math.round(standardDeductions * 100),
+          early_cod_fee_minor: Math.round(earlyFee * 100),
+          net_payout_minor: Math.round(netRemittance * 100),
+          payout_mode: payoutDestination === 'WALLET' ? 'WALLET' : 'BANK_TRANSFER',
+          bank_reference_utr: utr,
+          status: 'REMITTED',
+          remitted_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        }])
+        .catch(() => {});
+    }
 
     // If destination is WALLET, credit wallet instantly!
     if (payoutDestination === 'WALLET') {

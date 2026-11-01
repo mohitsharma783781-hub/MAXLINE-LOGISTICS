@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { IndianRupee, CheckCircle2, Clock, Eye, Zap, Settings, Wallet, Landmark, Search, FileSpreadsheet, RotateCcw } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
@@ -45,8 +45,15 @@ export const CodDashboardPage: React.FC = () => {
   const [earlyCodConfig, setEarlyCodConfig] = useState(() => CustomerCodService.getEarlyCodConfig(tenantId));
   const [selectedPlanType, setSelectedPlanType] = useState<EarlyCodPlanType>(earlyCodConfig.activePlan);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [refreshTick, setRefreshTick] = useState<number>(0);
 
-  const stats = CustomerCodService.getCodSummaryStats(tenantId);
+  useEffect(() => {
+    CustomerCodService.syncFromSupabase(tenantId).then(() => {
+      setRefreshTick((v) => v + 1);
+    });
+  }, [tenantId]);
+
+  const stats = useMemo(() => CustomerCodService.getCodSummaryStats(tenantId), [tenantId, refreshTick]);
 
   // Query Filtered COD Data
   const filteredTransactions = useMemo(() => {
@@ -55,7 +62,7 @@ export const CodDashboardPage: React.FC = () => {
       searchQuery,
       statusFilter,
     });
-  }, [tenantId, searchQuery, statusFilter]);
+  }, [tenantId, searchQuery, statusFilter, refreshTick]);
 
   const filteredRemittances = useMemo(() => {
     return CustomerCodService.queryRemittances({
@@ -63,7 +70,7 @@ export const CodDashboardPage: React.FC = () => {
       searchQuery,
       statusFilter,
     });
-  }, [tenantId, searchQuery, statusFilter]);
+  }, [tenantId, searchQuery, statusFilter, refreshTick]);
 
   // Pagination Math
   const activeListLength = activeTab === 'transactions' ? filteredTransactions.length : filteredRemittances.length;
@@ -90,6 +97,7 @@ export const CodDashboardPage: React.FC = () => {
     try {
       const rec = CustomerCodService.claimInstantCodPayout(tenantId, payoutDestination, payoutPlanFeePercent);
       setSuccessReceipt(rec);
+      setRefreshTick((v) => v + 1);
     } catch (err: any) {
       alert(err?.message || 'Failed to claim instant payout.');
     }

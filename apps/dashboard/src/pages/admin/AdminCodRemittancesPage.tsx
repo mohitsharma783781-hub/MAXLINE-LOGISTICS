@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IndianRupee, CheckCircle2, ShieldAlert, Plus, Eye, Check, Zap } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
@@ -18,6 +18,7 @@ import {
   type CourierCodSummaryRecord,
   type CodReconciliationException,
 } from '../../services/adminCodRemittanceService';
+import { AdminManagementService } from '../../services/adminManagementService';
 
 export const AdminCodRemittancesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'remittances' | 'receivables' | 'couriers' | 'reconciliation'>('remittances');
@@ -36,8 +37,9 @@ export const AdminCodRemittancesPage: React.FC = () => {
   // Create Remittance Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState('tenant-demo-01');
+  const [merchantsList, setMerchantsList] = useState<{ id: string; name: string }[]>([]);
   const [selectedCourier, setSelectedCourier] = useState('dtdc');
-  const [settlementPeriod, setSettlementPeriod] = useState('2026-08-18 to 2026-08-21');
+  const [settlementPeriod, setSettlementPeriod] = useState('2026-10-25 to 2026-10-31');
   const [otherAdjustments, setOtherAdjustments] = useState('0');
   const [recoveries, setRecoveries] = useState('0');
   const [remittanceNotes, setRemittanceNotes] = useState('');
@@ -47,9 +49,23 @@ export const AdminCodRemittancesPage: React.FC = () => {
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [bankReferenceId, setBankReferenceId] = useState('');
 
+  useEffect(() => {
+    AdminCodRemittanceService.syncFromSupabase('all').then((res) => {
+      setRemittances([...res.remittances]);
+      setReceivables([...res.receivables]);
+    });
+
+    AdminManagementService.getMerchants().then((mList) => {
+      if (mList && mList.length > 0) {
+        setMerchantsList(mList.map((m) => ({ id: m.id, name: `${m.businessName || m.ownerName} (${m.id.slice(0, 8)})` })));
+        setSelectedTenant(mList[0].id);
+      }
+    }).catch(() => {});
+  }, []);
+
   const refreshData = () => {
-    setRemittances(AdminCodRemittanceService.getRemittances(tenantFilter, statusFilter));
-    setReceivables(AdminCodRemittanceService.getReceivables(tenantFilter, statusFilter));
+    setRemittances([...AdminCodRemittanceService.getRemittances(tenantFilter, statusFilter)]);
+    setReceivables([...AdminCodRemittanceService.getReceivables(tenantFilter, statusFilter)]);
   };
 
   const handleCreateRemittance = () => {
@@ -332,6 +348,7 @@ export const AdminCodRemittancesPage: React.FC = () => {
               value={selectedTenant}
               onChange={(e) => setSelectedTenant(e.target.value)}
               options={[
+                ...merchantsList.map((m) => ({ value: m.id, label: m.name })),
                 { value: 'tenant-demo-01', label: 'tenant-demo-01 (ABC Traders)' },
                 { value: 'tenant-demo-02', label: 'tenant-demo-02 (XYZ Logistics)' },
               ]}
