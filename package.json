@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "MAXLINE LOGISTICS - Door-to-Door Courier & Cargo Aggregator SaaS Platform",
   "scripts": {
-    "build": "cd apps/dashboard && npm install && npm run build",
+    "build": "node scripts/build.js",
     "build:api": "cd apps/api && npm install && npm run build",
     "start": "cd apps/dashboard && npm run preview"
   },
