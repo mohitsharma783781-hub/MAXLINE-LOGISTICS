@@ -6,6 +6,8 @@ import type {
 export type { EligibleCourierResult };
 import { B2BPricingEngine } from './b2bPricingEngine';
 import { B2CPricingEngine } from './b2cPricingEngine';
+import { supabase } from '../lib/supabaseClient';
+import { toValidTenantUUID } from '../utils/uuidHelper';
 
 export const INITIAL_RATE_ASSIGNMENTS: CustomerRateAssignment[] = [
   {
@@ -64,9 +66,79 @@ export const INITIAL_RATE_ASSIGNMENTS: CustomerRateAssignment[] = [
   },
 ];
 
-let ASSIGNMENT_STORE = [...INITIAL_RATE_ASSIGNMENTS];
+const STORAGE_KEY = 'MAXLINE_RATE_ASSIGNMENTS_STORE';
+
+function loadAssignmentsFromStorage(): CustomerRateAssignment[] {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    }
+  } catch {}
+  return [...INITIAL_RATE_ASSIGNMENTS];
+}
+
+function saveAssignmentsToStorage(list: CustomerRateAssignment[]) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+  } catch {}
+}
+
+let ASSIGNMENT_STORE = loadAssignmentsFromStorage();
 
 export const CustomerRateAssignmentService = {
+  syncFromSupabase: async (tenantId?: string): Promise<CustomerRateAssignment[]> => {
+    try {
+      let query = supabase
+        .from('merchant_rate_assignments')
+        .select('*, carrier_rate_cards(*)');
+
+      if (tenantId && tenantId.toLowerCase() !== 'all') {
+        const validTid = toValidTenantUUID(tenantId);
+        query = query.eq('merchant_id', validTid);
+      }
+
+      const { data, error } = await query;
+      if (!error && data && Array.isArray(data) && data.length > 0) {
+        const cloudAssignments: CustomerRateAssignment[] = data.map((row: any) => {
+          const card = row.carrier_rate_cards || {};
+          return {
+            id: row.id,
+            tenantId: row.merchant_id,
+            tenantName: 'MAXLINE Partner Merchant',
+            mode: (row.mode as any) || 'B2C',
+            courierId: card.courier_id || 'delhivery',
+            courierName: card.courier_name || 'Delhivery Surface',
+            serviceId: 'express-surface',
+            serviceName: card.name || 'Express Cargo',
+            rateCardId: row.rate_card_id,
+            rateCardName: card.name || 'Assigned Rate Card',
+            rateCardVersion: 'v1.0',
+            isDefault: !!row.is_default,
+            status: row.is_active ? 'ACTIVE' : 'INACTIVE',
+            effectiveFrom: row.created_at ? row.created_at.split('T')[0] : '2026-08-01',
+            createdAt: row.created_at ? row.created_at.split('T')[0] : '2026-08-01',
+            updatedAt: row.updated_at ? row.updated_at.split('T')[0] : '2026-08-01',
+          };
+        });
+
+        const seenIds = new Set(cloudAssignments.map((a) => a.id));
+        const nonDup = ASSIGNMENT_STORE.filter((a) => !seenIds.has(a.id));
+        ASSIGNMENT_STORE = [...cloudAssignments, ...nonDup];
+        saveAssignmentsToStorage(ASSIGNMENT_STORE);
+        return ASSIGNMENT_STORE;
+      }
+    } catch (err: any) {
+      console.warn('[CustomerRateAssignmentService] Supabase sync warning:', err?.message);
+    }
+    return ASSIGNMENT_STORE;
+  },
+
   getAssignments: (tenantId?: string, mode?: 'B2B' | 'B2C'): CustomerRateAssignment[] => {
     const list = ASSIGNMENT_STORE.filter((item) => {
       if (tenantId && tenantId !== 'all' && item.tenantId !== tenantId) return false;
@@ -84,7 +156,6 @@ export const CustomerRateAssignmentService = {
   },
 
   assignRateCard: (input: CustomerRateAssignmentInput): CustomerRateAssignment => {
-    // If setting as default, clear previous default flag for that mode
     if (input.isDefault) {
       ASSIGNMENT_STORE.forEach((item) => {
         if (item.tenantId === input.tenantId && item.mode === input.mode) {
@@ -113,6 +184,23 @@ export const CustomerRateAssignmentService = {
     };
 
     ASSIGNMENT_STORE.unshift(newAssignment);
+    saveAssignmentsToStorage(ASSIGNMENT_STORE);
+
+    // Asynchronously synchronize assignment with Supabase
+    if (input.tenantId && input.tenantId.length > 20) {
+      const validTid = toValidTenantUUID(input.tenantId);
+      supabase
+        .from('merchant_rate_assignments')
+        .insert({
+          merchant_id: validTid,
+          rate_card_id: input.rateCardId,
+          mode: input.mode,
+          is_default: !!input.isDefault,
+          is_active: true,
+        })
+        .catch(() => {});
+    }
+
     return newAssignment;
   },
 
@@ -131,6 +219,10 @@ export const CustomerRateAssignmentService = {
       }
     });
 
+    if (updated) {
+      saveAssignmentsToStorage(ASSIGNMENT_STORE);
+    }
+
     return updated;
   },
 
@@ -140,16 +232,20 @@ export const CustomerRateAssignmentService = {
 
     item.status = 'INACTIVE';
     item.updatedAt = new Date().toISOString().split('T')[0];
+    saveAssignmentsToStorage(ASSIGNMENT_STORE);
     return true;
   },
 
   removeAssignment: (assignmentId: string): boolean => {
     const initialLen = ASSIGNMENT_STORE.length;
     ASSIGNMENT_STORE = ASSIGNMENT_STORE.filter((a) => a.id !== assignmentId);
-    return ASSIGNMENT_STORE.length < initialLen;
+    const removed = ASSIGNMENT_STORE.length < initialLen;
+    if (removed) {
+      saveAssignmentsToStorage(ASSIGNMENT_STORE);
+    }
+    return removed;
   },
 
-  // Eligible Couriers Filter Engine for Customer Booking
   getEligibleCouriersForCustomer: (
     tenantId: string,
     mode: 'B2B' | 'B2C',
@@ -159,106 +255,102 @@ export const CustomerRateAssignmentService = {
     paymentType: 'PREPAID' | 'COD' = 'PREPAID',
     codAmountPaise = 0
   ): EligibleCourierResult[] => {
-    let activeAssignments = ASSIGNMENT_STORE.filter(
-      (a) => a.tenantId === tenantId && a.mode === mode && a.status === 'ACTIVE'
-    );
+    const assignments = CustomerRateAssignmentService.getAssignments(tenantId, mode);
+    const activeAssignments = assignments.filter((a) => a.status === 'ACTIVE');
 
     if (activeAssignments.length === 0) {
-      activeAssignments = ASSIGNMENT_STORE.filter(
-        (a) => (a.tenantId === 'tenant-demo-01' || a.isDefault) && a.mode === mode && a.status === 'ACTIVE'
-      );
+      return [];
     }
 
     const results: EligibleCourierResult[] = [];
 
     activeAssignments.forEach((assign) => {
-      if (mode === 'B2C') {
-        const priceRes = B2CPricingEngine.calculateB2CRate({
-          tenantId,
-          courierId: assign.courierId,
-          serviceId: assign.serviceId,
-          originPincode,
-          destinationPincode,
-          actualWeightGrams,
-          paymentType,
-          codAmountPaise,
-          rateCardId: assign.rateCardId,
-        });
+      try {
+        if (mode === 'B2C') {
+          const calcRes = B2CPricingEngine.calculateCustomerRate({
+            tenantId,
+            originPincode,
+            destinationPincode,
+            actualWeightGrams,
+            lengthCm: 20,
+            widthCm: 15,
+            heightCm: 10,
+            paymentType,
+            codAmountPaise,
+            selectedCourierId: assign.courierId,
+          });
 
-        results.push({
-          courierId: assign.courierId,
-          courierName: assign.courierName,
-          serviceId: assign.serviceId,
-          serviceName: assign.serviceName,
-          mode: 'B2C',
-          isDefault: assign.isDefault,
-          rateCardId: assign.rateCardId,
-          rateCardName: assign.rateCardName,
-          rateCardVersion: assign.rateCardVersion,
-          serviceable: priceRes.serviceable,
-          reasonCode: priceRes.serviceable ? 'SERVICEABLE' : 'NOT_SERVICEABLE',
-          customerPriceINR: priceRes.totalAmountINR,
-          estimatedDeliveryDays: assign.courierId === 'bluedart' ? '1–2 Days (Air)' : '2–4 Days (Surface)',
-          rating: assign.courierId === 'bluedart' ? 4.9 : 4.8,
-          reliabilityScore: assign.courierId === 'bluedart' ? '99.1% On-Time' : '98.4% On-Time',
-          zoneRoute: originPincode.slice(0, 2) === destinationPincode.slice(0, 2) ? 'Zone A (Intra-City)' : 'Zone C (Metro-to-Metro)',
-        });
-      } else {
-        const priceRes = B2BPricingEngine.calculateB2BRate({
-          tenantId,
-          courierId: assign.courierId,
-          serviceId: assign.serviceId,
-          originPincode,
-          destinationPincode,
-          actualWeightGrams,
-          codAmountPaise,
-          rateCardId: assign.rateCardId,
-        });
+          if (calcRes.success && calcRes.breakdown) {
+            results.push({
+              assignmentId: assign.id,
+              courierId: assign.courierId,
+              courierName: assign.courierName,
+              serviceId: assign.serviceId,
+              serviceName: assign.serviceName,
+              rateCardId: assign.rateCardId,
+              rateCardName: assign.rateCardName,
+              mode: 'B2C',
+              isDefault: assign.isDefault,
+              appliedZone: calcRes.zoneName || 'Metro',
+              chargeableWeightGrams: calcRes.breakdown.chargeableWeightGrams,
+              baseFreightPaise: calcRes.breakdown.baseFreightPaise,
+              fuelSurchargePaise: calcRes.breakdown.fuelSurchargePaise,
+              codChargesPaise: calcRes.breakdown.codChargesPaise,
+              docketChargesPaise: calcRes.breakdown.docketFeePaise,
+              gstPaise: calcRes.breakdown.gstAmountPaise,
+              totalCustomerChargePaise: calcRes.breakdown.finalCustomerPayablePaise,
+              estimatedDeliveryDays: 2,
+              serviceable: true,
+            });
+          }
+        } else {
+          const b2bWeightKg = Math.max(20, Math.ceil(actualWeightGrams / 1000));
+          const calcRes = B2BPricingEngine.calculateB2BShipmentPrice({
+            originPincode,
+            destinationPincode,
+            actualWeightKg: b2bWeightKg,
+            dimensionsCm: '40x30x20',
+            packageCount: 1,
+            declaredValueINR: 10000,
+            paymentMode: paymentType,
+            codAmountINR: codAmountPaise / 100,
+            selectedCourierId: assign.courierId,
+          });
 
-        results.push({
-          courierId: assign.courierId,
-          courierName: assign.courierName,
-          serviceId: assign.serviceId,
-          serviceName: assign.serviceName,
-          mode: 'B2B',
-          isDefault: assign.isDefault,
-          rateCardId: assign.rateCardId,
-          rateCardName: assign.rateCardName,
-          rateCardVersion: assign.rateCardVersion,
-          serviceable: priceRes.serviceable,
-          reasonCode: priceRes.serviceable ? 'SERVICEABLE' : 'NOT_SERVICEABLE',
-          customerPriceINR: priceRes.totalAmountINR,
-          estimatedDeliveryDays: '3–5 Days (Commercial Cargo)',
-          rating: 4.7,
-          reliabilityScore: '97.8% On-Time',
-          zoneRoute: 'Zone C (Commercial Freight)',
-        });
+          if (calcRes.success && calcRes.breakdown) {
+            results.push({
+              assignmentId: assign.id,
+              courierId: assign.courierId,
+              courierName: assign.courierName,
+              serviceId: assign.serviceId,
+              serviceName: assign.serviceName,
+              rateCardId: assign.rateCardId,
+              rateCardName: assign.rateCardName,
+              mode: 'B2B',
+              isDefault: assign.isDefault,
+              appliedZone: calcRes.zoneName || 'Zone N1',
+              chargeableWeightGrams: b2bWeightKg * 1000,
+              baseFreightPaise: Math.round(calcRes.breakdown.freightBaseINR * 100),
+              fuelSurchargePaise: Math.round(calcRes.breakdown.fuelSurchargeINR * 100),
+              codChargesPaise: Math.round(calcRes.breakdown.codChargeINR * 100),
+              docketChargesPaise: Math.round(calcRes.breakdown.docketFeeINR * 100),
+              gstPaise: Math.round(calcRes.breakdown.gstINR * 100),
+              totalCustomerChargePaise: Math.round(calcRes.breakdown.totalPayableINR * 100),
+              estimatedDeliveryDays: 3,
+              serviceable: true,
+            });
+          }
+        }
+      } catch (err: any) {
+        console.warn(`[CustomerRateAssignmentService] Error calculating rate for ${assign.courierName}:`, err?.message);
       }
     });
 
-    // Evaluate Smart Recommendation Tags
-    const serviceableResults = results.filter((r) => r.serviceable);
-    if (serviceableResults.length > 0) {
-      // 1. Lowest Price -> Cheapest
-      let cheapest = serviceableResults[0];
-      serviceableResults.forEach((r) => {
-        if (r.customerPriceINR < cheapest.customerPriceINR) cheapest = r;
-      });
-      cheapest.isCheapest = true;
-
-      // 2. Shortest Days -> Fastest
-      let fastest = serviceableResults[0];
-      serviceableResults.forEach((r) => {
-        if (r.estimatedDeliveryDays.includes('1–2 Days') || r.estimatedDeliveryDays.includes('Air')) {
-          fastest = r;
-        }
-      });
-      fastest.isFastest = true;
-
-      // 3. Recommended -> Highest Rating & Balanced Choice
-      let recommended = serviceableResults.find((r) => r.isDefault) || cheapest;
-      recommended.isRecommended = true;
-    }
+    results.sort((a, b) => {
+      if (a.isDefault && !b.isDefault) return -1;
+      if (!a.isDefault && b.isDefault) return 1;
+      return a.totalCustomerChargePaise - b.totalCustomerChargePaise;
+    });
 
     return results;
   },

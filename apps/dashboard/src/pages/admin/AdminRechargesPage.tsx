@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wallet, ShieldAlert, CheckCircle2, Eye } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
@@ -18,6 +18,13 @@ export const AdminRechargesPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState<'recharges' | 'reconciliation'>('recharges');
   const [selectedRecord, setSelectedRecord] = useState<WalletRechargeRecord | null>(null);
+  const [syncCounter, setSyncCounter] = useState(0);
+
+  useEffect(() => {
+    WalletRechargeService.syncFromSupabase('all').then(() => {
+      setSyncCounter((prev) => prev + 1);
+    });
+  }, []);
 
   const recharges = WalletRechargeService.getRecharges('all', statusFilter).filter((r) => {
     if (searchQuery.trim()) {

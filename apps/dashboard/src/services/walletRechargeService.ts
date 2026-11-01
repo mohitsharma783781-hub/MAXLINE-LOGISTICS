@@ -1,5 +1,6 @@
 import { WalletService } from '../mocks/wallet.mock';
 import { MockPaymentGatewayAdapter, type PaymentVerificationInput } from './paymentProviderAdapter';
+import { supabase } from '../lib/supabaseClient';
 
 export type RechargeStatus =
   | 'CREATED'
@@ -59,6 +60,52 @@ let RECHARGE_STORE = [...INITIAL_RECHARGES];
 const PROCESSED_RECHARGE_IDS = new Set<string>(['RCH-8471902']);
 
 export const WalletRechargeService = {
+  syncFromSupabase: async (tenantId?: string): Promise<WalletRechargeRecord[]> => {
+    try {
+      let query = supabase
+        .from('wallet_transactions')
+        .select('*')
+        .eq('type', 'RECHARGE')
+        .order('created_at', { ascending: false });
+
+      if (tenantId && tenantId.toLowerCase() !== 'all') {
+        query = query.eq('merchant_id', tenantId);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.warn('[WalletRechargeService] Supabase sync warning:', error.message);
+        return RECHARGE_STORE;
+      }
+
+      if (data && Array.isArray(data) && data.length > 0) {
+        const cloudRecords: WalletRechargeRecord[] = data.map((row: any) => ({
+          id: row.id,
+          rechargeId: row.reference_id ? `RCH-${row.reference_id}` : `RCH-${row.id.slice(0, 8).toUpperCase()}`,
+          tenantId: row.merchant_id,
+          amountINR: Number(row.amount_minor || 0) / 100,
+          expectedAmountINR: Number(row.amount_minor || 0) / 100,
+          paymentFeeINR: 0,
+          payableAmountINR: Number(row.amount_minor || 0) / 100,
+          paymentStatus: 'SUCCESS',
+          paymentProvider: row.description?.includes('Razorpay') ? 'Razorpay' : 'Direct Gateway',
+          providerPaymentId: row.reference_id || `PAY-${row.id.slice(0, 8)}`,
+          walletTransactionId: row.id,
+          createdAt: row.created_at ? new Date(row.created_at).toLocaleString() : new Date().toLocaleString(),
+          completedAt: row.created_at ? new Date(row.created_at).toLocaleString() : new Date().toLocaleString(),
+        }));
+
+        const seenIds = new Set(cloudRecords.map((r) => r.id));
+        const nonDuplicateMock = RECHARGE_STORE.filter((r) => !seenIds.has(r.id));
+        RECHARGE_STORE = [...cloudRecords, ...nonDuplicateMock];
+        return RECHARGE_STORE;
+      }
+    } catch (err: any) {
+      console.warn('[WalletRechargeService] Supabase sync exception:', err?.message);
+    }
+    return RECHARGE_STORE;
+  },
+
   getRecharges: (tenantId?: string, statusFilter = 'all'): WalletRechargeRecord[] => {
     return RECHARGE_STORE.filter((r) => {
       if (tenantId && tenantId !== 'all' && r.tenantId !== tenantId) return false;

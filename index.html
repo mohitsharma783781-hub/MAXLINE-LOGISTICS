@@ -1755,10 +1755,66 @@
             });
         }
 
-        function openTrackingModal(awb) {
+        async function openTrackingModal(awb) {
             const modalAwb = document.getElementById('modal-awb');
             if (modalAwb) modalAwb.innerText = awb || 'MXL9482103IN';
-            const awbStr = (awb || '').toUpperCase();
+            const awbStr = (awb || '').trim().toUpperCase();
+
+            // Try Live Supabase Cloud Database Query first
+            try {
+                const sUrl = 'https://lbldljgyusyqqcbyvmem.supabase.co';
+                const sKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxibGRsamd5dXN5cXFjYnl2bWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5Mzg2NDcsImV4cCI6MjEwODUxNDY0N30.WsFo9NV3CI_fw5jOe3d-XNuGZ-HElpogkyq0UAINN8U';
+                const res = await fetch(`${sUrl}/rest/v1/shipments?or=(awb_number.eq.${encodeURIComponent(awbStr)},shipment_number.eq.${encodeURIComponent(awbStr)},order_id.eq.${encodeURIComponent(awbStr)})&select=*`, {
+                    headers: { 'apikey': sKey, 'Authorization': `Bearer ${sKey}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        const s = data[0];
+                        const courierEl = document.getElementById('modal-courier');
+                        if (courierEl) courierEl.innerText = `${s.courier_name || 'Delhivery Express'} (${s.mode || 'B2C'})`;
+
+                        const statusEl = document.getElementById('modal-status');
+                        if (statusEl) statusEl.innerText = s.customer_facing_status || s.booking_status || 'In Transit';
+
+                        const etaEl = document.getElementById('modal-eta');
+                        if (etaEl) etaEl.innerText = `Route: ${s.pickup_city || 'Origin'} → ${s.delivery_city || 'Destination'} (${s.delivery_pincode || ''})`;
+
+                        const isDelivered = s.booking_status === 'DELIVERED';
+                        const isOFD = isDelivered || s.booking_status === 'OUT_FOR_DELIVERY';
+                        const isInTransit = isOFD || s.booking_status === 'IN_TRANSIT';
+                        const isPickedUp = isInTransit || s.booking_status === 'PICKED_UP';
+                        const bookTime = s.booked_at ? new Date(s.booked_at).toLocaleDateString() : 'Active';
+
+                        const liveSteps = [
+                            { title: `Order Booked & AWB Created (${s.awb_number || s.shipment_number})`, time: bookTime, done: true },
+                            { title: `Pickup Scheduled from ${s.pickup_city || 'Warehouse'} Hub`, time: bookTime, done: isPickedUp },
+                            { title: 'Picked Up by Courier Representative', time: isPickedUp ? 'Completed' : 'Pending dispatch', done: isPickedUp },
+                            { title: 'In Transit across Surface / Air Network', time: isInTransit ? 'Active In-Transit' : 'En route', done: isInTransit },
+                            { title: `Out for Delivery to Consignee (${s.delivery_city || ''})`, time: isOFD ? 'Out for Delivery' : 'Pending arrival', done: isOFD },
+                            { title: 'Delivered to Doorstep', time: isDelivered ? 'Successfully Delivered' : 'Estimated 24-48 Hours', done: isDelivered }
+                        ];
+
+                        const stepsContainer = document.getElementById('modal-timeline-steps');
+                        if (stepsContainer) {
+                            stepsContainer.innerHTML = liveSteps.map(st => `
+                                <div class="relative pl-3">
+                                    <span class="absolute -left-[23px] top-0.5 w-3.5 h-3.5 rounded-full ${st.done ? 'bg-emerald-500 text-white shadow-xs' : 'bg-slate-300'} flex items-center justify-center text-[9px] font-bold">
+                                        ${st.done ? '✓' : ''}
+                                    </span>
+                                    <div class="text-xs font-bold ${st.done ? 'text-slate-900' : 'text-slate-400'}">${st.title}</div>
+                                    <div class="text-[10px] text-slate-600">${st.time}</div>
+                                </div>
+                            `).join('');
+                        }
+
+                        const modal = document.getElementById('tracking-modal');
+                        if (modal) modal.classList.remove('hidden');
+                        return;
+                    }
+                }
+            } catch (_err) {}
+
             const isBlue = awbStr.includes('BLUE');
             const isShadow = awbStr.includes('SHADOW');
             const isDelivered = awbStr.includes('DELIVERED') || awbStr.includes('DELVD');
