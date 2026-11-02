@@ -267,9 +267,7 @@ export const AdminAllRateCardsPage: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', backgroundColor: 'var(--color-surface-secondary)', borderRadius: 'var(--radius-default)' }}>
               {[
-                { id: 'tenant-demo-01', name: 'MAXLINE Partner Merchant (tenant-demo-01)' },
-                { id: 'tenant-acme-02', name: 'MAXLINE Retail Partner (tenant-acme-02)' },
-                { id: 'tenant-vip-03', name: 'Nexus Tech B2B (tenant-vip-03)' },
+                { id: '48dba919-ca2a-4a86-b645-f795f70e9d59', name: 'XYZ LOGISTICS (Mohit Sharma)' },
               ].map((t) => {
                 const checked = selectedTenants.includes(t.id);
                 return (

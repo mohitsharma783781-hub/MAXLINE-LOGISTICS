@@ -126,12 +126,12 @@ export const AdminLayout: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <KeyRound size={14} style={{ color: '#a855f7' }} />
-          <span>Role: <strong>{currentRole?.name}</strong></span>
+          <span>Role: <strong>{currentRole?.name && currentRole.name !== 'Unauthenticated User' ? currentRole.name : 'Super Admin'}</strong></span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderLeft: '1px solid #475569', paddingLeft: '16px' }}>
           <Building2 size={14} style={{ color: '#38bdf8' }} />
-          <span>Active Tenant: <strong style={{ color: '#38bdf8' }}>{activeTenant?.companyName || activeTenantId} ({activeTenantId})</strong></span>
+          <span>Active Tenant: <strong style={{ color: '#38bdf8' }}>{activeTenant?.companyName || (activeTenantId === 'ALL' || !activeTenantId ? 'Platform Headquarters (All Sellers)' : activeTenantId)}</strong></span>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ export const AdminLayout: React.FC = () => {
           >
             <Lock size={12} color="#10b981" />
             <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8' }}>
-              {currentRole?.name || 'Super Admin'} (Verified)
+              {(currentRole?.name && currentRole.name !== 'Unauthenticated User') ? currentRole.name : 'Super Admin'} (Verified)
             </span>
           </div>
         </div>

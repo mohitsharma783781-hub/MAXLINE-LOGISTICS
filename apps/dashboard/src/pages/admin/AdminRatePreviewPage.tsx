@@ -84,8 +84,7 @@ export const AdminRatePreviewPage: React.FC = () => {
             value={tenantId}
             onChange={(e) => setTenantId(e.target.value)}
             options={[
-              { value: 'tenant-demo-01', label: 'tenant-demo-01 (ABC Traders)' },
-              { value: 'tenant-demo-02', label: 'tenant-demo-02 (XYZ Logistics)' },
+              { value: '48dba919-ca2a-4a86-b645-f795f70e9d59', label: 'XYZ LOGISTICS (Mohit Sharma)' },
             ]}
           />
 

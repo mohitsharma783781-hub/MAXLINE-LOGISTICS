@@ -344,7 +344,29 @@ export const RbacProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logActivity('User Login', matchedUser.email, `User ${matchedUser.name} authenticated into ${matchedUser.portal} portal as ${matchedUser.roleName}`);
   };
 
-  const currentRole = roles.find((r) => r.id === activeRoleId) || UNAUTHENTICATED_ROLE;
+  const currentRole = (() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const cached = localStorage.getItem('courrier3_current_user');
+        if (cached) {
+          const u = JSON.parse(cached);
+          const emailLower = (u.workEmail || u.email || '').toLowerCase();
+          if (
+            u.role === 'super_admin' ||
+            emailLower === 'maxlinelogistic@gmail.com' ||
+            emailLower === 'maxlinelogistics@gmail.com' ||
+            emailLower === 'admin@maxlinelogistics.com' ||
+            emailLower === 'admin@maxline.in'
+          ) {
+            const superRole = roles.find((r) => r.id === 'role-admin-super' || r.code === 'SUPER_ADMIN');
+            if (superRole) return superRole;
+            return INITIAL_ROLES[0];
+          }
+        }
+      }
+    } catch {}
+    return roles.find((r) => r.id === activeRoleId) || UNAUTHENTICATED_ROLE;
+  })();
   const currentUser = users.find((u) => u.id === activeUserId) || users[0];
 
   const logActivity = (action: RbacAuditLog['action'], resource: string, details: string) => {

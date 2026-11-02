@@ -349,8 +349,7 @@ export const AdminCodRemittancesPage: React.FC = () => {
               onChange={(e) => setSelectedTenant(e.target.value)}
               options={[
                 ...merchantsList.map((m) => ({ value: m.id, label: m.name })),
-                { value: 'tenant-demo-01', label: 'tenant-demo-01 (ABC Traders)' },
-                { value: 'tenant-demo-02', label: 'tenant-demo-02 (XYZ Logistics)' },
+                { value: '48dba919-ca2a-4a86-b645-f795f70e9d59', label: 'XYZ LOGISTICS (Mohit Sharma)' },
               ]}
             />
             <Select

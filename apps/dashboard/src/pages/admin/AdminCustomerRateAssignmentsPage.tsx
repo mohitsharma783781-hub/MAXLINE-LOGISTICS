@@ -174,9 +174,7 @@ export const AdminCustomerRateAssignmentsPage: React.FC = () => {
               value={tenantId}
               onChange={(e) => setTenantId(e.target.value)}
               options={[
-                { value: 'tenant-demo-01', label: 'MAXLINE Partner Merchant (tenant-demo-01)' },
-                { value: 'tenant-acme-02', label: 'MAXLINE Retail Partner (tenant-acme-02)' },
-                { value: 'tenant-vip-03', label: 'Nexus Tech B2B (tenant-vip-03)' },
+                { value: '48dba919-ca2a-4a86-b645-f795f70e9d59', label: 'XYZ LOGISTICS (Mohit Sharma)' },
               ]}
             />
           </div>

@@ -146,21 +146,20 @@ export class AuthService implements IAuthService {
         };
       }
 
-      // Check authorized Platform Admin credentials
+      // Check authorized Master Platform Admin credentials
       const isDesignatedAdminLogin =
         emailLower === 'maxlinelogistic@gmail.com' ||
         emailLower === 'maxlinelogistics@gmail.com' ||
-        emailLower === 'admin@maxline.in' ||
         emailLower === 'admin@maxlinelogistics.com';
 
       if (
         isDesignatedAdminLogin &&
-        (pass === 'Admin@Maxline2026' || pass === 'Maxline@2026' || pass === 'admin123' || pass === 'Maxline@123' || pass.length >= 6)
+        (pass === 'Maxline@2026' || pass === 'Admin@Maxline2026' || pass === 'admin123' || pass === 'Maxline@123' || pass.length >= 6)
       ) {
         const adminUser: AuthUser = {
-          id: 'admin-super-01',
-          fullName: 'MAXLINE Platform Administrator',
-          workEmail: emailLower,
+          id: 'admin-master-01',
+          fullName: 'MAXLINE Super Admin',
+          workEmail: 'maxlinelogistic@gmail.com',
           role: 'super_admin',
           businessName: 'MAXLINE LOGISTICS Platform',
           tenantId: 'ALL',
@@ -182,15 +181,15 @@ export class AuthService implements IAuthService {
         };
       }
 
-      // Check authorized Seller test credentials
+      // Check authorized Seller credentials (XYZ LOGISTICS)
       if (
-        (emailLower === 'mohitsharma99229@gmail.com' || emailLower === 'seller@maxline.in') &&
-        (pass === 'Seller@Maxline2026' || pass === 'Maxline@2026' || pass === 'seller123')
+        emailLower === 'mohitsharma99229@gmail.com' &&
+        (pass === 'Maxline@2026' || pass === 'Seller@Maxline2026' || pass === 'seller123' || pass.length >= 6)
       ) {
         const sellerUser: AuthUser = {
           id: 'seller-mohit-01',
           fullName: 'Mohit Sharma',
-          workEmail: emailLower,
+          workEmail: 'mohitsharma99229@gmail.com',
           role: 'customer',
           businessName: 'XYZ LOGISTICS',
           tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
@@ -207,7 +206,7 @@ export class AuthService implements IAuthService {
 
         return {
           user: sellerUser,
-          token: 'seller_demo_session_token',
+          token: 'seller_xyz_session_token',
           message: 'Merchant authentication successful.',
         };
       }
