@@ -13,6 +13,12 @@ import {
   Lock,
   Activity,
   Download,
+  LogIn,
+  Key,
+  Eye,
+  EyeOff,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
@@ -98,6 +104,35 @@ export const AdminCustomerDetailPage: React.FC = () => {
   };
 
   const merchantName = 'XYZ LOGISTICS';
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleOneClickLogin = () => {
+    try {
+      const adminRaw = localStorage.getItem('courrier3_current_user');
+      if (adminRaw) {
+        localStorage.setItem('courrier3_admin_original_session', adminRaw);
+      }
+      localStorage.setItem('courrier3_admin_impersonating', 'true');
+      localStorage.setItem('courrier3_active_portal', 'CUSTOMER');
+      localStorage.setItem('courrier3_active_tenant_id', id || '48dba919-ca2a-4a86-b645-f795f70e9d59');
+
+      const sellerUser = {
+        id: id || '48dba919-ca2a-4a86-b645-f795f70e9d59',
+        fullName: 'Mohit Sharma',
+        workEmail: 'mohitsharma99229@gmail.com',
+        role: 'customer',
+        businessName: merchantName || 'XYZ LOGISTICS',
+        tenantId: id || '48dba919-ca2a-4a86-b645-f795f70e9d59',
+        phoneNumber: '+91 70091 74879',
+      };
+      localStorage.setItem('courrier3_current_user', JSON.stringify(sellerUser));
+
+      window.location.href = '/app';
+    } catch (e) {
+      console.error('Failed to 1-click login:', e);
+    }
+  };
 
   const breadcrumbs = [
     { label: 'Super Admin Portal', path: '/admin' },
@@ -156,7 +191,24 @@ export const AdminCustomerDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<LogIn size={14} />}
+              onClick={handleOneClickLogin}
+              style={{
+                backgroundColor: '#16a34a',
+                borderColor: '#16a34a',
+                color: '#ffffff',
+                fontWeight: '700',
+                boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)',
+              }}
+              title="1-Click Login to this seller's Merchant Portal"
+            >
+              1-Click Login as Seller
+            </Button>
+
             <Button variant="outline" size="sm" leftIcon={<Plus size={14} />} onClick={() => setIsAdjustModalOpen(true)}>
               + Wallet Adjustment
             </Button>
@@ -243,7 +295,33 @@ export const AdminCustomerDetailPage: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#334155' }}>
                   <div>Contact Person: <strong style={{ color: '#0f172a' }}>Mohit Sharma</strong></div>
                   <div>Email Address: <strong>mohitsharma99229@gmail.com</strong></div>
-                  <div>Mobile Number: <strong>+91 98765 43210</strong></div>
+                  <div>Mobile Number: <strong>+91 70091 74879</strong></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <span>Portal Password:</span>
+                    <strong style={{ color: isPasswordVisible ? '#0f172a' : '#64748b', fontFamily: 'monospace', fontSize: '13px' }}>
+                      {isPasswordVisible ? 'Maxline@2026' : '••••••••••'}
+                    </strong>
+                    <button
+                      type="button"
+                      onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#64748b', display: 'flex' }}
+                      title={isPasswordVisible ? 'Hide Password' : 'Show Password'}
+                    >
+                      {isPasswordVisible ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard?.writeText('Maxline@2026');
+                        setIsCopied(true);
+                        setTimeout(() => setIsCopied(false), 2500);
+                      }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: isCopied ? '#16a34a' : '#64748b', display: 'flex' }}
+                      title={isCopied ? 'Copied!' : 'Copy Password'}
+                    >
+                      {isCopied ? <Check size={13} /> : <Copy size={13} />}
+                    </button>
+                  </div>
                   <div>Assigned KAM: <strong style={{ color: '#16a34a' }}>{assignedManager}</strong></div>
                 </div>
               </Card>

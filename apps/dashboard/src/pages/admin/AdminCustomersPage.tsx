@@ -6,6 +6,11 @@ import {
   RotateCcw,
   CheckCircle2,
   Eye,
+  EyeOff,
+  Key,
+  Copy,
+  Check,
+  LogIn,
   Sliders,
   ShieldAlert,
   Search,
@@ -34,6 +39,7 @@ export interface CustomerTenant extends Record<string, unknown> {
   companyName: string;
   email: string;
   phone: string;
+  password?: string;
   gstNumber: string;
   kycStatus: 'Approved' | 'Under Review' | 'Pending Documents' | 'Rejected';
   city: string;
@@ -73,6 +79,7 @@ export const AdminCustomersPage: React.FC = () => {
           companyName: m.businessName || 'XYZ LOGISTICS',
           email: m.ownerEmail || 'mohitsharma99229@gmail.com',
           phone: m.ownerPhone || '+91 70091 74879',
+          password: 'Maxline@2026',
           gstNumber: '06AAAAA0000A1Z5',
           kycStatus: m.status === 'ACTIVE' ? 'Approved' : 'Under Review',
           city: 'Panchkula',
@@ -112,6 +119,50 @@ export const AdminCustomersPage: React.FC = () => {
 
   const [assignModalCustomer, setAssignModalCustomer] = useState<CustomerTenant | null>(null);
   const [selectedRateCard, setSelectedRateCard] = useState('Retail B2C Standard Card');
+
+  // Password Visibility & One-Click Impersonation Login
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [custPassword, setCustPassword] = useState('Maxline@2026');
+
+  const togglePasswordVisibility = (id: string) => {
+    setVisiblePasswords((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const copyToClipboard = (text: string, id: string) => {
+    try {
+      navigator.clipboard?.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2500);
+    } catch {}
+  };
+
+  const handleOneClickLogin = (row: CustomerTenant) => {
+    try {
+      const adminRaw = localStorage.getItem('courrier3_current_user');
+      if (adminRaw) {
+        localStorage.setItem('courrier3_admin_original_session', adminRaw);
+      }
+      localStorage.setItem('courrier3_admin_impersonating', 'true');
+      localStorage.setItem('courrier3_active_portal', 'CUSTOMER');
+      localStorage.setItem('courrier3_active_tenant_id', row.tenantId || row.id);
+
+      const sellerUser = {
+        id: row.id,
+        fullName: row.name || 'Mohit Sharma',
+        workEmail: row.email || 'mohitsharma99229@gmail.com',
+        role: 'customer',
+        businessName: row.companyName || 'XYZ LOGISTICS',
+        tenantId: row.tenantId || row.id,
+        phoneNumber: row.phone || '+91 70091 74879',
+      };
+      localStorage.setItem('courrier3_current_user', JSON.stringify(sellerUser));
+
+      window.location.href = '/app';
+    } catch (e) {
+      console.error('Failed to 1-click login:', e);
+    }
+  };
 
   const filteredCustomers = customers.filter((c) => {
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;
@@ -370,6 +421,75 @@ export const AdminCustomersPage: React.FC = () => {
               ),
             },
             {
+              key: 'password',
+              header: 'Login Password',
+              render: (row) => {
+                const isVisible = visiblePasswords[row.id];
+                const pwd = (row.password as string) || 'Maxline@2026';
+                const isCopied = copiedId === row.id;
+
+                return (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      backgroundColor: '#f8fafc',
+                      padding: '4px 8px',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                    }}
+                  >
+                    <Key size={13} style={{ color: '#0284c7' }} />
+                    <span
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        color: isVisible ? '#0f172a' : '#64748b',
+                        letterSpacing: isVisible ? '0px' : '1px',
+                        minWidth: '65px',
+                      }}
+                    >
+                      {isVisible ? pwd : '••••••••'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility(row.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px',
+                        color: '#64748b',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={isVisible ? 'Hide password' : 'Show password'}
+                    >
+                      {isVisible ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(pwd, row.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px',
+                        color: isCopied ? '#16a34a' : '#64748b',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={isCopied ? 'Copied!' : 'Copy password'}
+                    >
+                      {isCopied ? <Check size={13} /> : <Copy size={13} />}
+                    </button>
+                  </div>
+                );
+              },
+            },
+            {
               key: 'gstNumber',
               header: 'GST Number',
               render: (row) => <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#475569' }}>{row.gstNumber}</span>,
@@ -415,7 +535,26 @@ export const AdminCustomersPage: React.FC = () => {
               key: 'actions',
               header: 'Actions',
               render: (row) => (
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    leftIcon={<LogIn size={13} />}
+                    onClick={() => handleOneClickLogin(row)}
+                    style={{
+                      fontSize: '11px',
+                      padding: '4px 10px',
+                      backgroundColor: '#16a34a',
+                      borderColor: '#16a34a',
+                      color: '#ffffff',
+                      fontWeight: '700',
+                      boxShadow: '0 2px 4px rgba(22, 163, 74, 0.25)',
+                    }}
+                    title="1-Click Login: Open Seller Portal directly as this merchant"
+                  >
+                    1-Click Login
+                  </Button>
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -423,7 +562,7 @@ export const AdminCustomersPage: React.FC = () => {
                     onClick={() => navigate(`/admin/customers/${row.id}`)}
                     style={{ fontSize: '11px', padding: '4px 8px', color: '#0284c7', borderColor: '#0284c7' }}
                   >
-                    View Master Profile
+                    View
                   </Button>
 
                   <Button
