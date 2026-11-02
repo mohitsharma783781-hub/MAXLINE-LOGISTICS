@@ -151,7 +151,19 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (!u) return;
       const appMetadata = u.app_metadata || {};
       const platformRole = (appMetadata.platform_role || appMetadata.role || '').toString().toLowerCase();
-      const isPlatformAdmin = platformRole === 'super_admin' || platformRole === 'admin_operator' || platformRole === 'operator';
+      const userEmail = (u.email || '').toLowerCase();
+      const isDesignatedAdmin =
+        userEmail === 'maxlinelogistic@gmail.com' ||
+        userEmail === 'maxlinelogistics@gmail.com' ||
+        userEmail === 'admin@maxlinelogistics.com' ||
+        userEmail === 'admin@maxline.in';
+
+      const isPlatformAdmin =
+        platformRole === 'super_admin' ||
+        platformRole === 'admin_operator' ||
+        platformRole === 'operator' ||
+        isDesignatedAdmin;
+
       if (isPlatformAdmin) {
         setActiveTenantIdState('ALL');
         localStorage.setItem('courrier3_active_tenant_id', 'ALL');

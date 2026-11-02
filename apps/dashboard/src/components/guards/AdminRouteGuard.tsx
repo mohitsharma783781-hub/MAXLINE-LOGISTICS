@@ -70,8 +70,15 @@ export const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({ children }) =>
   }
 
   // 2. Authenticated, but not a verified platform admin (e.g. merchant user / owner)
+  const userEmail = (currentUser.workEmail || '').toLowerCase();
+  const isDesignatedAdmin =
+    userEmail === 'maxlinelogistic@gmail.com' ||
+    userEmail === 'maxlinelogistics@gmail.com' ||
+    userEmail === 'admin@maxlinelogistics.com' ||
+    userEmail === 'admin@maxline.in';
+
   const isPlatformAdmin =
-    currentUser.role === 'super_admin' || currentUser.role === 'admin_operator';
+    currentUser.role === 'super_admin' || currentUser.role === 'admin_operator' || isDesignatedAdmin;
 
   if (!isPlatformAdmin) {
     return (

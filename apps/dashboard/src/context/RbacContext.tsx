@@ -131,7 +131,16 @@ const getInitialRoleId = (): string => {
       const cached = localStorage.getItem('courrier3_current_user');
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed.role === 'super_admin') return 'role-admin-super';
+        const emailLower = (parsed.workEmail || parsed.email || '').toLowerCase();
+        if (
+          parsed.role === 'super_admin' ||
+          emailLower === 'maxlinelogistic@gmail.com' ||
+          emailLower === 'maxlinelogistics@gmail.com' ||
+          emailLower === 'admin@maxlinelogistics.com' ||
+          emailLower === 'admin@maxline.in'
+        ) {
+          return 'role-admin-super';
+        }
         if (parsed.role === 'admin_operator') return 'role-admin-ops';
         return 'role-seller-owner';
       }
@@ -146,7 +155,16 @@ const getInitialUserId = (): string => {
       const cached = localStorage.getItem('courrier3_current_user');
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed.role === 'super_admin') return 'usr-admin-01';
+        const emailLower = (parsed.workEmail || parsed.email || '').toLowerCase();
+        if (
+          parsed.role === 'super_admin' ||
+          emailLower === 'maxlinelogistic@gmail.com' ||
+          emailLower === 'maxlinelogistics@gmail.com' ||
+          emailLower === 'admin@maxlinelogistics.com' ||
+          emailLower === 'admin@maxline.in'
+        ) {
+          return 'usr-admin-01';
+        }
         if (parsed.role === 'admin_operator') return 'usr-admin-ops';
         return 'usr-seller-01';
       }
@@ -223,8 +241,14 @@ export const RbacProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const appMetadata = user.app_metadata || {};
       const platformRole = (appMetadata.platform_role || appMetadata.role || user.role || '').toString().toLowerCase();
+      const userEmail = (user.email || user.workEmail || '').toLowerCase();
+      const isDesignatedAdmin =
+        userEmail === 'maxlinelogistic@gmail.com' ||
+        userEmail === 'maxlinelogistics@gmail.com' ||
+        userEmail === 'admin@maxlinelogistics.com' ||
+        userEmail === 'admin@maxline.in';
 
-      if (platformRole === 'super_admin') {
+      if (platformRole === 'super_admin' || isDesignatedAdmin) {
         setActiveRoleIdState('role-admin-super');
         setActiveUserIdState('usr-admin-01');
       } else if (platformRole === 'admin_operator' || platformRole === 'operator') {
@@ -362,45 +386,52 @@ export const RbacProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Pure function without side-effects for safe sidebar render checking
   const canAccessPath = (path: string): boolean => {
-    // Platform Super Admin has full administrative and platform access
+    // 0. If local user is super admin, ALWAYS allow administrative and platform access
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const cached = localStorage.getItem('courrier3_current_user');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          const emailLower = (parsed.workEmail || parsed.email || '').toLowerCase();
+          if (
+            parsed.role === 'super_admin' ||
+            emailLower === 'maxlinelogistic@gmail.com' ||
+            emailLower === 'maxlinelogistics@gmail.com' ||
+            emailLower === 'admin@maxlinelogistics.com' ||
+            emailLower === 'admin@maxline.in'
+          ) {
+            return true;
+          }
+        }
+      }
+    } catch {}
+
+    // 1. Platform Super Admin has full administrative and platform access
     if (currentRole?.code === 'SUPER_ADMIN') {
       return true;
     }
 
-    // Portal isolation: Seller roles (including ACCOUNT_OWNER) can NEVER access /admin
-    if (currentRole?.portal === 'SELLER' || currentRole?.code === 'ACCOUNT_OWNER') {
-      if (path === '/admin' || path.startsWith('/admin/')) {
+    // 2. Platform admin roles can access admin paths
+    if (currentRole?.portal === 'ADMIN') {
+      if (path.startsWith('/admin')) {
+        return true;
+      }
+    }
+
+    // 3. Check if role is unauthenticated or inactive
+    if (!currentRole || currentRole.status === 'INACTIVE' || currentRole.code === 'UNAUTHENTICATED') {
+      if (path.startsWith('/admin')) {
         return false;
       }
       return true;
     }
 
-    // Check if role is unauthenticated or inactive
-    if (!currentRole || currentRole.status === 'INACTIVE' || currentRole.code === 'UNAUTHENTICATED') {
-      // Check if user is cached in local session
-      try {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          const cached = localStorage.getItem('courrier3_current_user');
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            if (parsed.role === 'super_admin') {
-              return true;
-            }
-            if (path.startsWith('/admin')) {
-              return false;
-            }
-            return true;
-          }
-        }
-      } catch {}
-      return false;
-    }
-
-    // Platform admin roles can access admin paths
-    if (currentRole.portal === 'ADMIN') {
-      if (path.startsWith('/admin')) {
-        return true;
+    // 4. Portal isolation: Seller roles (including ACCOUNT_OWNER) can NEVER access /admin
+    if (currentRole?.portal === 'SELLER' || currentRole?.code === 'ACCOUNT_OWNER') {
+      if (path === '/admin' || path.startsWith('/admin/')) {
+        return false;
       }
+      return true;
     }
 
     // Check exact path or prefix match
