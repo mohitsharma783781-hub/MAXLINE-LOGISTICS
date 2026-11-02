@@ -4,6 +4,7 @@ import { AdminLayout } from '../layouts/AdminLayout';
 import { RoutePlaceholder } from '../components/common/RoutePlaceholder';
 import { PermissionGuard } from '../components/common/PermissionGuard';
 import { AdminRouteGuard } from '../components/guards/AdminRouteGuard';
+import { RouteErrorBoundary } from '../components/common/RouteErrorBoundary';
 
 // Lazy-loaded Admin Pages
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })));
@@ -42,6 +43,7 @@ export const adminRoutes: RouteObject = {
       <AdminLayout />
     </AdminRouteGuard>
   ),
+  errorElement: <RouteErrorBoundary />,
   children: [
     {
       index: true,

@@ -189,16 +189,17 @@ export const CustomerRateAssignmentService = {
     // Asynchronously synchronize assignment with Supabase
     if (input.tenantId && input.tenantId.length > 20) {
       const validTid = toValidTenantUUID(input.tenantId);
-      supabase
-        .from('merchant_rate_assignments')
-        .insert({
-          merchant_id: validTid,
-          rate_card_id: input.rateCardId,
-          mode: input.mode,
-          is_default: !!input.isDefault,
-          is_active: true,
-        })
-        .catch(() => {});
+      Promise.resolve(
+        supabase
+          .from('merchant_rate_assignments')
+          .insert({
+            merchant_id: validTid,
+            rate_card_id: input.rateCardId,
+            mode: input.mode,
+            is_default: !!input.isDefault,
+            is_active: true,
+          })
+      ).catch(() => {});
     }
 
     return newAssignment;
@@ -267,77 +268,61 @@ export const CustomerRateAssignmentService = {
     activeAssignments.forEach((assign) => {
       try {
         if (mode === 'B2C') {
-          const calcRes = B2CPricingEngine.calculateCustomerRate({
-            tenantId,
+          const calcRes = B2CPricingEngine.calculateB2CRate({
             originPincode,
             destinationPincode,
             actualWeightGrams,
-            lengthCm: 20,
-            widthCm: 15,
-            heightCm: 10,
             paymentType,
             codAmountPaise,
-            selectedCourierId: assign.courierId,
+            courierId: assign.courierId,
+            tenantId,
+            rateCardId: assign.rateCardId,
           });
 
-          if (calcRes.success && calcRes.breakdown) {
+          if (calcRes.success && calcRes.serviceable) {
             results.push({
-              assignmentId: assign.id,
               courierId: assign.courierId,
               courierName: assign.courierName,
               serviceId: assign.serviceId,
               serviceName: assign.serviceName,
               rateCardId: assign.rateCardId,
               rateCardName: assign.rateCardName,
+              rateCardVersion: assign.rateCardVersion || 'v1.0',
               mode: 'B2C',
               isDefault: assign.isDefault,
-              appliedZone: calcRes.zoneName || 'Metro',
-              chargeableWeightGrams: calcRes.breakdown.chargeableWeightGrams,
-              baseFreightPaise: calcRes.breakdown.baseFreightPaise,
-              fuelSurchargePaise: calcRes.breakdown.fuelSurchargePaise,
-              codChargesPaise: calcRes.breakdown.codChargesPaise,
-              docketChargesPaise: calcRes.breakdown.docketFeePaise,
-              gstPaise: calcRes.breakdown.gstAmountPaise,
-              totalCustomerChargePaise: calcRes.breakdown.finalCustomerPayablePaise,
-              estimatedDeliveryDays: 2,
+              customerPriceINR: calcRes.totalAmountINR,
+              estimatedDeliveryDays: '2-3 Days',
               serviceable: true,
+              reasonCode: 'SERVICEABLE',
             });
           }
         } else {
-          const b2bWeightKg = Math.max(20, Math.ceil(actualWeightGrams / 1000));
-          const calcRes = B2BPricingEngine.calculateB2BShipmentPrice({
+          const calcRes = B2BPricingEngine.calculateB2BPrice({
             originPincode,
             destinationPincode,
-            actualWeightKg: b2bWeightKg,
-            dimensionsCm: '40x30x20',
-            packageCount: 1,
-            declaredValueINR: 10000,
-            paymentMode: paymentType,
-            codAmountINR: codAmountPaise / 100,
-            selectedCourierId: assign.courierId,
+            actualWeightGrams,
+            chargeableWeightGrams: actualWeightGrams,
+            codAmountPaise,
+            courierId: assign.courierId,
+            tenantId,
+            rateCardId: assign.rateCardId,
           });
 
-          if (calcRes.success && calcRes.breakdown) {
+          if (calcRes.success && calcRes.serviceable) {
             results.push({
-              assignmentId: assign.id,
               courierId: assign.courierId,
               courierName: assign.courierName,
               serviceId: assign.serviceId,
               serviceName: assign.serviceName,
               rateCardId: assign.rateCardId,
               rateCardName: assign.rateCardName,
+              rateCardVersion: assign.rateCardVersion || 'v1.0',
               mode: 'B2B',
               isDefault: assign.isDefault,
-              appliedZone: calcRes.zoneName || 'Zone N1',
-              chargeableWeightGrams: b2bWeightKg * 1000,
-              baseFreightPaise: Math.round(calcRes.breakdown.freightBaseINR * 100),
-              fuelSurchargePaise: Math.round(calcRes.breakdown.fuelSurchargeINR * 100),
-              codChargesPaise: Math.round(calcRes.breakdown.codChargeINR * 100),
-              docketChargesPaise: Math.round(calcRes.breakdown.docketFeeINR * 100),
-              gstPaise: Math.round(calcRes.breakdown.gstINR * 100),
-              totalCustomerChargePaise: Math.round(calcRes.breakdown.totalPayableINR * 100),
-              estimatedDeliveryDays: 3,
+              customerPriceINR: calcRes.totalAmountINR,
+              estimatedDeliveryDays: '3-5 Days',
               serviceable: true,
+              reasonCode: 'SERVICEABLE',
             });
           }
         }
@@ -349,7 +334,7 @@ export const CustomerRateAssignmentService = {
     results.sort((a, b) => {
       if (a.isDefault && !b.isDefault) return -1;
       if (!a.isDefault && b.isDefault) return 1;
-      return a.totalCustomerChargePaise - b.totalCustomerChargePaise;
+      return a.customerPriceINR - b.customerPriceINR;
     });
 
     return results;

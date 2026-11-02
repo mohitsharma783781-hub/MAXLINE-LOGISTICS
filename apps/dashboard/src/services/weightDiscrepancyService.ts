@@ -672,6 +672,8 @@ export const WeightDiscrepancyService = {
                 status: row.status || 'DETECTED',
               },
             ],
+            internalNotes: row.internal_notes || '',
+            refundCreditINR: 0,
             createdAt: row.created_at ? new Date(row.created_at).toLocaleString() : new Date().toLocaleString(),
             updatedAt: row.updated_at ? new Date(row.updated_at).toLocaleString() : new Date().toLocaleString(),
           };
@@ -767,16 +769,17 @@ export const WeightDiscrepancyService = {
     saveDiscrepanciesToStorage(DISCREPANCY_STORE);
 
     if (record.id && record.id.length > 20) {
-      supabase
-        .from('weight_discrepancies')
-        .update({
-          status: 'DISPUTE_RAISED',
-          merchant_dispute_reason: input.disputeReason,
-          merchant_proof_image_url: record.proofAttachments[0]?.url || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', record.id)
-        .catch(() => {});
+      Promise.resolve(
+        supabase
+          .from('weight_discrepancies')
+          .update({
+            status: 'DISPUTE_RAISED',
+            merchant_dispute_reason: input.disputeReason,
+            merchant_proof_image_url: record.proofAttachments[0]?.url || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', record.id)
+      ).catch(() => {});
     }
 
     return {
@@ -886,15 +889,16 @@ export const WeightDiscrepancyService = {
     saveDiscrepanciesToStorage(DISCREPANCY_STORE);
 
     if (record.id && record.id.length > 20) {
-      supabase
-        .from('weight_discrepancies')
-        .update({
-          status: 'RESOLVED_IN_FAVOR_MERCHANT',
-          resolved_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', record.id)
-        .catch(() => {});
+      Promise.resolve(
+        supabase
+          .from('weight_discrepancies')
+          .update({
+            status: 'RESOLVED_IN_FAVOR_MERCHANT',
+            resolved_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', record.id)
+      ).catch(() => {});
     }
 
     return {
@@ -950,15 +954,16 @@ export const WeightDiscrepancyService = {
     saveDiscrepanciesToStorage(DISCREPANCY_STORE);
 
     if (record.id && record.id.length > 20) {
-      supabase
-        .from('weight_discrepancies')
-        .update({
-          status: 'RESOLVED_IN_FAVOR_CARRIER',
-          resolved_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', record.id)
-        .catch(() => {});
+      Promise.resolve(
+        supabase
+          .from('weight_discrepancies')
+          .update({
+            status: 'RESOLVED_IN_FAVOR_CARRIER',
+            resolved_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', record.id)
+      ).catch(() => {});
     }
 
     return { success: true, message: `Dispute ${record.discrepancyId} rejected. Original billing maintained.` };

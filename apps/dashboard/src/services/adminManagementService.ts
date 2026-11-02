@@ -22,7 +22,7 @@ export interface AdminDashboardStats {
   timestamp: string;
 }
 
-export interface AdminMerchantItem {
+export interface AdminMerchantItem extends Record<string, unknown> {
   id: string;
   businessName: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'PENDING_KYC' | 'CLOSED';

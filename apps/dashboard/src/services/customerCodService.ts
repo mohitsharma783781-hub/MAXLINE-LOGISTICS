@@ -349,23 +349,24 @@ export const CustomerCodService = {
 
     // Insert into Supabase
     if (tenantId && tenantId.length > 20) {
-      supabase
-        .from('cod_remittances')
-        .insert([{
-          merchant_id: toValidTenantUUID(tenantId),
-          remittance_number: remittanceId,
-          total_shipments_count: eligibleTxs.length,
-          gross_collected_minor: Math.round(grossAmount * 100),
-          deductions_minor: Math.round(standardDeductions * 100),
-          early_cod_fee_minor: Math.round(earlyFee * 100),
-          net_payout_minor: Math.round(netRemittance * 100),
-          payout_mode: payoutDestination === 'WALLET' ? 'WALLET' : 'BANK_TRANSFER',
-          bank_reference_utr: utr,
-          status: 'REMITTED',
-          remitted_at: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-        }])
-        .catch(() => {});
+      Promise.resolve(
+        supabase
+          .from('cod_remittances')
+          .insert([{
+            merchant_id: toValidTenantUUID(tenantId),
+            remittance_number: remittanceId,
+            total_shipments_count: eligibleTxs.length,
+            gross_collected_minor: Math.round(grossAmount * 100),
+            deductions_minor: Math.round(standardDeductions * 100),
+            early_cod_fee_minor: Math.round(earlyFee * 100),
+            net_payout_minor: Math.round(netRemittance * 100),
+            payout_mode: payoutDestination === 'WALLET' ? 'WALLET' : 'BANK_TRANSFER',
+            bank_reference_utr: utr,
+            status: 'REMITTED',
+            remitted_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+          }])
+      ).catch(() => {});
     }
 
     // If destination is WALLET, credit wallet instantly!

@@ -3,14 +3,20 @@ import { publicRoutes } from './publicRoutes';
 import { appRoutes } from './appRoutes';
 import { adminRoutes } from './adminRoutes';
 import { NotFoundState } from '../components/common/NotFoundState';
+import { RouteErrorBoundary } from '../components/common/RouteErrorBoundary';
 
 const router = createBrowserRouter([
-  publicRoutes,
-  appRoutes,
-  adminRoutes,
   {
-    path: '*',
-    element: <NotFoundState />,
+    errorElement: <RouteErrorBoundary />,
+    children: [
+      publicRoutes,
+      appRoutes,
+      adminRoutes,
+      {
+        path: '*',
+        element: <NotFoundState />,
+      },
+    ],
   },
 ]);
 

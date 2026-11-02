@@ -76,6 +76,7 @@ export interface DelhiveryTrackingResponse {
   origin?: string;
   destination?: string;
   expectedDeliveryDate?: string;
+  consignee?: string;
   events: DelhiveryTrackingEvent[];
   message?: string;
 }

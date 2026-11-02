@@ -469,21 +469,22 @@ export const AdminCodRemittanceService = {
     saveReceivablesToStorage(RECEIVABLES_STORE);
 
     if (input.tenantId && input.tenantId.length > 20) {
-      supabase
-        .from('cod_remittances')
-        .insert([{
-          merchant_id: toValidTenantUUID(input.tenantId),
-          remittance_number: newRemittance.remittanceId,
-          total_shipments_count: newRemittance.shipmentCount,
-          gross_collected_minor: Math.round(newRemittance.grossCodAmountINR * 100),
-          deductions_minor: Math.round(newRemittance.codChargesINR * 100),
-          early_cod_fee_minor: 0,
-          net_payout_minor: Math.round(newRemittance.netRemittanceINR * 100),
-          payout_mode: 'BANK_TRANSFER',
-          status: 'PROCESSING',
-          created_at: new Date().toISOString(),
-        }])
-        .catch(() => {});
+      Promise.resolve(
+        supabase
+          .from('cod_remittances')
+          .insert([{
+            merchant_id: toValidTenantUUID(input.tenantId),
+            remittance_number: newRemittance.remittanceId,
+            total_shipments_count: newRemittance.shipmentCount,
+            gross_collected_minor: Math.round(newRemittance.grossCodAmountINR * 100),
+            deductions_minor: Math.round(newRemittance.codChargesINR * 100),
+            early_cod_fee_minor: 0,
+            net_payout_minor: Math.round(newRemittance.netRemittanceINR * 100),
+            payout_mode: 'BANK_TRANSFER',
+            status: 'PROCESSING',
+            created_at: new Date().toISOString(),
+          }])
+      ).catch(() => {});
     }
 
     return { success: true, message: `Remittance ${remId} created in PROCESSING status.`, remittance: newRemittance };
@@ -515,15 +516,16 @@ export const AdminCodRemittanceService = {
     saveReceivablesToStorage(RECEIVABLES_STORE);
 
     if (rem.remittanceId) {
-      supabase
-        .from('cod_remittances')
-        .update({
-          status: 'COMPLETED',
-          bank_reference_utr: bankReferenceId,
-          remitted_at: new Date().toISOString(),
-        })
-        .eq('remittance_number', rem.remittanceId)
-        .catch(() => {});
+      Promise.resolve(
+        supabase
+          .from('cod_remittances')
+          .update({
+            status: 'COMPLETED',
+            bank_reference_utr: bankReferenceId,
+            remitted_at: new Date().toISOString(),
+          })
+          .eq('remittance_number', rem.remittanceId)
+      ).catch(() => {});
     }
 
     // Fire Customer Notification

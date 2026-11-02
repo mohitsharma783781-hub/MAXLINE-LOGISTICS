@@ -4,6 +4,7 @@ import { AppLayout } from '../layouts/AppLayout';
 import { RoutePlaceholder } from '../components/common/RoutePlaceholder';
 import { PermissionGuard } from '../components/common/PermissionGuard';
 import { TenantGuard } from '../components/common/TenantGuard';
+import { RouteErrorBoundary } from '../components/common/RouteErrorBoundary';
 
 // Lazy-loaded Merchant Portal Pages
 const CustomerDashboard = lazy(() => import('../pages/app/CustomerDashboard').then((m) => ({ default: m.CustomerDashboard })));
@@ -74,6 +75,7 @@ const CustomerGstInvoicesPage = lazy(() => import('../pages/app/billing/Customer
 export const appRoutes: RouteObject = {
   path: '/app',
   element: <AppLayout />,
+  errorElement: <RouteErrorBoundary />,
   children: [
     {
       index: true,

@@ -778,21 +778,22 @@ export const ShipmentTrackingNdrRtoService = {
     saveNdrToStorage(NDR_STORE);
 
     if (ndr.id && ndr.id.length > 20) {
-      supabase
-        .from('ndr_records')
-        .update({
-          status: ndr.status,
-          reschedule_date: input.preferredDeliveryDate ? new Date().toISOString().split('T')[0] : null,
-          updated_delivery_address: ndr.updatedAddress || null,
-          updated_phone: ndr.updatedPhone || null,
-          carrier_comment: ndr.deliveryInstructions || null,
-          buyer_action_requested: input.actionType,
-          payment_link_url: ndr.paymentLinkUrl || null,
-          payment_link_status: ndr.paymentTypeChange === 'CONVERT_TO_PREPAID' ? 'GENERATED' : 'NONE',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', ndr.id)
-        .catch(() => {});
+      Promise.resolve(
+        supabase
+          .from('ndr_records')
+          .update({
+            status: ndr.status,
+            reschedule_date: input.preferredDeliveryDate ? new Date().toISOString().split('T')[0] : null,
+            updated_delivery_address: ndr.updatedAddress || null,
+            updated_phone: ndr.updatedPhone || null,
+            carrier_comment: ndr.deliveryInstructions || null,
+            buyer_action_requested: input.actionType,
+            payment_link_url: ndr.paymentLinkUrl || null,
+            payment_link_status: ndr.paymentTypeChange === 'CONVERT_TO_PREPAID' ? 'GENERATED' : 'NONE',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', ndr.id)
+      ).catch(() => {});
     }
 
     NotificationService.createNotification({
@@ -836,15 +837,16 @@ export const ShipmentTrackingNdrRtoService = {
     saveRtoToStorage(RTO_STORE);
 
     if (record.id && record.id.length > 20) {
-      supabase
-        .from('rto_records')
-        .update({
-          status: newStatus,
-          delivered_at: newStatus === 'RTO_DELIVERED' ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', record.id)
-        .catch(() => {});
+      Promise.resolve(
+        supabase
+          .from('rto_records')
+          .update({
+            status: newStatus,
+            delivered_at: newStatus === 'RTO_DELIVERED' ? new Date().toISOString() : null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', record.id)
+      ).catch(() => {});
     }
 
     return { success: true, message: `RTO status updated to ${newStatus}.`, record };
@@ -880,18 +882,19 @@ export const ShipmentTrackingNdrRtoService = {
     saveRtoToStorage(RTO_STORE);
 
     if (input.tenantId && input.shipmentId && input.shipmentId.length > 20) {
-      supabase
-        .from('rto_records')
-        .upsert({
-          merchant_id: toValidTenantUUID(input.tenantId),
-          shipment_id: input.shipmentId,
-          rto_reason: input.rtoReason,
-          status: 'RTO_INITIATED',
-          rto_awb_number: input.awbNumber,
-          rto_charge_minor: Math.round((newRto.rtoChargeINR || 65) * 100),
-          updated_at: new Date().toISOString(),
-        })
-        .catch(() => {});
+      Promise.resolve(
+        supabase
+          .from('rto_records')
+          .upsert({
+            merchant_id: toValidTenantUUID(input.tenantId),
+            shipment_id: input.shipmentId,
+            rto_reason: input.rtoReason,
+            status: 'RTO_INITIATED',
+            rto_awb_number: input.awbNumber,
+            rto_charge_minor: Math.round((newRto.rtoChargeINR || 65) * 100),
+            updated_at: new Date().toISOString(),
+          })
+      ).catch(() => {});
     }
 
     NotificationService.createNotification({

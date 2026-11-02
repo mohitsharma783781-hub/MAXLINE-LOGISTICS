@@ -72,6 +72,7 @@ export const SellerKycVerificationPage: React.FC = () => {
   const [activeUploadDoc, setActiveUploadDoc] = useState<{ id: string; type: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [previewDocUrl, setPreviewDocUrl] = useState<string | null>(null);
+  const [previewDocName, setPreviewDocName] = useState<string | null>(null);
 
   useEffect(() => {
     if (resolvedCompanyName && (!bankHolder || bankHolder === 'Apex Logistics Pvt Ltd')) {
@@ -83,20 +84,26 @@ export const SellerKycVerificationPage: React.FC = () => {
   useEffect(() => {
     if (!activeTenantId) return;
 
-    // 1. Check merchant status in Supabase
-    supabase
-      .from('merchants')
-      .select('status')
-      .eq('id', toValidTenantUUID(activeTenantId))
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.status === 'ACTIVE') {
-          setKycStatus('Approved');
-        } else if (data?.status === 'SUSPENDED') {
-          setKycStatus('Suspended');
+    let isMounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('merchants')
+          .select('status')
+          .eq('id', toValidTenantUUID(activeTenantId))
+          .maybeSingle();
+
+        if (isMounted && data) {
+          if (data.status === 'ACTIVE') {
+            setKycStatus('Approved');
+          } else if (data.status === 'SUSPENDED') {
+            setKycStatus('Suspended');
+          }
         }
-      })
-      .catch(() => {});
+      } catch {
+        // Fallback silently if offline
+      }
+    })();
 
     // 2. Load Bank details from localStorage
     try {
@@ -363,6 +370,8 @@ export const SellerKycVerificationPage: React.FC = () => {
                       onClick={() => {
                         if (doc.publicUrl) {
                           window.open(doc.publicUrl, '_blank');
+                        } else {
+                          setPreviewDocName(doc.name || doc.fileName || doc.type);
                         }
                       }}
                     >
