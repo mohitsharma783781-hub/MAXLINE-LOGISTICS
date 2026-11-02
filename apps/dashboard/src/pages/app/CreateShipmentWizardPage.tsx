@@ -1199,6 +1199,7 @@ export const CreateShipmentWizardPage: React.FC = () => {
         customerEmail: receiverEmail.trim(),
         shipmentType: modeStr as 'b2b' | 'b2c',
         pickupWarehouseId: currentWarehouse.id,
+        pickupWarehouseName: (currentWarehouse.warehouseName as string) || 'MAXLINE_PRIMARY',
         pickupContactName: currentWarehouse.contactPerson as string,
         pickupPhone: currentWarehouse.phone as string,
         pickupAddressLine1: currentWarehouse.addressLine1 as string,

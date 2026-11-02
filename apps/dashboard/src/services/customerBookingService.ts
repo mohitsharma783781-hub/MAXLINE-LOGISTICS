@@ -14,6 +14,7 @@ export interface CustomerBookingInput {
   customerEmail?: string;
   shipmentType: 'b2c' | 'b2b';
   pickupWarehouseId?: string;
+  pickupWarehouseName?: string;
   pickupContactName: string;
   pickupPhone: string;
   pickupAddressLine1: string;
@@ -201,7 +202,7 @@ export const CustomerBookingService = {
       chargeableWeight: input.chargeableWeightKg,
       sellingPriceINR: input.invoiceValueINR || totalChargeINR,
       estimatedDays: '2–4 Days',
-      pickupLocation: input.pickupContactName || 'Primary',
+      pickupLocation: input.pickupWarehouseName || 'MAXLINE_PRIMARY',
       pickupContactName: input.pickupContactName,
       pickupPhone: input.pickupPhone,
       pickupAddress: input.pickupAddressLine1,

@@ -83,12 +83,13 @@ export const PickupEngine = {
     
     try {
       const adapter = CourierAdapterFactory.getAdapter(code);
-      await adapter.requestPickup(input.shipmentIds);
+      const adapterRes = await adapter.requestPickup(input.shipmentIds);
+      const actualPickupRef = adapterRes?.pickupReference || pickupRef;
 
       const requestObj: PickupRequest = {
         id: pickupId,
-        pickupNumber: pickupRef,
-        pickupReference: pickupRef,
+        pickupNumber: actualPickupRef,
+        pickupReference: actualPickupRef,
         warehouseId: input.warehouseId || 'wh-001',
         warehouseName: input.warehouseId === 'wh-002' ? 'Delhi Air Cargo Hub' : 'Mumbai MIDC Logistics Hub',
         warehouseAddress: 'MIDC Industrial Area, Bhiwandi, Thane, MH - 421302',

@@ -1,4 +1,5 @@
 import { SupabaseWarehouseService } from './supabase/supabaseWarehouseService';
+import { DelhiveryService } from './delhiveryService';
 
 export interface PickupWarehouseSnapshot extends Record<string, unknown> {
   warehouseId: string;
@@ -204,6 +205,16 @@ export const CustomerWarehouseService = {
       }
     }).catch(() => {});
 
+    // Asynchronously register warehouse directly with Delhivery HQ
+    DelhiveryService.registerWarehouse({
+      name: newWh.warehouseName,
+      phone: newWh.phone,
+      address: `${newWh.addressLine1} ${newWh.addressLine2 || ''}`.trim(),
+      city: newWh.city,
+      pin: newWh.pincode,
+      email: newWh.email,
+    }).catch((delErr) => console.warn('[Delhivery Auto-Sync]:', delErr));
+
     return {
       success: true,
       message: `Warehouse ${newWh.warehouseCode} (${newWh.warehouseName}) created successfully!`,
@@ -225,6 +236,16 @@ export const CustomerWarehouseService = {
       }
       WAREHOUSE_STORE.unshift(cloudRes.warehouse);
       saveWarehousesToStorage(WAREHOUSE_STORE);
+      // Asynchronously register warehouse directly with Delhivery HQ
+      DelhiveryService.registerWarehouse({
+        name: cloudRes.warehouse.warehouseName,
+        phone: cloudRes.warehouse.phone,
+        address: `${cloudRes.warehouse.addressLine1} ${cloudRes.warehouse.addressLine2 || ''}`.trim(),
+        city: cloudRes.warehouse.city,
+        pin: cloudRes.warehouse.pincode,
+        email: cloudRes.warehouse.email,
+      }).catch((delErr) => console.warn('[Delhivery Auto-Sync]:', delErr));
+
       return { success: true, message: cloudRes.message, warehouse: cloudRes.warehouse };
     }
 
@@ -252,6 +273,18 @@ export const CustomerWarehouseService = {
 
     // Asynchronously synchronize update with Supabase Cloud DB
     SupabaseWarehouseService.updateWarehouse(id, updates, tenantId).catch(() => {});
+
+    // Asynchronously update warehouse with Delhivery HQ
+    if (wh.warehouseName && wh.pincode) {
+      DelhiveryService.registerWarehouse({
+        name: wh.warehouseName,
+        phone: wh.phone,
+        address: `${wh.addressLine1} ${wh.addressLine2 || ''}`.trim(),
+        city: wh.city,
+        pin: wh.pincode,
+        email: wh.email,
+      }).catch(() => {});
+    }
 
     return {
       success: true,

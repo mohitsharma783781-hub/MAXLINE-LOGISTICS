@@ -73,20 +73,27 @@ module.exports = async (req, res) => {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const rawText = await response.text();
+    let data = {};
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = { raw: rawText };
+    }
 
-    if (response.status === 201 || data.success) {
-      return res.status(201).json({
+    const isSuccess = response.ok || response.status === 201 || (rawText && !rawText.toLowerCase().includes('error'));
+    if (isSuccess) {
+      return res.status(200).json({
         success: true,
         name: cleanName,
-        data: data.data || data,
+        data,
         message: 'Warehouse successfully registered with Delhivery HQ.',
       });
     }
 
     return res.status(response.status || 400).json({
       success: false,
-      message: data.error || data.message || 'Failed to register warehouse with Delhivery.',
+      message: data.error || data.message || rawText || 'Failed to register warehouse with Delhivery.',
       raw: data,
     });
   } catch (error) {

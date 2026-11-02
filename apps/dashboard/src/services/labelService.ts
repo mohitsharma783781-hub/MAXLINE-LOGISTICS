@@ -57,7 +57,7 @@ export const LabelService = {
       format,
       template,
       status: 'GENERATED',
-      fileReference: `https://demo.shipping-saas.com/labels/${awb}.pdf`,
+      fileReference: `/api/delhivery/label?awb=${encodeURIComponent(awb)}`,
       generatedAt: nowStr,
       createdAt: nowStr,
       updatedAt: nowStr,

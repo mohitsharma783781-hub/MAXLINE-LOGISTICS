@@ -9,6 +9,7 @@ import type {
   CourierHealth,
   CourierActivityLog,
 } from '../types/couriers';
+import { DelhiveryService } from './delhiveryService';
 
 // UNIVERSAL COURIER ADAPTER INTERFACE
 export interface CourierAdapter {
@@ -67,7 +68,22 @@ export const DemoDelhiveryAdapter: CourierAdapter = {
     };
   },
 
-  requestPickup: async (_shipmentIds) => {
+  requestPickup: async (shipmentIds) => {
+    try {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const res = await DelhiveryService.requestPickup({
+        pickupDate: tomorrow.toISOString().split('T')[0],
+        pickupLocation: 'MAXLINE_PRIMARY',
+        expectedPackageCount: shipmentIds.length || 1,
+      });
+      if (res.success && res.pickupId) {
+        return {
+          success: true,
+          pickupReference: `DEL-${res.pickupId}`,
+        };
+      }
+    } catch {}
     return {
       success: true,
       pickupReference: `PICKUP-DELHIVERY-${Math.floor(100000 + Math.random() * 900000)}`,

@@ -41,7 +41,11 @@ export const ShipmentLabelPage: React.FC = () => {
   };
 
   const handleDownloadCarrierPdf = () => {
-    window.print();
+    if (shipment.awbNumber) {
+      window.open(`/api/delhivery/label?awb=${encodeURIComponent(shipment.awbNumber)}`, '_blank');
+    } else {
+      window.print();
+    }
   };
 
   const breadcrumbs = [

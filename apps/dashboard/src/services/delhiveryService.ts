@@ -245,6 +245,52 @@ class DelhiveryServiceClass {
   }
 
   /**
+   * Schedules an official First-Mile (FM) Pickup Request with Delhivery HQ
+   */
+  async requestPickup(input: {
+    pickupDate: string;
+    pickupTime?: string;
+    pickupLocation?: string;
+    expectedPackageCount?: number;
+  }): Promise<{
+    success: boolean;
+    pickupId: string;
+    message: string;
+    pickupLocation?: string;
+    pickupDate?: string;
+    pickupTime?: string;
+  }> {
+    try {
+      const res = await fetch(`${this.apiBase}/pickup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pickup_date: input.pickupDate,
+          pickup_time: input.pickupTime,
+          pickup_location: input.pickupLocation || 'MAXLINE_PRIMARY',
+          expected_package_count: input.expectedPackageCount || 1,
+        }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+      const errData = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        pickupId: '',
+        message: (errData as { message?: string }).message || 'Failed to schedule pickup with Delhivery.',
+      };
+    } catch (err: unknown) {
+      console.warn('[DelhiveryService] Pickup request error:', err);
+      return {
+        success: false,
+        pickupId: '',
+        message: 'Could not connect to Delhivery pickup scheduling service.',
+      };
+    }
+  }
+
+  /**
    * Returns direct printable Delhivery packing slip URL
    */
   getLabelUrl(awb: string): string {

@@ -28,6 +28,7 @@ import { DEMO_SHIPMENT_ITEMS } from '../../mocks/shipments.mock';
 import type { CreatePickupForm, PickupRequest } from '../../types/pickups';
 import type { ShipmentItem } from '../../types/shipments';
 import { formatCurrency } from '../../utils/formatters';
+import { DelhiveryService } from '../../services/delhiveryService';
 
 export const CreatePickupWizardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -108,6 +109,23 @@ export const CreatePickupWizardPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      let livePickupRef = '';
+      if (formData.courierId.toLowerCase().includes('delhivery')) {
+        try {
+          const delRes = await DelhiveryService.requestPickup({
+            pickupDate: formData.pickupDate,
+            pickupTime: formData.timeSlot,
+            pickupLocation: selectedWarehouse.name || 'MAXLINE_PRIMARY',
+            expectedPackageCount: formData.selectedShipmentIds.length || 1,
+          });
+          if (delRes.success && delRes.pickupId) {
+            livePickupRef = `DEL-${delRes.pickupId}`;
+          }
+        } catch (delErr) {
+          console.warn('[CreatePickupWizardPage] Delhivery live pickup fallback:', delErr);
+        }
+      }
+
       const res = await demoPickupProvider.createPickupRequest({
         warehouseId: formData.warehouseId,
         shipmentIds: formData.selectedShipmentIds,
@@ -120,6 +138,10 @@ export const CreatePickupWizardPage: React.FC = () => {
       });
 
       if (res.success && res.pickup) {
+        if (livePickupRef) {
+          res.pickup.pickupNumber = livePickupRef;
+          res.pickup.pickupReference = livePickupRef;
+        }
         setCreatedPickupResult(res.pickup);
         setIsSuccessDialogOpen(true);
       } else if (res.failureReason) {
