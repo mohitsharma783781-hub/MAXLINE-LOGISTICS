@@ -151,92 +151,11 @@ export const AppLayout: React.FC = () => {
 
   const isOnboardingRoute = location.pathname.startsWith('/app/onboarding');
 
-  const isImpersonating = typeof window !== 'undefined' && localStorage.getItem('courrier3_admin_impersonating') === 'true';
-
-  const superAdminPreviewBanner = (currentUser?.role === 'super_admin' || isImpersonating) ? (
-    <div
-      style={{
-        backgroundColor: '#0f172a',
-        color: '#f8fafc',
-        padding: '8px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        fontSize: '12px',
-        fontWeight: '500',
-        borderBottom: '2px solid #0284c7',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        zIndex: 50,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <span
-          style={{
-            backgroundColor: isImpersonating ? '#16a34a' : '#f59e0b',
-            color: '#ffffff',
-            fontWeight: '800',
-            fontSize: '10px',
-            padding: '3px 8px',
-            borderRadius: '4px',
-            letterSpacing: '0.5px',
-            textTransform: 'uppercase',
-          }}
-        >
-          {isImpersonating ? '1-Click Seller Login Active' : 'Super Admin Preview'}
-        </span>
-        <span style={{ color: '#cbd5e1' }}>
-          Viewing as Customer: <strong style={{ color: '#ffffff' }}>{activeTenant?.companyName || currentUser?.businessName || 'XYZ LOGISTICS'}</strong> ({currentUser?.workEmail || 'mohitsharma99229@gmail.com'})
-        </span>
-      </div>
-      <button
-        onClick={() => {
-          const originalAdmin = localStorage.getItem('courrier3_admin_original_session');
-          if (originalAdmin) {
-            localStorage.setItem('courrier3_current_user', originalAdmin);
-          } else {
-            localStorage.setItem('courrier3_current_user', JSON.stringify({
-              id: 'admin-master-01',
-              fullName: 'MAXLINE Super Admin',
-              workEmail: 'maxlinelogistic@gmail.com',
-              role: 'super_admin',
-              businessName: 'MAXLINE LOGISTICS Platform',
-              tenantId: 'ALL',
-            }));
-          }
-          localStorage.setItem('courrier3_active_portal', 'ADMIN');
-          localStorage.setItem('courrier3_active_tenant_id', 'ALL');
-          localStorage.removeItem('courrier3_admin_impersonating');
-          window.location.href = '/admin/customers';
-        }}
-        style={{
-          backgroundColor: '#0284c7',
-          color: '#ffffff',
-          border: 'none',
-          borderRadius: '6px',
-          padding: '5px 14px',
-          fontSize: '11px',
-          fontWeight: '700',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          transition: 'background-color 0.15s ease',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0369a1'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#0284c7'; }}
-      >
-        &larr; Return to Super Admin Portal
-      </button>
-    </div>
-  ) : null;
-
   return (
     <AppShell
       navigationGroups={filteredNavGroups}
       brandName="MAXLINE LOGISTICS"
       portalLabel="Merchant Portal"
-      topBanner={superAdminPreviewBanner}
     >
       <div
         key={location.pathname}

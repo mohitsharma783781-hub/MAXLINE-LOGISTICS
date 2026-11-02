@@ -49,6 +49,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     return null;
   })();
 
+  const isImpersonating = typeof window !== 'undefined' && localStorage.getItem('courrier3_admin_impersonating') === 'true';
   const isSuperAdminInSeller = !isAdmin && (currentUser?.role === 'super_admin' || currentUser?.role === 'admin_operator');
 
   const resolvedName = userName || currentUser?.fullName || (isAdmin ? 'Platform Super Admin' : 'Merchant');
@@ -61,7 +62,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   const merchantDisplayName = isAdmin
     ? 'Super Admin Portal'
-    : (isSuperAdminInSeller ? 'Super Admin Preview' : (!isGenericOrMissing ? rawBusinessName.trim() : 'Merchant Setup Pending'));
+    : ((currentUser?.role === 'super_admin' && !isImpersonating) ? 'Super Admin Preview' : (!isGenericOrMissing ? rawBusinessName.trim() : 'Merchant Setup Pending'));
 
   const resolvedCompany = merchantDisplayName;
   const resolvedEmail = userEmail || currentUser?.workEmail || (isAdmin ? 'admin@maxline.in' : 'support@maxline.in');
@@ -367,14 +368,30 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
             </div>
           </div>
 
-          {/* Super Admin Quick Switcher Banner */}
-          {isSuperAdminInSeller && (
+          {/* Super Admin / Impersonating Return Switcher */}
+          {(isSuperAdminInSeller || isImpersonating) && (
             <div style={{ padding: '4px 6px 8px 6px' }}>
               <button
                 type="button"
                 onClick={() => {
                   setIsOpen(false);
-                  navigate('/admin');
+                  const originalAdmin = localStorage.getItem('courrier3_admin_original_session');
+                  if (originalAdmin) {
+                    localStorage.setItem('courrier3_current_user', originalAdmin);
+                  } else {
+                    localStorage.setItem('courrier3_current_user', JSON.stringify({
+                      id: 'admin-master-01',
+                      fullName: 'MAXLINE Super Admin',
+                      workEmail: 'maxlinelogistic@gmail.com',
+                      role: 'super_admin',
+                      businessName: 'MAXLINE LOGISTICS Platform',
+                      tenantId: 'ALL',
+                    }));
+                  }
+                  localStorage.setItem('courrier3_active_portal', 'ADMIN');
+                  localStorage.setItem('courrier3_active_tenant_id', 'ALL');
+                  localStorage.removeItem('courrier3_admin_impersonating');
+                  window.location.href = '/admin/customers';
                 }}
                 style={{
                   width: '100%',
@@ -382,8 +399,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
-                  backgroundColor: '#0f172a',
-                  color: '#f8fafc',
+                  backgroundColor: '#0284c7',
+                  color: '#ffffff',
                   border: 'none',
                   borderRadius: '8px',
                   padding: '7px 10px',
@@ -393,7 +410,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                 }}
               >
-                <span>Switch to Admin Control Center &rarr;</span>
+                <span>&larr; Return to Super Admin Portal</span>
               </button>
             </div>
           )}
