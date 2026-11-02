@@ -8,6 +8,14 @@ const dashboardDist = path.join(appsDashboard, 'dist');
 const finalDist = path.join(rootDir, 'dist');
 
 console.log('=== STEP 1: Building apps/dashboard Vite React App ===');
+if (!fs.existsSync(path.join(appsDashboard, 'node_modules', 'vite')) && !fs.existsSync(path.join(rootDir, 'node_modules', 'vite'))) {
+  console.log('Installing apps/dashboard dependencies with devDependencies...');
+  execSync('npm install --include=dev', {
+    cwd: appsDashboard,
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'development' }
+  });
+}
 execSync('npm run build', { cwd: appsDashboard, stdio: 'inherit' });
 
 console.log('=== STEP 2: Assembling Unified Production Build in dist/ ===');
