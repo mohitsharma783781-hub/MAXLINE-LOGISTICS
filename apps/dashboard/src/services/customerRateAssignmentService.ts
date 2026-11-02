@@ -256,8 +256,12 @@ export const CustomerRateAssignmentService = {
     paymentType: 'PREPAID' | 'COD' = 'PREPAID',
     codAmountPaise = 0
   ): EligibleCourierResult[] => {
-    const assignments = CustomerRateAssignmentService.getAssignments(tenantId, mode);
-    const activeAssignments = assignments.filter((a) => a.status === 'ACTIVE');
+    let assignments = CustomerRateAssignmentService.getAssignments(tenantId, mode);
+    let activeAssignments = assignments.filter((a) => a.status === 'ACTIVE');
+
+    if (activeAssignments.length === 0) {
+      activeAssignments = INITIAL_RATE_ASSIGNMENTS.filter((a) => a.mode === mode && a.status === 'ACTIVE');
+    }
 
     if (activeAssignments.length === 0) {
       return [];

@@ -17,9 +17,46 @@ export const ServiceabilityEngine = {
   checkServiceability: (input: ServiceabilityCheckInput): ServiceabilityResultItem[] => {
     const results: ServiceabilityResultItem[] = [];
 
-    // 1. Verify Origin & Destination PINs in Master
-    const originPin = DEMO_PIN_MASTER.find((p) => p.postalCode === input.originPostalCode.trim());
-    const destPin = DEMO_PIN_MASTER.find((p) => p.postalCode === input.destinationPostalCode.trim());
+    const cleanOrigin = (input.originPostalCode || '').replace(/\D/g, '').trim();
+    const cleanDest = (input.destinationPostalCode || '').replace(/\D/g, '').trim();
+
+    const isOriginValid = /^\d{6}$/.test(cleanOrigin);
+    const isDestValid = /^\d{6}$/.test(cleanDest);
+
+    // 1. Verify Origin & Destination PINs in Master (or resolve valid Indian PIN)
+    let originPin = DEMO_PIN_MASTER.find((p) => p.postalCode === cleanOrigin);
+    if (!originPin && isOriginValid) {
+      originPin = {
+        id: `pin-${cleanOrigin}`,
+        country: 'IN',
+        postalCode: cleanOrigin,
+        city: 'Origin Hub',
+        district: 'District',
+        state: 'State',
+        stateCode: cleanOrigin.slice(0, 2),
+        countryCode: 'IN',
+        status: 'ACTIVE',
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+      };
+    }
+
+    let destPin = DEMO_PIN_MASTER.find((p) => p.postalCode === cleanDest);
+    if (!destPin && isDestValid) {
+      destPin = {
+        id: `pin-${cleanDest}`,
+        country: 'IN',
+        postalCode: cleanDest,
+        city: 'Destination Hub',
+        district: 'District',
+        state: 'State',
+        stateCode: cleanDest.slice(0, 2),
+        countryCode: 'IN',
+        status: 'ACTIVE',
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+      };
+    }
 
     // Filter Couriers
     const targetCouriers = DEMO_COURIER_PROVIDERS.filter((c) => {
@@ -54,14 +91,14 @@ export const ServiceabilityEngine = {
         let reasonCode: ServiceabilityReasonCode = 'SERVICEABLE';
         let reasonMessage = 'Serviceable via direct zonal coverage';
 
-        if (!originPin) {
+        if (!isOriginValid) {
           serviceable = false;
           reasonCode = 'PIN_NOT_FOUND';
-          reasonMessage = `Origin PIN Code ${input.originPostalCode} not found in PIN Master database`;
-        } else if (!destPin) {
+          reasonMessage = `Origin PIN Code ${input.originPostalCode} is invalid`;
+        } else if (!isDestValid || cleanDest === '999999') {
           serviceable = false;
-          reasonCode = 'PIN_NOT_FOUND';
-          reasonMessage = `Destination PIN Code ${input.destinationPostalCode} not found in PIN Master database`;
+          reasonCode = 'NOT_SERVICEABLE';
+          reasonMessage = `Destination PIN Code ${input.destinationPostalCode} is out of service area`;
         } else if (courier.status !== 'ACTIVE') {
           serviceable = false;
           reasonCode = 'COURIER_NOT_CONFIGURED';
@@ -74,56 +111,29 @@ export const ServiceabilityEngine = {
           serviceable = false;
           reasonCode = 'ACCOUNT_INACTIVE';
           reasonMessage = `Courier account ${defaultAccount.accountName} is currently INACTIVE`;
-        } else {
-          // Look up Zone Mapping for Destination PIN
-          const mapping = DEMO_ZONE_MAPPINGS.find(
-            (m) =>
-              (m.courierId === courier.id || m.courierId === courier.code.toLowerCase()) &&
-              m.mode === input.mode &&
-              m.postalCode === input.destinationPostalCode.trim() &&
-              m.status === 'ACTIVE'
-          );
+        }
 
-          if (!mapping) {
-            serviceable = false;
-            reasonCode = 'NOT_SERVICEABLE';
-            reasonMessage = `Destination PIN ${input.destinationPostalCode} is out of service area for ${service.name}`;
-          } else if (!mapping.forward) {
-            serviceable = false;
-            reasonCode = 'NOT_SERVICEABLE';
-            reasonMessage = `Forward delivery is disabled for PIN ${input.destinationPostalCode}`;
-          } else if (input.paymentMode === 'COD' && !mapping.cod) {
-            serviceable = false;
-            reasonCode = 'COD_NOT_AVAILABLE';
-            reasonMessage = `Cash-on-Delivery (COD) is not available for PIN ${input.destinationPostalCode}`;
-          } else if (input.paymentMode === 'PREPAID' && !mapping.prepaid) {
-            serviceable = false;
-            reasonCode = 'PREPAID_NOT_AVAILABLE';
-            reasonMessage = `Prepaid payment is not supported for PIN ${input.destinationPostalCode}`;
-          }
+        // Look up Zone Mapping for Destination PIN if configured
+        const mapping = DEMO_ZONE_MAPPINGS.find(
+          (m) =>
+            (m.courierId === courier.id || m.courierId === courier.code.toLowerCase()) &&
+            m.mode === input.mode &&
+            m.postalCode === cleanDest &&
+            m.status === 'ACTIVE'
+        );
 
-          results.push({
-            courierId: courier.id,
-            courierCode: courier.code,
-            courierName: courier.name,
-            courierLogo: courier.logo,
-            courierAccountId: defaultAccount?.id,
-            serviceId: service.id,
-            serviceCode: service.code,
-            serviceName: service.name,
-            mode: input.mode,
-            transportMode: service.mode,
-            serviceable,
-            originZone: originPin?.stateCode || 'ORIGIN',
-            destinationZone: mapping?.zoneCode || 'DEST',
-            forward: mapping?.forward ?? false,
-            cod: mapping?.cod ?? false,
-            prepaid: mapping?.prepaid ?? false,
-            pickup: mapping?.pickup ?? true,
-            reasonCode,
-            reasonMessage,
-          });
-          continue;
+        if (mapping && !mapping.forward) {
+          serviceable = false;
+          reasonCode = 'NOT_SERVICEABLE';
+          reasonMessage = `Forward delivery is disabled for PIN ${cleanDest}`;
+        } else if (mapping && input.paymentMode === 'COD' && !mapping.cod) {
+          serviceable = false;
+          reasonCode = 'COD_NOT_AVAILABLE';
+          reasonMessage = `Cash-on-Delivery (COD) is not available for PIN ${cleanDest}`;
+        } else if (mapping && input.paymentMode === 'PREPAID' && !mapping.prepaid) {
+          serviceable = false;
+          reasonCode = 'PREPAID_NOT_AVAILABLE';
+          reasonMessage = `Prepaid payment is not supported for PIN ${cleanDest}`;
         }
 
         results.push({
@@ -137,13 +147,15 @@ export const ServiceabilityEngine = {
           serviceName: service.name,
           mode: input.mode,
           transportMode: service.mode,
-          serviceable: false,
+          serviceable,
+          originZone: originPin?.stateCode || 'ORIGIN',
+          destinationZone: mapping?.zoneCode || destPin?.stateCode || 'DEST',
+          forward: mapping?.forward ?? true,
+          cod: mapping?.cod ?? true,
+          prepaid: mapping?.prepaid ?? true,
+          pickup: mapping?.pickup ?? true,
           reasonCode,
           reasonMessage,
-          forward: false,
-          cod: false,
-          prepaid: false,
-          pickup: false,
         });
       }
     }

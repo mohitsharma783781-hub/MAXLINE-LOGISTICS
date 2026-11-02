@@ -659,6 +659,19 @@ export const CreateShipmentWizardPage: React.FC = () => {
     }));
   }, [tenantId, currentWarehouse, deliveryPincode, packageMath.totalChargeableWeightKg, paymentMode, codAmount, shipmentCategory]);
 
+  // Auto-select best/default courier in B2C if none selected
+  useEffect(() => {
+    if (shipmentCategory !== 'b2b_freight' && eligibleCouriers.length > 0) {
+      setSelectedCourier((prev) => {
+        if (prev && eligibleCouriers.some((c) => c.courierId === prev.courierId)) return prev;
+        const defaultCourier = eligibleCouriers.find((c) => c.isDefault);
+        const recommended = eligibleCouriers.find((c) => c.isRecommended);
+        return defaultCourier || recommended || eligibleCouriers[0];
+      });
+      setFormError(null);
+    }
+  }, [eligibleCouriers, shipmentCategory]);
+
   // Calculate Price Breakdown Function
   const calculateDetailedBreakdown = (courier: EligibleCourierResult | null) => {
     if (!courier) return null;
@@ -1502,6 +1515,7 @@ export const CreateShipmentWizardPage: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setReceiverType('b2c');
+                      setShipmentCategory('parcel');
                       setFormError(null);
                     }}
                     style={{
@@ -1543,6 +1557,7 @@ export const CreateShipmentWizardPage: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setReceiverType('b2b');
+                      setShipmentCategory('b2b_freight');
                       setFormError(null);
                     }}
                     style={{
@@ -1732,32 +1747,42 @@ export const CreateShipmentWizardPage: React.FC = () => {
                 </Badge>
               </div>
 
-              {/* 1. Single Shipment Type Selector (B2B Cargo, B2C Parcel, Document) */}
+              {/* 1. Contextual Package Type Selector based on B2C vs B2B Consignee */}
               <div>
                 <label style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', display: 'block', marginBottom: '8px' }}>
-                  Shipment Type *
+                  {receiverType === 'b2c' ? 'Packaging Type *' : 'Commercial Cargo Packaging *'}
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                  {[
-                    {
-                      id: 'b2b_freight' as const,
-                      label: 'B2B Cargo',
-                      subtitle: 'Multi-box commercial shipments & cartons',
-                      icon: Building2,
-                    },
-                    {
-                      id: 'parcel' as const,
-                      label: 'B2C Parcel',
-                      subtitle: 'Standard retail & single delivery parcel',
-                      icon: Package,
-                    },
-                    {
-                      id: 'document' as const,
-                      label: 'Document',
-                      subtitle: 'Envelopes, legal deeds & letters (0.5 kg)',
-                      icon: FileText,
-                    },
-                  ].map((cat) => {
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                  {(receiverType === 'b2c'
+                    ? [
+                        {
+                          id: 'parcel' as const,
+                          label: 'Box / Parcel',
+                          subtitle: 'Standard retail & ecommerce package',
+                          icon: Package,
+                        },
+                        {
+                          id: 'document' as const,
+                          label: 'Flyer / Document',
+                          subtitle: 'Envelopes, legal deeds & letters (≤ 0.5 kg)',
+                          icon: FileText,
+                        },
+                      ]
+                    : [
+                        {
+                          id: 'b2b_freight' as const,
+                          label: 'B2B Cargo',
+                          subtitle: 'Multi-box commercial freight & heavy cartons',
+                          icon: Building2,
+                        },
+                        {
+                          id: 'document' as const,
+                          label: 'Commercial Documents',
+                          subtitle: 'Invoices, tenders, and official agreements',
+                          icon: FileText,
+                        },
+                      ]
+                  ).map((cat) => {
                     const isSelected = shipmentCategory === cat.id;
                     const CatIcon = cat.icon;
                     return (
