@@ -5,6 +5,7 @@ import type {
 } from '../types/tracking';
 import { DEMO_TRACKING_DATA, deriveCurrentTrackingStatus } from '../mocks/tracking.mock';
 import { CustomerShipmentService } from './customerShipmentService';
+import { DelhiveryService } from './delhiveryService';
 
 const TRACKING_STORE: Map<string, ShipmentTrackingSummary> = new Map();
 DEMO_TRACKING_DATA.forEach((t) => TRACKING_STORE.set(t.shipmentId, t));
@@ -170,6 +171,60 @@ export const TrackingService = {
 
     const qLower = q.toLowerCase();
     const bookedShipment = CustomerShipmentService.getShipmentById(q);
+
+    // 1. LIVE CARRIER TRACKING: Query Delhivery live network if AWB matches pattern or belongs to booked shipment
+    const targetAwb = bookedShipment?.awbNumber || q;
+    const isDelhiveryCandidate =
+      (bookedShipment && (bookedShipment.courierId?.toLowerCase().includes('delhivery') || bookedShipment.courierName?.toLowerCase().includes('delhivery'))) ||
+      /^(del|\d{10,16})/i.test(targetAwb);
+
+    if (isDelhiveryCandidate) {
+      try {
+        const liveDelhivery = await DelhiveryService.trackShipment(targetAwb);
+        if (liveDelhivery && liveDelhivery.success && liveDelhivery.events && liveDelhivery.events.length > 0) {
+          const liveEvents: TrackingEvent[] = liveDelhivery.events.map((e, idx) => ({
+            id: `del-ev-${idx}-${Date.now()}`,
+            shipmentId: bookedShipment?.shipmentId || `SHP-${targetAwb}`,
+            awb: targetAwb,
+            courierId: 'delhivery',
+            courierName: 'Delhivery Surface Express',
+            status: TrackingStatusMapper.normalize(e.status),
+            providerStatus: e.title || e.status,
+            description: e.description || 'Processed by Delhivery Hub',
+            location: e.location || 'Delhivery Hub',
+            eventTime: e.timestamp ? new Date(e.timestamp).toLocaleString() : new Date().toLocaleString(),
+            source: 'COURIER',
+            createdAt: e.timestamp || new Date().toISOString(),
+          }));
+
+          const carrierSummary: ShipmentTrackingSummary = {
+            shipmentId: bookedShipment?.shipmentId || `SHP-${targetAwb}`,
+            orderId: bookedShipment?.orderId || liveDelhivery.orderId || `ORD-${targetAwb.slice(-6)}`,
+            awb: targetAwb,
+            courierId: 'delhivery',
+            courierName: 'Delhivery Surface Express',
+            courierLogo: '/delhivery.png',
+            originCity: bookedShipment?.pickupCity || liveDelhivery.origin || 'Panchkula Hub',
+            destinationCity: bookedShipment?.deliveryCity || liveDelhivery.destination || 'Destination Hub',
+            recipientName: bookedShipment?.deliveryContact || liveDelhivery.consignee || 'Customer Consignee',
+            currentStatus: TrackingStatusMapper.normalize(liveDelhivery.status),
+            lastUpdated: new Date().toLocaleString(),
+            estimatedDeliveryDate: liveDelhivery.expectedDeliveryDate || '2-4 Business Days',
+            events: liveEvents,
+            tenantId: bookedShipment?.tenantId,
+          };
+
+          return {
+            success: true,
+            data: carrierSummary,
+            source: 'LIVE_CARRIER',
+            message: 'Live tracking feed connected directly with Delhivery Production Network.',
+          };
+        }
+      } catch (delTrackErr) {
+        console.warn('[TrackingService] Delhivery live tracking check fallback:', delTrackErr);
+      }
+    }
 
     // 2. Check local merchant portal shipments (CustomerShipmentService)
     if (bookedShipment) {

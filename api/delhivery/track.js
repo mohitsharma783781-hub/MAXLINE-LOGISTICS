@@ -1,0 +1,136 @@
+/**
+ * MAXLINE LOGISTICS - Delhivery Live Package Tracking API
+ * Fetches real-time milestone scans directly from Delhivery Production Tracking engine.
+ */
+
+const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN || '745fcc8cddf49e2c15e9e018a20d78b7ede7656e';
+const DELHIVERY_HOST = 'track.delhivery.com';
+
+module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const awb = req.query.awb || (req.body && req.body.awb);
+  if (!awb) {
+    return res.status(400).json({
+      success: false,
+      message: 'Delhivery AWB / Waybill number is required.',
+    });
+  }
+
+  try {
+    const cleanAwb = String(awb).trim();
+    const url = `https://${DELHIVERY_HOST}/api/v1/packages/json/?waybill=${cleanAwb}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Token ${DELHIVERY_API_TOKEN}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        success: false,
+        message: `Delhivery tracking returned status ${response.status}`,
+      });
+    }
+
+    const data = await response.json();
+    const packageData = (data.ShipmentData && data.ShipmentData[0] && data.ShipmentData[0].Shipment) || null;
+
+    if (!packageData) {
+      return res.status(200).json({
+        success: true,
+        awb: cleanAwb,
+        status: 'BOOKED',
+        carrier: 'Delhivery B2C',
+        origin: 'Panchkula Hub',
+        destination: 'Destination Hub',
+        events: [
+          {
+            status: 'BOOKED',
+            title: 'Shipment Booked & Manifested',
+            description: 'Order registered with Delhivery logistics network.',
+            location: 'Origin Facility',
+            timestamp: new Date().toISOString(),
+          }
+        ],
+        message: 'Delhivery package registered. Awaiting initial scan.',
+      });
+    }
+
+    // Map Delhivery status to Maxline standard status
+    const statusType = String(packageData.Status && packageData.Status.StatusType || '').toLowerCase();
+    const rawStatus = String(packageData.Status && packageData.Status.Status || '').toLowerCase();
+
+    let mappedStatus = 'IN_TRANSIT';
+    if (statusType.includes('dl') || rawStatus.includes('delivered')) {
+      mappedStatus = 'DELIVERED';
+    } else if (rawStatus.includes('out for delivery') || rawStatus.includes('ofd')) {
+      mappedStatus = 'OUT_FOR_DELIVERY';
+    } else if (rawStatus.includes('rto') || statusType.includes('rt')) {
+      mappedStatus = 'RTO';
+    } else if (rawStatus.includes('ndr') || rawStatus.includes('undelivered') || statusType.includes('ud')) {
+      mappedStatus = 'NDR';
+    } else if (rawStatus.includes('picked up') || rawStatus.includes('in transit') || statusType.includes('in')) {
+      mappedStatus = 'IN_TRANSIT';
+    } else if (rawStatus.includes('manifest') || rawStatus.includes('booked')) {
+      mappedStatus = 'BOOKED';
+    }
+
+    // Map scans array
+    const scans = packageData.Scans || [];
+    const events = scans.map((s) => {
+      const scanDetail = s.ScanDetail || {};
+      return {
+        status: mappedStatus,
+        title: scanDetail.Scan || 'Package In Transit',
+        description: scanDetail.Instructions || scanDetail.Comment || 'Processed at Delhivery Hub',
+        location: scanDetail.ScannedLocation || 'Delhivery Hub',
+        timestamp: scanDetail.ScanDateTime || new Date().toISOString(),
+      };
+    });
+
+    if (events.length === 0) {
+      events.push({
+        status: mappedStatus,
+        title: packageData.Status ? packageData.Status.Status : 'Shipment Manifested',
+        description: packageData.Status ? packageData.Status.Instructions : 'Manifested at Delhivery Hub',
+        location: packageData.Destination || 'Delhivery Logistics Hub',
+        timestamp: packageData.PickUpDate || new Date().toISOString(),
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      awb: cleanAwb,
+      orderId: packageData.ReferenceNo || '',
+      status: mappedStatus,
+      rawStatus: packageData.Status ? packageData.Status.Status : 'Manifested',
+      carrier: 'Delhivery Express Surface',
+      origin: packageData.Origin || 'Origin Hub',
+      destination: packageData.Destination || 'Destination Hub',
+      expectedDeliveryDate: packageData.ExpectedDeliveryDate || '',
+      consignee: packageData.Consignee ? packageData.Consignee.Name : '',
+      events,
+    });
+  } catch (error) {
+    console.error('[Delhivery Tracking Error]:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to query Delhivery tracking service.',
+      error: error.message,
+    });
+  }
+};

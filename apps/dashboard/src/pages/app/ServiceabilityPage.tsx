@@ -26,6 +26,7 @@ import type {
   ServiceabilityCheckInput,
 } from '../../types/rates';
 import { demoServiceabilityProvider } from '../../mocks/rates.mock';
+import { DelhiveryService } from '../../services/delhiveryService';
 
 type TableRowData = NormalizedServiceability & Record<string, unknown>;
 
@@ -70,14 +71,14 @@ export const ServiceabilityPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleCheck = (e?: React.FormEvent) => {
+  const handleCheck = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) return;
 
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
       const input: ServiceabilityCheckInput = {
         originPincode: originPincode.trim(),
         destinationPincode: destinationPincode.trim(),
@@ -86,12 +87,40 @@ export const ServiceabilityPage: React.FC = () => {
       };
 
       const result = demoServiceabilityProvider.checkServiceability(input);
-      setServiceabilityList(result.results as TableRowData[]);
+      let list = (result.results as TableRowData[]) || [];
+
+      // Query real Delhivery Production Network live
+      try {
+        const liveDelhivery = await DelhiveryService.checkServiceability(destinationPincode.trim());
+        if (liveDelhivery && liveDelhivery.success) {
+          list = list.map((item) => {
+            if (item.courierId?.toLowerCase().includes('delhivery') || item.courierName?.toLowerCase().includes('delhivery')) {
+              return {
+                ...item,
+                serviceable: liveDelhivery.serviceable,
+                codAvailable: liveDelhivery.codAvailable ?? item.codAvailable,
+                prepaidAvailable: liveDelhivery.prepaidAvailable ?? item.prepaidAvailable,
+                isODA: liveDelhivery.isODA ?? item.isODA,
+                remarks: liveDelhivery.district
+                  ? `Verified with Delhivery live network (${liveDelhivery.district}, ${liveDelhivery.state})`
+                  : item.remarks,
+                isLiveCarrier: true,
+              };
+            }
+            return item;
+          });
+        }
+      } catch (delErr) {
+        console.warn('[ServiceabilityPage] Delhivery live check fallback:', delErr);
+      }
+
+      setServiceabilityList(list);
       setOverallStatus(result.status);
       setStatusMessage(result.message);
+    } finally {
       setIsLoading(false);
       setHasChecked(true);
-    }, 400);
+    }
   };
 
   const handleReset = () => {
