@@ -1,6 +1,6 @@
 # MAXLINE LOGISTICS — FIXES IMPLEMENTED & ARCHITECTURAL STABILIZATION
 
-This report details the concrete, code-level enhancements and fixes deployed across the MAXLINE LOGISTICS platform during the master system stabilization sprint.
+This report details the concrete, code-level enhancements and fixes deployed across the MAXLINE LOGISTICS platform during the master system stabilization sprint, including the critical Razorpay wallet atomicity fix.
 
 ---
 
@@ -8,116 +8,81 @@ This report details the concrete, code-level enhancements and fixes deployed acr
 
 | Subsystem | File Path | Nature of Fix |
 | :--- | :--- | :--- |
-| **Serverless API** | `api/verify-payment.js` | Added strict payment idempotency, uninitialized wallet auto-provisioning, and immutable audit ledger insertion. |
+| **Serverless API** | `api/verify-payment.js` | Converted multi-step REST calls into a single atomic PostgreSQL RPC call (`credit_wallet_rpc`) with row-level locking (`FOR UPDATE`) and server-side amount verification from Razorpay API. |
+| **Serverless Webhook** | `api/razorpay-webhook.js` | Created dedicated webhook endpoint verifying HMAC signatures and calling the exact same atomic RPC with matching idempotency key. |
+| **Backend API** | `apps/api/src/controllers/payment.controller.ts` | Upgraded `verifyPayment` and added `razorpayWebhook` calling `public.credit_wallet_rpc` with PostgreSQL row locking. |
+| **Backend Routes** | `apps/api/src/routes/payment.routes.ts` | Registered `/webhook` alongside `/create-order` and `/verify-payment`. |
+| **Database Stored Procedure** | PostgreSQL `credit_wallet_rpc` | Updated function to acquire row-level lock (`FOR UPDATE`), auto-provision uninitialized wallets, enforce idempotency under lock, and mutate balance and ledger in a single transaction. |
 | **Database Service** | `apps/dashboard/src/services/supabase/supabaseWalletService.ts` | Aligned transaction type enum to `FREIGHT_DEBIT`, implemented direct PostgreSQL fallbacks for RPC failures. |
 | **Admin Onboarding** | `apps/dashboard/src/pages/admin/AdminOnboardingTrackerPage.tsx` | Fixed missing `useEffect` import, wired live Supabase merchant synchronization, and eliminated crash on page load. |
 | **Admin KYC** | `apps/dashboard/src/pages/admin/AdminKycVerificationPage.tsx` | Fixed UUID replacement bug, enabled direct Supabase KYC document verification updates and merchant status toggling. |
 | **Onboarding Service**| `apps/dashboard/src/services/onboardingService.ts` | Filtered legacy demo merchants from localStorage, implemented automated cloud merchant sync and status progression. |
 | **Seller Wallet UI** | `apps/dashboard/src/pages/app/WalletPage.tsx` | Integrated `syncFromSupabase` on component mount and payment success to ensure immediate cloud balance visibility. |
-| **Wallet Recharge** | `apps/dashboard/src/pages/app/WalletRechargeWizardPage.tsx` | Added post-recharge cloud synchronization and stage 8 onboarding auto-progression. |
 | **Application Root** | `apps/dashboard/src/main.tsx` | Added client-side cache sanitization to purge obsolete demo state on first load; fixed syntax errors. |
-| **Topbar Navigation**| `apps/dashboard/src/components/common/Topbar.tsx` | Added window focus event and 15-second polling interval for real-time wallet balance pill updates. |
-| **Admin Management** | `apps/dashboard/src/services/adminManagementService.ts` | Added `ensureMerchantInCloud`, direct Supabase queries for wallets and merchants, and resilient fallbacks. |
 
 ---
 
 ## 2. Technical Code Modifications & In-Depth Analysis
 
-### Fix 1: Razorpay Verification Idempotency & Auto-Provisioning (`api/verify-payment.js`)
+### Fix 1: Single Authoritative Server-Side Atomic Credit (`credit_wallet_rpc` & `api/verify-payment.js`)
 
 **Problem:**
-Previously, if a merchant signed up and immediately recharged before a wallet record was formally initialized, `api/verify-payment.js` executed a PATCH query that matched 0 rows, resulting in payment capture without balance credit. Additionally, webhook retries could result in duplicate balance increments.
+Previously, `api/verify-payment.js` performed wallet balance updates and ledger insertions through multiple separate PostgREST requests:
+1. REST GET on `wallet_transactions`
+2. REST GET on `wallets`
+3. REST PATCH on `wallets`
+4. REST POST on `wallet_transactions`
+
+If a client callback and an asynchronous Razorpay webhook arrived at the same time, both could read the same initial balance before either had committed the PATCH, creating a race condition that could lead to duplicate credits or ledger discrepancies.
 
 **Solution:**
-Implemented a two-tier verification guard:
-1. Checked `wallet_transactions` for existing records with `reference_id == razorpay_payment_id`. If found, returned early with HTTP 200 and `{ isDuplicate: true }`.
-2. Checked for existing wallet row. If missing, executed a POST to `/rest/v1/wallets` creating an active wallet with the credited balance, followed by an immutable ledger entry.
+Replaced the separate REST calls with a single call to `public.credit_wallet_rpc`:
 
 ```javascript
-// 1. Strict Idempotency Check: Prevent duplicate credits
-const checkTxRes = await fetch(
-  `${SUPABASE_URL}/rest/v1/wallet_transactions?reference_id=eq.${encodeURIComponent(razorpay_payment_id)}&select=id`,
-  { method: 'GET', headers }
-);
-
-if (checkTxRes.ok) {
-  const existingTxs = await checkTxRes.json();
-  if (Array.isArray(existingTxs) && existingTxs.length > 0) {
-    return res.status(200).json({
-      success: true,
-      message: 'Payment already verified and credited previously (Idempotent).',
-      order_id: razorpay_order_id,
-      payment_id: razorpay_payment_id,
-      credited: true,
-      isDuplicate: true,
-      verified_at: new Date().toISOString(),
-    });
-  }
-}
-```
-
----
-
-### Fix 2: PostgreSQL Transaction Type Enum Alignment (`supabaseWalletService.ts`)
-
-**Problem:**
-The Supabase PostgreSQL database defines the `wallet_tx_type` enum as:
-`('RECHARGE', 'FREIGHT_DEBIT', 'COD_REMITTANCE', 'REFUND', 'MANUAL_CREDIT', 'MANUAL_DEBIT', 'ADJUSTMENT')`.
-The frontend service passed `type: 'SHIPMENT_CHARGE'`, which failed PostgreSQL schema validation.
-
-**Solution:**
-Updated the transaction payload in `supabaseWalletService.ts` to `FREIGHT_DEBIT`. Verified that all debit transactions conform to the database schema.
-
-```typescript
-await supabase.from('wallet_transactions').insert({
-  merchant_id: validTid,
-  wallet_id: wRow.id,
-  type: 'FREIGHT_DEBIT', // Aligned with Supabase PostgreSQL enum
-  direction: 'DEBIT',
-  amount_minor: Math.round(params.amountMinor),
-  currency: 'INR',
-  description: params.description || 'Freight Charges for Shipment Dispatch',
-  reference_type: 'SHIPMENT',
-  reference_id: params.referenceId || `shp-${Date.now()}`,
-  idempotency_key: `debit_${params.referenceId || Date.now()}`,
+// Single Authoritative Server-Side Atomic Credit via PostgreSQL RPC
+const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/credit_wallet_rpc`, {
+  method: 'POST',
+  headers,
+  body: JSON.stringify({
+    p_merchant_id: verifiedMerchantId,
+    p_amount_minor: verifiedAmountMinor,
+    p_reference_type: 'RAZORPAY',
+    p_reference_id: razorpay_payment_id,
+    p_idempotency_key: idempotencyKey,
+    p_description: `Wallet Balance Added via Razorpay (${razorpay_payment_id})`,
+  }),
 });
 ```
 
----
-
-### Fix 3: React Import Restoration on Super Admin Onboarding (`AdminOnboardingTrackerPage.tsx`)
-
-**Problem:**
-`AdminOnboardingTrackerPage.tsx` called `useEffect` to fetch live merchants from Supabase, but `useEffect` was not imported from `react`, causing a runtime `ReferenceError` when platform administrators navigated to `/admin/onboarding`.
-
-**Solution:**
-Updated line 1 to `import React, { useState, useEffect } from 'react';`. Tested compilation via `node scripts/build.js`, completing with 0 errors across 2,096 modules.
+Inside PostgreSQL, `credit_wallet_rpc` executes as a single transaction with:
+1. `SELECT * FROM public.wallets WHERE merchant_id = p_merchant_id FOR UPDATE` (Row-level lock serializing concurrent requests).
+2. Auto-provisions wallet if missing.
+3. Checks `idempotency_key = p_idempotency_key` under the lock (Duplicate hits immediately return `is_duplicate: true` with zero balance mutation).
+4. Atomically mutates `wallets.available_balance_minor` and `wallets.total_recharged_minor`.
+5. Inserts an immutable row into `public.wallet_transactions`.
 
 ---
 
-### Fix 4: Pruning Legacy Demo Onboarding Records (`onboardingService.ts` & `main.tsx`)
+### Fix 2: Server-Side Anti-Tampering (Razorpay API Verification)
 
 **Problem:**
-Old demo customer records (`Apex Logistics`, `Zenith Electronics`, `CUST-1001` through `CUST-1005`) persisted in browsers' `localStorage`, obscuring newly registered merchants in the Onboarding Tracker.
+A malicious client could attempt to send `amountINR: 99999` or an altered `merchantId` in the JSON body of `/api/verify-payment`.
 
 **Solution:**
-Implemented sanitization logic in `OnboardingService.getRecords()` that automatically filters out obsolete mock records. Furthermore, added a client-side startup check in `main.tsx` to clear obsolete keys once per browser session.
-
-```typescript
-// Prune legacy demo records
-const demoIds = ['CUST-1001', 'CUST-1002', 'CUST-1003', 'CUST-1004', 'CUST-1005', 'demo-01', 'demo-02'];
-const demoNames = ['apex logistics', 'zenith electronics', 'freshkart', 'vastra fashions', 'bharat tools', 'xyz logistics'];
-records = parsed.filter(
-  (r) => !demoIds.includes(r.customerId) && !demoNames.some((d) => r.companyName?.toLowerCase().includes(d))
-);
-```
+Before crediting, the server calls `https://api.razorpay.com/v1/orders/:order_id` with HTTP Basic auth:
+- Derives the true credit amount strictly from `orderData.amount` (in paise).
+- Resolves the merchant ID strictly from `orderData.notes.merchantId`.
+- Completely neutralizes client-supplied payload tampering.
 
 ---
 
-### Fix 5: KYC Approval UUID Compatibility (`AdminKycVerificationPage.tsx`)
+### Fix 3: Unified Idempotency Across Webhook & Callback
 
-**Problem:**
-The compliance desk replaced `'cust-'` with `'CUST-100'` on customer IDs, which corrupted standard UUID strings and prevented onboarding stage progression for real PostgreSQL merchants.
+Both client callback (`/api/verify-payment`) and webhook (`/api/razorpay-webhook`) use the exact same payment identity:
+$$\text{idempotency\_key} = \text{"rzp\_"} \mathbin{\Vert} \text{razorpay\_payment\_id}$$
 
-**Solution:**
-Preserved the unmodified `selectedRecord.id` and added direct Supabase updates to `merchant_kyc_documents` and `merchants.status`.
+Verified in `scripts/test_razorpay_atomicity_suite.ts`:
+- Simultaneous arrival of callback and webhook: Exactly 1 credits, 1 acknowledged as duplicate.
+- 20 concurrent requests for same payment ID: Exactly 1 credits, 19 acknowledged as duplicate.
+- Final wallet balance incremented by exactly 1x amount.
+- Mathematical ledger reconciliation invariant holds with ₹0.00 discrepancy.
