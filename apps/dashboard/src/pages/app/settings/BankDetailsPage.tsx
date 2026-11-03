@@ -8,9 +8,11 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { Button, Card, Badge, Alert, Input } from '../../../components/ui';
+import { useTenant } from '../../../context/TenantContext';
 
 export const BankDetailsPage: React.FC = () => {
-  const [accountHolder, setAccountHolder] = useState('XYZ LOGISTICS');
+  const { activeTenant } = useTenant();
+  const [accountHolder, setAccountHolder] = useState(activeTenant?.companyName || '');
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');

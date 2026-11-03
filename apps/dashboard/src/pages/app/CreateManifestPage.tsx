@@ -41,16 +41,9 @@ export const CreateManifestPage: React.FC = () => {
     setShipments(CustomerShipmentService.getShipments(tenantId));
   }, [tenantId]);
 
-  const defaultWh = warehouses.find((w) => w.isDefault) || warehouses[0] || {
-    id: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
-    warehouseName: 'XYZ Logistics Primary Hub',
-    addressLine1: 'Plot 42, Industrial Area Phase 1',
-    city: 'Panchkula',
-    state: 'Haryana',
-    pincode: '134113',
-  };
+  const defaultWh = warehouses.find((w) => w.isDefault) || warehouses[0] || null;
 
-  const [warehouseId, setWarehouseId] = useState<string>(defaultWh.id);
+  const [warehouseId, setWarehouseId] = useState<string>(defaultWh?.id || '');
   const [courierId, setCourierId] = useState<string>('delhivery');
   const [selectedShipmentIds, setSelectedShipmentIds] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});

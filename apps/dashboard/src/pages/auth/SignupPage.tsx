@@ -82,13 +82,6 @@ export const SignupPage: React.FC = () => {
       });
 
       if (res.user) {
-        if (!res.token) {
-          // If Supabase project has email confirmation enabled, no immediate session token is returned
-          setSuccessMessage(
-            'Registration successful! A verification link has been sent to your email. Please verify your email before logging in.'
-          );
-          return;
-        }
         navigate('/app');
       } else {
         const rawMsg = res.message || '';

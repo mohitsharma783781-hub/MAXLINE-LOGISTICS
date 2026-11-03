@@ -37,9 +37,27 @@ export const Topbar: React.FC<TopbarProps> = ({
   })();
 
   const isCustomerPortal = !portalName.toLowerCase().includes('admin');
-  const walletBalancePaise = activeTenantId
-    ? (WalletService.getWallet(activeTenantId).availableBalanceMinor ?? 0)
-    : 0;
+  const [walletBalancePaise, setWalletBalancePaise] = useState<number>(() => {
+    return activeTenantId
+      ? (WalletService.getWallet(activeTenantId).availableBalanceMinor ?? 0)
+      : 0;
+  });
+
+  useEffect(() => {
+    const updateBal = () => {
+      if (activeTenantId) {
+        setWalletBalancePaise(WalletService.getWallet(activeTenantId).availableBalanceMinor ?? 0);
+      }
+    };
+    updateBal();
+    window.addEventListener('maxline_wallet_updated', updateBal);
+    window.addEventListener('storage', updateBal);
+    return () => {
+      window.removeEventListener('maxline_wallet_updated', updateBal);
+      window.removeEventListener('storage', updateBal);
+    };
+  }, [activeTenantId]);
+
   const walletBalanceINR = (walletBalancePaise / 100).toFixed(2);
 
   // Global Keyboard Shortcut: Ctrl + K / Cmd + K

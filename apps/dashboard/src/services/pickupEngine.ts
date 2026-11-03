@@ -10,48 +10,6 @@ import { DelhiveryService } from './delhiveryService';
 
 const PICKUPS_STORAGE_KEY = 'maxline_pickups_store';
 
-// Default Production Pickup for XYZ LOGISTICS
-const INITIAL_PICKUP: PickupRequest = {
-  id: 'pkp-del-1001',
-  pickupNumber: 'PRQ-DEL-892104',
-  pickupReference: 'PRQ-DEL-892104',
-  warehouseId: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
-  warehouseName: 'XYZ Logistics Primary Hub',
-  warehouseAddress: 'Plot 42, Industrial Area Phase 1, Panchkula, Haryana - 134113',
-  courierId: 'delhivery',
-  courierName: 'Delhivery Surface Express',
-  shipmentIds: ['SHP-ORD-1001'],
-  shipmentCount: 1,
-  totalWeightKg: 1.0,
-  pickupDate: new Date().toISOString().split('T')[0],
-  timeSlot: '02:00 PM - 06:00 PM',
-  contactPerson: 'Mohit Sharma',
-  contactPhone: '+91 70091 74879',
-  status: 'SCHEDULED',
-  statusText: 'Scheduled for Pickup',
-  createdAt: new Date().toLocaleDateString('en-IN'),
-  updatedAt: new Date().toLocaleDateString('en-IN'),
-  tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
-  events: [
-    {
-      id: 'evt-pk-1',
-      pickupId: 'pkp-del-1001',
-      status: 'REQUESTED',
-      title: 'Pickup Request Dispatched',
-      description: 'Scheduled with Delhivery First Mile (FM) service.',
-      timestamp: new Date().toLocaleString(),
-    },
-    {
-      id: 'evt-pk-2',
-      pickupId: 'pkp-del-1001',
-      status: 'SCHEDULED',
-      title: 'Pickup Confirmed & Scheduled',
-      description: 'Delhivery pickup rider allocated for Panchkula Hub collection.',
-      timestamp: new Date().toLocaleString(),
-    },
-  ],
-};
-
 function loadPickupsFromStorage(): Map<string, PickupRequest> {
   const map = new Map<string, PickupRequest>();
   try {
@@ -66,7 +24,6 @@ function loadPickupsFromStorage(): Map<string, PickupRequest> {
   } catch {
     // Ignore storage parse errors
   }
-  map.set(INITIAL_PICKUP.id, INITIAL_PICKUP);
   return map;
 }
 
@@ -109,18 +66,18 @@ export const PickupEngine = {
       };
     }
 
-    const tenantId = input.tenantId || '48dba919-ca2a-4a86-b645-f795f70e9d59';
+    const tenantId = input.tenantId || '';
     const nowStr = new Date().toLocaleString();
 
     // 1. Resolve Warehouse Details
     const wh = CustomerWarehouseService.getWarehouseById(input.warehouseId || '', tenantId) || {
-      warehouseName: 'XYZ Logistics Primary Hub',
-      addressLine1: 'Plot 42, Industrial Area Phase 1',
-      city: 'Panchkula',
-      state: 'Haryana',
-      pincode: '134113',
-      contactPerson: input.contactPerson || 'Mohit Sharma',
-      contactPhone: input.contactPhone || '+91 70091 74879',
+      warehouseName: 'Primary Warehouse',
+      addressLine1: 'Warehouse Address',
+      city: 'Delhi',
+      state: 'Delhi',
+      pincode: '110001',
+      contactPerson: input.contactPerson || 'Dispatch Officer',
+      contactPhone: input.contactPhone || '',
     };
 
     const warehouseAddress = `${wh.addressLine1}, ${wh.city}, ${wh.state || 'Haryana'} - ${wh.pincode}`;

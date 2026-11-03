@@ -24,21 +24,7 @@ export interface TenantSecurityEvent extends Record<string, unknown> {
   details: string;
 }
 
-export const INITIAL_TENANTS: TenantProfile[] = [
-  {
-    tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
-    companyName: 'XYZ LOGISTICS',
-    slug: 'xyz-logistics',
-    status: 'ACTIVE',
-    planTier: 'Enterprise',
-    createdAt: '2026-09-01',
-    assignedRateCards: ['RC-DELHIVERY-B2C-STD', 'RC-DELHIVERY-B2B-STD'],
-    assignedManager: 'Maxline Platform Super Admin',
-    contactEmail: 'mohitsharma99229@gmail.com',
-    contactMobile: '+91 70091 74879',
-    gstNumber: '06AAAAA0000A1Z5',
-  },
-];
+export const INITIAL_TENANTS: TenantProfile[] = [];
 
 export const INITIAL_SECURITY_EVENTS: TenantSecurityEvent[] = [];
 

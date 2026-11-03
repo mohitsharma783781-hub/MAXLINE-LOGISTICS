@@ -6,10 +6,10 @@ import type {
 } from '../types/customerDashboard';
 
 export const DEMO_MERCHANT_PROFILE = {
-  companyName: 'XYZ LOGISTICS',
-  userName: 'Mohit Sharma',
+  companyName: 'My Business',
+  userName: 'Seller Admin',
   userRole: 'Merchant Administrator',
-  tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
+  tenantId: '',
 };
 
 export const DEMO_KPI_METRICS: DashboardKpiMetrics = {

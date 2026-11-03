@@ -35,6 +35,7 @@ import {
 } from '../../components/ui';
 import { WalletService } from '../../mocks/wallet.mock';
 import { KycService, type UploadedKycDoc } from '../../services/kycService';
+import { AdminManagementService } from '../../services/adminManagementService';
 
 export const AdminCustomerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -103,7 +104,12 @@ export const AdminCustomerDetailPage: React.FC = () => {
     }
   };
 
-  const merchantName = 'XYZ LOGISTICS';
+  const registeredMerchants = AdminManagementService.getRegisteredMerchantsFromStorage();
+  const foundMerchant = registeredMerchants.find((m) => m.id === id);
+  const merchantName = foundMerchant?.businessName || 'Partner Merchant';
+  const merchantOwner = foundMerchant?.ownerName || 'Merchant Admin';
+  const merchantEmail = foundMerchant?.ownerEmail || '';
+  const merchantPhone = foundMerchant?.ownerPhone || '';
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -115,16 +121,16 @@ export const AdminCustomerDetailPage: React.FC = () => {
       }
       localStorage.setItem('courrier3_admin_impersonating', 'true');
       localStorage.setItem('courrier3_active_portal', 'CUSTOMER');
-      localStorage.setItem('courrier3_active_tenant_id', id || '48dba919-ca2a-4a86-b645-f795f70e9d59');
+      localStorage.setItem('courrier3_active_tenant_id', id || foundMerchant?.id || '');
 
       const sellerUser = {
-        id: id || '48dba919-ca2a-4a86-b645-f795f70e9d59',
-        fullName: 'Mohit Sharma',
-        workEmail: 'mohitsharma99229@gmail.com',
+        id: id || foundMerchant?.id || '',
+        fullName: merchantOwner,
+        workEmail: merchantEmail,
         role: 'customer',
-        businessName: merchantName || 'XYZ LOGISTICS',
-        tenantId: id || '48dba919-ca2a-4a86-b645-f795f70e9d59',
-        phoneNumber: '+91 70091 74879',
+        businessName: merchantName,
+        tenantId: id || foundMerchant?.id || '',
+        phoneNumber: merchantPhone,
       };
       localStorage.setItem('courrier3_current_user', JSON.stringify(sellerUser));
 
@@ -167,7 +173,7 @@ export const AdminCustomerDetailPage: React.FC = () => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: '56px', height: '56px', borderRadius: '14px', backgroundColor: '#0f172a', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold' }}>
-              XYZ
+              {(merchantName[0] || 'M').toUpperCase()}
             </div>
 
             <div>

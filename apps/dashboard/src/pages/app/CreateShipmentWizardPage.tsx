@@ -2829,9 +2829,9 @@ export const CreateShipmentWizardPage: React.FC = () => {
                     {/* Shipper */}
                     <div style={{ padding: '6px 0', fontSize: '9px' }}>
                       <span style={{ fontWeight: '800', color: '#555' }}>RETURN TO SENDER (RTO):</span>
-                      <div style={{ fontWeight: '900' }}>{currentWarehouse?.warehouseName || 'XYZ LOGISTICS Primary Hub'} ({currentWarehouse?.contactPerson || 'Mohit Sharma'})</div>
-                      <div style={{ color: '#333' }}>{currentWarehouse?.addressLine1 || 'Plot 42, Industrial Area Phase 1'}, {currentWarehouse?.city || 'Panchkula'} - <strong>{currentWarehouse?.pincode || '134113'}</strong></div>
-                      <div style={{ fontWeight: 'bold' }}>Origin Phone: {currentWarehouse?.contactPhone || '+91 70091 74879'}</div>
+                      <div style={{ fontWeight: '900' }}>{currentWarehouse?.warehouseName || 'Registered Origin Facility'} ({currentWarehouse?.contactPerson || 'Dispatch Manager'})</div>
+                      <div style={{ color: '#333' }}>{currentWarehouse?.addressLine1 || 'Origin Dispatch Facility'}, {currentWarehouse?.city || 'Dispatch City'} - <strong>{currentWarehouse?.pincode || 'Pincode'}</strong></div>
+                      <div style={{ fontWeight: 'bold' }}>Origin Phone: {currentWarehouse?.contactPhone || currentWarehouse?.phone || '+91 99999 99999'}</div>
                     </div>
 
                     <div style={{ borderTop: '1px solid #000', paddingTop: '4px', display: 'flex', justifyContent: 'space-between', fontSize: '8px', fontWeight: '700', color: '#555' }}>

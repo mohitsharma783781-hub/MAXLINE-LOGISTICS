@@ -459,7 +459,7 @@ export const AdminSellingRatesPage: React.FC = () => {
       assignClientTenantId === 'tenant-demo-01'
         ? 'ABC Traders'
         : assignClientTenantId === 'tenant-acme-02'
-        ? 'XYZ Retail'
+        ? 'Prime Retail'
         : 'Nexus Tech B2B';
 
     CustomerRateAssignmentService.assignRateCard({
@@ -1059,7 +1059,7 @@ export const AdminSellingRatesPage: React.FC = () => {
               onChange={(e) => setAssignClientTenantId(e.target.value)}
               options={[
                 { value: 'tenant-demo-01', label: 'ABC Traders (tenant-demo-01)' },
-                { value: 'tenant-acme-02', label: 'XYZ Retail (tenant-acme-02)' },
+                { value: 'tenant-acme-02', label: 'Prime Retail (tenant-acme-02)' },
                 { value: 'tenant-vip-03', label: 'Nexus Tech B2B (tenant-vip-03)' },
               ]}
             />

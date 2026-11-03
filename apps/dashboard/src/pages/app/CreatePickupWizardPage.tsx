@@ -54,16 +54,7 @@ export const CreatePickupWizardPage: React.FC = () => {
     setShipments(shpList);
   }, [tenantId]);
 
-  const defaultWh = warehouses.find((w) => w.isDefault) || warehouses[0] || {
-    id: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
-    warehouseName: 'XYZ Logistics Primary Hub',
-    addressLine1: 'Plot 42, Industrial Area Phase 1',
-    city: 'Panchkula',
-    state: 'Haryana',
-    pincode: '134113',
-    contactPerson: 'Mohit Sharma',
-    contactPhone: '+91 70091 74879',
-  };
+  const defaultWh = warehouses.find((w) => w.isDefault) || warehouses[0] || null;
 
   const todayStr = new Date().toISOString().split('T')[0];
   const tomorrow = new Date();
@@ -71,7 +62,7 @@ export const CreatePickupWizardPage: React.FC = () => {
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
   const [formData, setFormData] = useState<CreatePickupForm>({
-    warehouseId: defaultWh.id,
+    warehouseId: defaultWh?.id || '',
     selectedShipmentIds: [],
     courierId: 'delhivery',
     pickupDate: todayStr,

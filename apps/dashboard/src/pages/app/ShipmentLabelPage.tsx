@@ -32,11 +32,11 @@ export const ShipmentLabelPage: React.FC = () => {
     bookingDate: new Date().toLocaleDateString('en-IN'),
     courierName: 'Delhivery Surface Express',
     serviceName: 'Delhivery B2C Surface',
-    pickupContact: 'Mohit Sharma (XYZ LOGISTICS)',
-    pickupAddress: 'Plot 42, Industrial Area Phase 1',
-    pickupCity: 'Panchkula',
-    pickupPincode: '134113',
-    pickupPhone: '+91 70091 74879',
+    pickupContact: 'Merchant Dispatch Manager',
+    pickupAddress: 'Origin Dispatch Warehouse Facility',
+    pickupCity: 'Origin Hub',
+    pickupPincode: '110001',
+    pickupPhone: '+91 99999 99999',
     deliveryContact: 'Rohan Sharma',
     deliveryAddress: 'House 412, 5th Cross, 2nd Main, Indiranagar',
     deliveryCity: 'Bengaluru',
@@ -414,13 +414,13 @@ export const ShipmentLabelPage: React.FC = () => {
               RETURN TO SENDER IF UNDELIVERED (RTO):
             </div>
             <div style={{ fontSize: '12px', fontWeight: '900', marginTop: '2px' }}>
-              {shipment.pickupContact || 'XYZ LOGISTICS (Mohit Sharma)'}
+              {shipment.pickupContact || 'Registered Shipper Origin'}
             </div>
             <div style={{ fontSize: '10px', color: '#1e293b', marginTop: '2px', lineHeight: '1.3' }}>
-              {shipment.pickupAddress || 'Plot 42, Industrial Area Phase 1'}, {shipment.pickupCity} - <strong>{shipment.pickupPincode || '134113'}</strong>
+              {shipment.pickupAddress || 'Origin Dispatch Facility'}, {shipment.pickupCity} - <strong>{shipment.pickupPincode || ''}</strong>
             </div>
             <div style={{ fontSize: '10px', fontWeight: '800', marginTop: '2px' }}>
-              Origin Phone: {shipment.pickupPhone || '+91 70091 74879'}
+              Origin Phone: {shipment.pickupPhone || '+91 99999 99999'}
             </div>
           </div>
 

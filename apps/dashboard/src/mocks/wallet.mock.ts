@@ -88,6 +88,7 @@ function saveWalletToStorage(wallet: Wallet) {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem(key, JSON.stringify(wallet));
+      window.dispatchEvent(new CustomEvent('maxline_wallet_updated', { detail: { tenantId: wallet.tenantId, wallet } }));
     }
   } catch {}
 }
@@ -234,6 +235,10 @@ export const WalletService = {
     }).catch(() => {});
 
     return newTx;
+  },
+
+  credit: (amountINR: number, description = 'Admin Adjustment', tenantId?: string): WalletTransaction => {
+    return WalletService.recharge(amountINR, description, tenantId);
   },
 
   debit: (
@@ -453,6 +458,10 @@ export const WalletService = {
     txs.unshift(newTx);
     saveTxsToStorage(tid, txs);
     return newTx;
+  },
+
+  credit: (amountINR: number, description = 'Admin Adjustment', tenantId?: string): WalletTransaction => {
+    return WalletService.recharge(amountINR, description, tenantId);
   },
 
   refund: (

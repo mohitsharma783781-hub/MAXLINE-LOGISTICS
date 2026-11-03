@@ -421,10 +421,10 @@ export const ShippingLabelsPage: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '10px', borderBottom: '2px solid #000', paddingBottom: '8px' }}>
                 <div style={{ borderRight: '1px solid #000', paddingRight: '6px' }}>
                   <strong style={{ fontSize: '11px', textTransform: 'uppercase' }}>SHIP FROM (SENDER):</strong>
-                  <div>XYZ LOGISTICS (Mohit Sharma)</div>
-                  <div>Plot 42, Industrial Area Phase 1</div>
-                  <div>Panchkula, Haryana - 134113</div>
-                  <div>Phone: +91 70091 74879</div>
+                  <div>Registered Origin Hub (Dispatch Center)</div>
+                  <div>Industrial Area Dispatch Facility</div>
+                  <div>Origin Hub - 110001</div>
+                  <div>Phone: +91 99999 99999</div>
                 </div>
 
                 <div>

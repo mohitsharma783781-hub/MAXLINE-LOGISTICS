@@ -22,11 +22,13 @@ import type { Manifest } from '../../types/manifests';
 import { MANIFEST_STATUS_CONFIG } from '../../types/manifests';
 import { ManifestEngine } from '../../services/manifestEngine';
 import { BarcodeService } from '../../services/barcodeService';
+import { useTenant } from '../../context/TenantContext';
 
 export const ManifestDetailPage: React.FC = () => {
   const { manifestId, id } = useParams<{ manifestId?: string; id?: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { activeTenant } = useTenant();
 
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [actionAlert, setActionAlert] = useState<string | null>(null);
@@ -53,10 +55,11 @@ export const ManifestDetailPage: React.FC = () => {
 
   const handleMarkHandover = async () => {
     if (!manifest) return;
+    const handoverName = activeTenant?.companyName ? `${activeTenant.companyName} Dispatch Team` : 'Authorized Dispatch Officer';
     const updated = await ManifestEngine.markHandover(
       manifest.id,
-      'Mohit Sharma (XYZ LOGISTICS)',
-      'Handed over parcels to Delhivery collection executive'
+      handoverName,
+      'Handed over parcels to courier collection executive'
     );
     if (updated) {
       setManifest({ ...updated });
@@ -262,7 +265,7 @@ export const ManifestDetailPage: React.FC = () => {
                 ORIGIN DISPATCH HUB (SHIPPER)
               </div>
               <div style={{ marginTop: '4px', fontSize: '13px', fontWeight: '900' }}>
-                {manifest.warehouseName || 'XYZ Logistics Primary Hub'}
+                {manifest.warehouseName || activeTenant?.companyName || 'Primary Fulfillment Warehouse'}
               </div>
               <div style={{ marginTop: '2px' }}>
                 Plot 42, Industrial Area Phase 1, Panchkula, Haryana - <strong>134113</strong>
@@ -364,7 +367,7 @@ export const ManifestDetailPage: React.FC = () => {
                 WAREHOUSE DISPATCH SIGN-OFF
               </div>
               <div style={{ marginTop: '8px' }}>
-                Handed Over By: <strong>{manifest.handoverBy || 'Mohit Sharma (XYZ LOGISTICS)'}</strong>
+                Handed Over By: <strong>{manifest.handoverBy || (activeTenant?.companyName ? `${activeTenant.companyName} Dispatch Team` : 'Authorized Dispatch Officer')}</strong>
               </div>
               <div style={{ marginTop: '4px' }}>
                 Date & Time: <strong>{manifest.handedOverAt || manifest.generatedAt}</strong>

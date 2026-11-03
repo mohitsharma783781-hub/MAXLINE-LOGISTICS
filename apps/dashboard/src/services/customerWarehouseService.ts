@@ -62,32 +62,8 @@ export interface CustomerWarehouseInput extends Record<string, unknown> {
   status?: 'ACTIVE' | 'INACTIVE';
 }
 
-// Initial Multi-Warehouse Locations (Primary registered origin for XYZ LOGISTICS & merchant defaults)
-export const INITIAL_CUSTOMER_WAREHOUSES: CustomerWarehouse[] = [
-  {
-    id: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
-    tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
-    warehouseCode: 'PAN-WH-01',
-    warehouseName: 'XYZ Logistics Primary Hub',
-    contactPerson: 'Mohit Sharma',
-    phone: '+91 70091 74879',
-    email: 'mohitsharma99229@gmail.com',
-    addressLine1: 'Plot No. 42, Industrial Area, Phase 2',
-    addressLine2: 'Near Tribune Chowk',
-    landmark: 'Industrial Area Phase 2',
-    pincode: '134113',
-    city: 'Panchkula',
-    state: 'Haryana',
-    country: 'India',
-    pickupStartTime: '10:00 AM',
-    pickupEndTime: '06:00 PM',
-    isDefault: true,
-    status: 'ACTIVE',
-    totalShipmentsCount: 0,
-    createdAt: '2026-09-01T10:00:00Z',
-    updatedAt: '2026-09-01T10:00:00Z',
-  },
-];
+// Initial Multi-Warehouse Locations (Starts empty for fresh merchant signup)
+export const INITIAL_CUSTOMER_WAREHOUSES: CustomerWarehouse[] = [];
 
 const WAREHOUSE_KEY = 'COURRIER3_WAREHOUSE_STORE';
 
@@ -149,18 +125,6 @@ export const CustomerWarehouseService = {
       return true;
     });
 
-    if (list.length === 0) {
-      const match = INITIAL_CUSTOMER_WAREHOUSES.find((w) => w.tenantId === tenantId) || INITIAL_CUSTOMER_WAREHOUSES[0];
-      if (match) {
-        const assignedWh: CustomerWarehouse = {
-          ...match,
-          tenantId,
-        };
-        WAREHOUSE_STORE = [assignedWh, ...WAREHOUSE_STORE.filter((w) => w.id !== assignedWh.id)];
-        saveWarehousesToStorage(WAREHOUSE_STORE);
-        return [assignedWh];
-      }
-    }
     return list;
   },
 

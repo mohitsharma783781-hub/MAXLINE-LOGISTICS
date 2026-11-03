@@ -11,9 +11,9 @@ import { toValidTenantUUID } from '../utils/uuidHelper';
 
 export const INITIAL_RATE_ASSIGNMENTS: CustomerRateAssignment[] = [
   {
-    id: 'assign-b2c-xyz-01',
-    tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
-    tenantName: 'XYZ LOGISTICS',
+    id: 'assign-b2c-std-01',
+    tenantId: 'default-template',
+    tenantName: 'Standard Partner',
     mode: 'B2C',
     courierId: 'delhivery',
     courierName: 'Delhivery Surface',
@@ -29,9 +29,9 @@ export const INITIAL_RATE_ASSIGNMENTS: CustomerRateAssignment[] = [
     updatedAt: '2026-08-01',
   },
   {
-    id: 'assign-b2c-xyz-02',
-    tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
-    tenantName: 'XYZ LOGISTICS',
+    id: 'assign-b2c-std-02',
+    tenantId: 'default-template',
+    tenantName: 'Standard Partner',
     mode: 'B2C',
     courierId: 'delhivery',
     courierName: 'Delhivery Express Air',
@@ -47,9 +47,9 @@ export const INITIAL_RATE_ASSIGNMENTS: CustomerRateAssignment[] = [
     updatedAt: '2026-08-01',
   },
   {
-    id: 'assign-b2b-xyz-01',
-    tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
-    tenantName: 'XYZ LOGISTICS',
+    id: 'assign-b2b-std-01',
+    tenantId: 'default-template',
+    tenantName: 'Standard Partner',
     mode: 'B2B',
     courierId: 'delhivery',
     courierName: 'Delhivery Surface B2B',

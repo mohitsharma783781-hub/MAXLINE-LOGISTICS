@@ -14,6 +14,7 @@ import {
   type EligibilityCheckDetail,
 } from '../../services/bookingEligibilityEngine';
 import { type EligibleCourierResult } from '../../services/customerRateAssignmentService';
+import { AdminManagementService } from '../../services/adminManagementService';
 
 export const AdminRatePreviewPage: React.FC = () => {
   const [tenantId, setTenantId] = useState('tenant-demo-01');
@@ -83,9 +84,14 @@ export const AdminRatePreviewPage: React.FC = () => {
             label="Merchant Tenant *"
             value={tenantId}
             onChange={(e) => setTenantId(e.target.value)}
-            options={[
-              { value: '48dba919-ca2a-4a86-b645-f795f70e9d59', label: 'XYZ LOGISTICS (Mohit Sharma)' },
-            ]}
+            options={
+              AdminManagementService.getRegisteredMerchantsFromStorage().length > 0
+                ? AdminManagementService.getRegisteredMerchantsFromStorage().map((m) => ({
+                    value: m.id,
+                    label: `${m.businessName} (${m.ownerName})`,
+                  }))
+                : [{ value: 'default', label: 'Standard Platform Merchants' }]
+            }
           />
 
           <Select

@@ -12,16 +12,19 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Button, Card, Badge, Alert, Input, Select } from '../../components/ui';
+import { useTenant } from '../../context/TenantContext';
 
 export const SellerOnboardingWizardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { activeTenant } = useTenant();
+  const initialCompany = activeTenant?.companyName || '';
 
   const [currentStep, setCurrentStep] = useState(1);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Step 1 Form Data
-  const [companyName, setCompanyName] = useState('XYZ LOGISTICS');
-  const [brandName, setBrandName] = useState('XYZ LOGISTICS');
+  const [companyName, setCompanyName] = useState(initialCompany);
+  const [brandName, setBrandName] = useState(initialCompany);
   const [gstNo, setGstNo] = useState('');
   const [panNo, setPanNo] = useState('');
   const [businessType, setBusinessType] = useState('D2C Brand');
@@ -38,7 +41,7 @@ export const SellerOnboardingWizardPage: React.FC = () => {
   const [chequeFile, setChequeFile] = useState<string | null>(null);
 
   // Step 4 Form Data (Bank Details)
-  const [accountHolder, setAccountHolder] = useState('XYZ LOGISTICS');
+  const [accountHolder, setAccountHolder] = useState(initialCompany);
   const [bankName, setBankName] = useState('');
   const [accountNo, setAccountNo] = useState('');
   const [ifscCode, setIfscCode] = useState('');

@@ -9,24 +9,6 @@ import { BookingEngine } from './bookingEngine';
 
 const LABELS_STORE: Map<string, LabelDocument> = new Map();
 
-// PRE-POPULATE INITIAL DEFAULT LABEL
-const INITIAL_LABEL: LabelDocument = {
-  id: 'lbl-xyz-primary',
-  tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
-  shipmentId: 'SHP-ORD-1001',
-  bookingId: 'book-ORD-1001',
-  awb: '474740192831',
-  format: 'THERMAL_4X6',
-  template: 'DEFAULT_4X6',
-  status: 'GENERATED',
-  fileReference: '/api/delhivery/label?awb=474740192831',
-  generatedAt: new Date().toLocaleString(),
-  createdAt: new Date().toLocaleString(),
-  updatedAt: new Date().toLocaleString(),
-};
-
-LABELS_STORE.set(INITIAL_LABEL.shipmentId, INITIAL_LABEL);
-
 export const LabelService = {
   // Generate Shipping Label for a booked shipment
   generateLabel: async (
@@ -73,7 +55,7 @@ export const LabelService = {
     for (const doc of Array.from(LABELS_STORE.values())) {
       if (doc.id === shipmentIdOrLabelId || doc.awb === shipmentIdOrLabelId) return doc;
     }
-    return INITIAL_LABEL;
+    return null;
   },
 
   regenerateLabel: async (
@@ -92,11 +74,11 @@ export const LabelService = {
     const awb = shipment?.awbNumber || booking?.awb || '474740192831';
     const courierName = shipment?.courierName || booking?.courierName || 'Delhivery Surface Express';
     const serviceName = shipment?.serviceName || booking?.serviceName || 'Express Surface Cargo';
-    const senderName = shipment?.pickupContact || 'Mohit Sharma (XYZ LOGISTICS)';
+    const senderName = shipment?.pickupContact || 'Dispatch Hub';
     const senderAddress = shipment
       ? `${shipment.pickupAddress}, ${shipment.pickupCity} - ${shipment.pickupPincode}`
-      : 'Plot 42, Industrial Area Phase 1, Panchkula, Haryana - 134113';
-    const senderPhone = shipment?.pickupPhone || '+91 70091 74879';
+      : 'Primary Fulfillment Center';
+    const senderPhone = shipment?.pickupPhone || '';
     const recipientName = shipment?.deliveryContact || 'Rohan Sharma';
     const recipientAddress = shipment
       ? `${shipment.deliveryAddress}, ${shipment.deliveryCity} - ${shipment.deliveryPincode}`

@@ -12,20 +12,22 @@ import {
 import { PageHeader } from '../../../components/common/PageHeader';
 import { Button, Card, Badge, Alert, Input, Select } from '../../../components/ui';
 import { useRbac } from '../../../context/RbacContext';
+import { useTenant } from '../../../context/TenantContext';
 
 export const CompanyProfilePage: React.FC = () => {
   const { logActivity } = useRbac();
-  const [companyName, setCompanyName] = useState('XYZ LOGISTICS');
-  const [gstNumber, setGstNumber] = useState('22AAAAA0000A1Z5');
-  const [panNumber, setPanNumber] = useState('ABCDE1234F');
+  const { activeTenant } = useTenant();
+  const [companyName, setCompanyName] = useState(activeTenant?.companyName || '');
+  const [gstNumber, setGstNumber] = useState('');
+  const [panNumber, setPanNumber] = useState('');
   const [businessType, setBusinessType] = useState('D2C Brand');
-  const [website, setWebsite] = useState('https://maxlinelogistics.com');
+  const [website, setWebsite] = useState('');
 
-  const [supportEmail, setSupportEmail] = useState('mohitsharma99229@gmail.com');
-  const [supportMobile, setSupportMobile] = useState('+91 98765 43210');
+  const [supportEmail, setSupportEmail] = useState(activeTenant?.contactEmail || '');
+  const [supportMobile, setSupportMobile] = useState(activeTenant?.contactMobile || '');
 
-  const [billingAddress, setBillingAddress] = useState('Plot 45, Okhla Industrial Area Phase 3, New Delhi - 110020');
-  const [pickupAddress, setPickupAddress] = useState('Warehouse 4, Khasra 391, Village Kapashera, New Delhi - 110037');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [pickupAddress, setPickupAddress] = useState('');
 
   const [accountStatus] = useState<'Pending Verification' | 'Pending KYC' | 'Under Review' | 'Approved' | 'Suspended' | 'Rejected'>('Approved');
 

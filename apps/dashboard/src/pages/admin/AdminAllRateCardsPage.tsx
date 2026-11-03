@@ -24,6 +24,7 @@ import { DEMO_B2B_RATE_CARDS } from '../../mocks/b2bPricing.mock';
 import { DEMO_B2C_RATE_CARDS } from '../../mocks/b2cPricing.mock';
 import { CustomerRateAssignmentService } from '../../services/customerRateAssignmentService';
 import { DEMO_COURIER_PROVIDERS } from '../../mocks/couriers.mock';
+import { AdminManagementService } from '../../services/adminManagementService';
 
 export interface UnifiedRateCardSummary extends Record<string, unknown> {
   id: string;
@@ -266,27 +267,32 @@ export const AdminAllRateCardsPage: React.FC = () => {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', backgroundColor: 'var(--color-surface-secondary)', borderRadius: 'var(--radius-default)' }}>
-              {[
-                { id: '48dba919-ca2a-4a86-b645-f795f70e9d59', name: 'XYZ LOGISTICS (Mohit Sharma)' },
-              ].map((t) => {
-                const checked = selectedTenants.includes(t.id);
-                return (
-                  <label key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedTenants([...selectedTenants, t.id]);
-                        } else {
-                          setSelectedTenants(selectedTenants.filter((id) => id !== t.id));
-                        }
-                      }}
-                    />
-                    <span>{t.name}</span>
-                  </label>
-                );
-              })}
+              {AdminManagementService.getRegisteredMerchantsFromStorage().length === 0 ? (
+                <div style={{ fontSize: '13px', color: '#64748b' }}>No registered merchants found yet.</div>
+              ) : (
+                AdminManagementService.getRegisteredMerchantsFromStorage().map((m) => ({
+                  id: m.id,
+                  name: `${m.businessName} (${m.ownerName})`,
+                })).map((t) => {
+                  const checked = selectedTenants.includes(t.id);
+                  return (
+                    <label key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedTenants([...selectedTenants, t.id]);
+                          } else {
+                            setSelectedTenants(selectedTenants.filter((id) => id !== t.id));
+                          }
+                        }}
+                      />
+                      <span>{t.name}</span>
+                    </label>
+                  );
+                })
+              )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>

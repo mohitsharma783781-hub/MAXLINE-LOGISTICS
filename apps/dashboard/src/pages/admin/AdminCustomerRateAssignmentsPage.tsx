@@ -21,6 +21,7 @@ import { CustomerRateAssignmentService } from '../../services/customerRateAssign
 import { DEMO_COURIER_PROVIDERS } from '../../mocks/couriers.mock';
 import { DEMO_B2B_RATE_CARDS } from '../../mocks/b2bPricing.mock';
 import { DEMO_B2C_RATE_CARDS } from '../../mocks/b2cPricing.mock';
+import { AdminManagementService } from '../../services/adminManagementService';
 
 export const AdminCustomerRateAssignmentsPage: React.FC = () => {
   const [tenantId, setTenantId] = useState('tenant-demo-01');
@@ -173,9 +174,14 @@ export const AdminCustomerRateAssignmentsPage: React.FC = () => {
             <Select
               value={tenantId}
               onChange={(e) => setTenantId(e.target.value)}
-              options={[
-                { value: '48dba919-ca2a-4a86-b645-f795f70e9d59', label: 'XYZ LOGISTICS (Mohit Sharma)' },
-              ]}
+              options={
+                AdminManagementService.getRegisteredMerchantsFromStorage().length > 0
+                  ? AdminManagementService.getRegisteredMerchantsFromStorage().map((m) => ({
+                      value: m.id,
+                      label: `${m.businessName} (${m.ownerName})`,
+                    }))
+                  : [{ value: 'default', label: 'Standard Platform Merchants' }]
+              }
             />
           </div>
         </div>

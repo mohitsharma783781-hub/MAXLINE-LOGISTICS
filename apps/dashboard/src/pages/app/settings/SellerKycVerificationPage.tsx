@@ -56,7 +56,7 @@ export const SellerKycVerificationPage: React.FC = () => {
     return null;
   })();
 
-  const resolvedCompanyName = activeTenant?.companyName || currentUser?.businessName || 'XYZ LOGISTICS';
+  const resolvedCompanyName = activeTenant?.companyName || currentUser?.businessName || 'Partner Merchant';
 
   const [kycStatus, setKycStatus] = useState<'Not Started' | 'Pending Documents' | 'Under Review' | 'Approved' | 'Rejected' | 'Suspended'>('Pending Documents');
   const [kycDocs, setKycDocs] = useState<KycDocRecord[]>(INITIAL_KYC_DOCS);

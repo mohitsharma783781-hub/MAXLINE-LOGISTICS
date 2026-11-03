@@ -5,42 +5,6 @@ import { CustomerWarehouseService } from './customerWarehouseService';
 
 const MANIFESTS_STORAGE_KEY = 'maxline_manifests_store';
 
-// Default Production Manifest for XYZ LOGISTICS
-const INITIAL_MANIFEST: Manifest = {
-  id: 'man-del-1001',
-  tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
-  pickupRequestId: 'PRQ-DEL-892104',
-  courierId: 'delhivery',
-  courierName: 'Delhivery Surface Express',
-  warehouseId: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
-  warehouseName: 'XYZ Logistics Primary Hub',
-  manifestNumber: 'MAN-2026-104921',
-  shipmentIds: ['SHP-ORD-1001'],
-  items: [
-    {
-      shipmentId: 'SHP-ORD-1001',
-      orderRef: 'ORD-1001',
-      awb: '474740192831',
-      recipientName: 'Rohan Sharma',
-      recipientCity: 'Bengaluru (560038)',
-      packageCount: 1,
-      weightGrams: 1000,
-      paymentMode: 'PREPAID',
-      codAmountMinor: 0,
-    },
-  ],
-  shipmentCount: 1,
-  totalPackages: 1,
-  totalWeightGrams: 1000,
-  totalCodAmountMinor: 0,
-  status: 'GENERATED',
-  generatedAt: new Date().toLocaleDateString('en-IN'),
-  handoverBy: 'Mohit Sharma (XYZ LOGISTICS)',
-  notes: 'Handover run sheet for Delhivery pickup van',
-  createdAt: new Date().toLocaleDateString('en-IN'),
-  updatedAt: new Date().toLocaleDateString('en-IN'),
-};
-
 function loadManifestsFromStorage(): Map<string, Manifest> {
   const map = new Map<string, Manifest>();
   try {
@@ -55,7 +19,6 @@ function loadManifestsFromStorage(): Map<string, Manifest> {
   } catch {
     // Ignore storage parse errors
   }
-  map.set(INITIAL_MANIFEST.id, INITIAL_MANIFEST);
   return map;
 }
 
@@ -103,8 +66,8 @@ export const ManifestEngine = {
       pickupRequestId: pickup?.pickupNumber || pickupRequestId,
       courierId: pickup?.courierId || 'delhivery',
       courierName: pickup?.courierName || 'Delhivery Surface Express',
-      warehouseId: pickup?.warehouseId || 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
-      warehouseName: pickup?.warehouseName || 'XYZ Logistics Primary Hub',
+      warehouseId: pickup?.warehouseId || 'primary-hub',
+      warehouseName: pickup?.warehouseName || 'Primary Fulfillment Warehouse',
       manifestNumber,
       shipmentIds,
       items,
@@ -114,7 +77,7 @@ export const ManifestEngine = {
       totalCodAmountMinor: items.reduce((acc, i) => acc + i.codAmountMinor, 0),
       status: 'GENERATED',
       generatedAt: nowStr,
-      handoverBy: 'Mohit Sharma (XYZ LOGISTICS)',
+      handoverBy: 'Authorized Dispatch Officer',
       createdAt: nowStr,
       updatedAt: nowStr,
     };
@@ -131,11 +94,11 @@ export const ManifestEngine = {
     shipmentIds: string[];
     tenantId?: string;
   }): Promise<Manifest> => {
-    const tenantId = input.tenantId || '48dba919-ca2a-4a86-b645-f795f70e9d59';
+    const tenantId = input.tenantId || '';
     const wh = CustomerWarehouseService.getWarehouseById(input.warehouseId, tenantId) || {
-      warehouseName: 'XYZ Logistics Primary Hub',
-      city: 'Panchkula',
-      pincode: '134113',
+      warehouseName: 'Primary Warehouse',
+      city: 'Delhi',
+      pincode: '110001',
     };
 
     const manifestId = `man-${Date.now()}`;
@@ -177,7 +140,7 @@ export const ManifestEngine = {
       totalCodAmountMinor: items.reduce((acc, i) => acc + i.codAmountMinor, 0),
       status: 'GENERATED',
       generatedAt: nowStr,
-      handoverBy: 'Mohit Sharma (XYZ LOGISTICS)',
+      handoverBy: 'Authorized Dispatch Officer',
       createdAt: nowStr,
       updatedAt: nowStr,
     };
@@ -193,19 +156,18 @@ export const ManifestEngine = {
     for (const m of Array.from(MANIFESTS_STORE.values())) {
       if (m.manifestNumber === id || m.pickupRequestId === id || m.id === id) return m;
     }
-    return INITIAL_MANIFEST;
+    return null;
   },
 
-  getAllManifests: (tenantId: string = '48dba919-ca2a-4a86-b645-f795f70e9d59'): Manifest[] => {
+  getAllManifests: (tenantId: string = ''): Manifest[] => {
     const list = Array.from(MANIFESTS_STORE.values());
-    if (tenantId === 'all') return list;
-    const filtered = list.filter((m) => m.tenantId === tenantId || m.tenantId === '48dba919-ca2a-4a86-b645-f795f70e9d59');
-    return filtered.length > 0 ? filtered : list;
+    if (!tenantId || tenantId === 'all') return list;
+    return list.filter((m) => m.tenantId === tenantId);
   },
 
   markHandover: async (
     manifestId: string,
-    handoverBy: string = 'Mohit Sharma (XYZ LOGISTICS)',
+    handoverBy: string = 'Authorized Dispatch Officer',
     notes?: string
   ): Promise<Manifest | null> => {
     const manifest = ManifestEngine.getManifest(manifestId);

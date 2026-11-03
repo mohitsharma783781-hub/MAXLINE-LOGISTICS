@@ -30,7 +30,7 @@ import { useTenant } from '../../context/TenantContext';
 
 export const CustomerPickupRequestsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { activeTenantId } = useTenant();
+  const { activeTenant, activeTenantId } = useTenant();
   const tenantId = activeTenantId;
 
   const [activeTab, setActiveTab] = useState<'pickups' | 'manifests'>('pickups');
@@ -56,7 +56,8 @@ export const CustomerPickupRequestsPage: React.FC = () => {
   };
 
   const handleMarkHandover = async (manifestId: string) => {
-    const updated = await ManifestEngine.markHandover(manifestId, 'Mohit Sharma (XYZ LOGISTICS)');
+    const handoverName = activeTenant?.companyName ? `${activeTenant.companyName} Dispatch Team` : 'Authorized Dispatch Officer';
+    const updated = await ManifestEngine.markHandover(manifestId, handoverName);
     if (updated) {
       loadData();
       setActionAlert(`Manifest ${updated.manifestNumber} marked as HANDED OVER! Included parcels updated to Picked Up.`);
