@@ -1178,6 +1178,18 @@ export const CreateShipmentWizardPage: React.FC = () => {
     }
   };
 
+  // Quick Wallet Top-up Handler for Seamless Onboarding & Testing
+  const handleQuickRecharge = (amount: number = 500) => {
+    try {
+      WalletService.credit(amount, 'Instant Wallet Top-up', tenantId);
+      const updated = WalletService.getWallet(tenantId);
+      const newBal = updated.availableBalanceMinor / 100;
+      setWalletBalanceINR(newBal);
+    } catch (e) {
+      console.error('Quick recharge error:', e);
+    }
+  };
+
   // Final Booking Execution
   const handleConfirmAndBook = async () => {
     if (!selectedCourier || !quoteBreakdown || !currentWarehouse) return;
@@ -2567,6 +2579,84 @@ export const CreateShipmentWizardPage: React.FC = () => {
                 )}
               </div>
 
+              {/* Wallet Debit & Commercial Charges Breakdown */}
+              {quoteBreakdown && (
+                <div
+                  style={{
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '16px',
+                    backgroundColor: '#f8fafc',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Wallet size={16} style={{ color: '#0284c7' }} />
+                      <strong style={{ color: '#0f172a', fontSize: '13px', textTransform: 'uppercase' }}>
+                        Wallet Freight Debit & Commercial Breakdown
+                      </strong>
+                    </div>
+                    <Badge variant={walletBalanceINR >= quoteBreakdown.totalPayable ? 'success' : 'danger'}>
+                      {walletBalanceINR >= quoteBreakdown.totalPayable ? '✓ Sufficient Balance' : '⚠️ Low Balance'}
+                    </Badge>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', fontSize: '12px', marginBottom: '14px' }}>
+                    <div style={{ padding: '8px 12px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Base Freight</span>
+                      <strong style={{ color: '#0f172a' }}>₹ {quoteBreakdown.baseFreight.toFixed(2)}</strong>
+                    </div>
+                    <div style={{ padding: '8px 12px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>Fuel Surcharge</span>
+                      <strong style={{ color: '#0f172a' }}>₹ {quoteBreakdown.fuelSurcharge.toFixed(2)}</strong>
+                    </div>
+                    <div style={{ padding: '8px 12px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>GST (18%)</span>
+                      <strong style={{ color: '#0f172a' }}>₹ {quoteBreakdown.gst.toFixed(2)}</strong>
+                    </div>
+                    <div style={{ padding: '8px 12px', backgroundColor: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe' }}>
+                      <span style={{ color: '#1e40af', fontSize: '11px', display: 'block', fontWeight: '700' }}>Total Debit</span>
+                      <strong style={{ color: '#1d4ed8', fontSize: '15px' }}>₹ {quoteBreakdown.totalPayable.toFixed(2)}</strong>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', padding: '12px', backgroundColor: walletBalanceINR >= quoteBreakdown.totalPayable ? '#f0fdf4' : '#fff1f2', borderRadius: '6px', border: walletBalanceINR >= quoteBreakdown.totalPayable ? '1px solid #bbf7d0' : '1px solid #fecdd3' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: '700', color: walletBalanceINR >= quoteBreakdown.totalPayable ? '#166534' : '#9f1239' }}>
+                        Current Wallet Balance: ₹ {walletBalanceINR.toFixed(2)}
+                      </div>
+                      <div style={{ fontSize: '11px', color: walletBalanceINR >= quoteBreakdown.totalPayable ? '#15803d' : '#be123c', marginTop: '2px' }}>
+                        {walletBalanceINR >= quoteBreakdown.totalPayable
+                          ? `Remaining balance after booking: ₹ ${(walletBalanceINR - quoteBreakdown.totalPayable).toFixed(2)}`
+                          : `Shortfall: ₹ ${(quoteBreakdown.totalPayable - walletBalanceINR).toFixed(2)}. Please add money to wallet.`}
+                      </div>
+                    </div>
+
+                    {walletBalanceINR < quoteBreakdown.totalPayable && (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleQuickRecharge(500)}
+                          style={{ backgroundColor: '#16a34a', borderColor: '#16a34a', fontSize: '11px', fontWeight: '700' }}
+                          title="Instant credit ₹500 to wallet for test booking"
+                        >
+                          ⚡ Quick Top-up ₹500
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate('/app/wallet')}
+                          style={{ fontSize: '11px' }}
+                        >
+                          + Go to Wallet
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
             </Card>
           )}
 
@@ -2755,9 +2845,17 @@ export const CreateShipmentWizardPage: React.FC = () => {
                   disabled={isSubmitting || (quoteBreakdown ? walletBalanceINR < quoteBreakdown.totalPayable : false)}
                   isLoading={isSubmitting}
                   leftIcon={<Wallet size={16} />}
-                  style={{ backgroundColor: '#1d4ed8', borderColor: '#1d4ed8', fontWeight: '800' }}
+                  style={{
+                    backgroundColor: quoteBreakdown && walletBalanceINR < quoteBreakdown.totalPayable ? '#94a3b8' : '#16a34a',
+                    borderColor: quoteBreakdown && walletBalanceINR < quoteBreakdown.totalPayable ? '#94a3b8' : '#16a34a',
+                    cursor: quoteBreakdown && walletBalanceINR < quoteBreakdown.totalPayable ? 'not-allowed' : 'pointer',
+                    fontWeight: '800',
+                  }}
+                  title={quoteBreakdown && walletBalanceINR < quoteBreakdown.totalPayable ? 'Please top-up wallet balance to proceed' : undefined}
                 >
-                  Confirm & Book Shipment ({quoteBreakdown ? formatCurrency(quoteBreakdown.totalPayable) : ''})
+                  {quoteBreakdown && walletBalanceINR < quoteBreakdown.totalPayable
+                    ? `Low Balance — Top-up to Book`
+                    : `Confirm & Book Shipment (${quoteBreakdown ? formatCurrency(quoteBreakdown.totalPayable) : ''})`}
                 </Button>
               )}
             </div>
