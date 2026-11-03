@@ -20,16 +20,17 @@ import { PickupEngine } from '../../services/pickupEngine';
 import { ManifestEngine } from '../../services/manifestEngine';
 
 export const PickupDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { pickupId, id } = useParams<{ pickupId?: string; id?: string }>();
   const navigate = useNavigate();
 
   const [pickup, setPickup] = useState<PickupRequest | null>(null);
   const [actionAlert, setActionAlert] = useState<string | null>(null);
 
+  const targetId = pickupId || id || 'pkp-del-1001';
+
   useEffect(() => {
-    const targetId = id || 'DEMO-9840192';
     setPickup(PickupEngine.getPickup(targetId));
-  }, [id]);
+  }, [targetId]);
 
   const handleGenerateManifest = async () => {
     if (!pickup) return;

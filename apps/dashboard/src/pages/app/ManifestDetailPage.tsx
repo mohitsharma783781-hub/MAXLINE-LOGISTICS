@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Printer,
   Download,
   CheckCircle2,
   ArrowLeft,
+  Truck,
+  Building2,
+  FileText,
+  Clock,
+  ShieldCheck,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import {
@@ -16,57 +21,63 @@ import {
 import type { Manifest } from '../../types/manifests';
 import { MANIFEST_STATUS_CONFIG } from '../../types/manifests';
 import { ManifestEngine } from '../../services/manifestEngine';
+import { BarcodeService } from '../../services/barcodeService';
 
 export const ManifestDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { manifestId, id } = useParams<{ manifestId?: string; id?: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [actionAlert, setActionAlert] = useState<string | null>(null);
 
+  const targetId = manifestId || id || 'man-del-1001';
+
   useEffect(() => {
-    const targetId = id || 'man-9840192';
     setManifest(ManifestEngine.getManifest(targetId));
-  }, [id]);
+  }, [targetId]);
+
+  // Auto-print if query param present
+  useEffect(() => {
+    if (searchParams.get('autoPrint') === '1') {
+      const timer = setTimeout(() => {
+        window.print();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownload = () => {
-    if (!manifest) return;
-    const element = document.createElement('a');
-    const file = new Blob([`DEMO MANIFEST PDF FOR MANIFEST NUMBER: ${manifest.manifestNumber}`], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${manifest.manifestNumber}-shipping-manifest.pdf`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
-
   const handleMarkHandover = async () => {
     if (!manifest) return;
-    const updated = await ManifestEngine.markHandover(manifest.id, 'Operations Manager', 'Handed over parcels to courier associate');
+    const updated = await ManifestEngine.markHandover(
+      manifest.id,
+      'Mohit Sharma (XYZ LOGISTICS)',
+      'Handed over parcels to Delhivery collection executive'
+    );
     if (updated) {
       setManifest({ ...updated });
-      setActionAlert(`Manifest ${updated.manifestNumber} successfully marked as HANDED_OVER!`);
+      setActionAlert(`Manifest ${updated.manifestNumber} successfully marked as HANDED OVER! Included shipments updated to Picked Up.`);
     }
   };
 
   const breadcrumbs = [
     { label: 'Customer Portal', path: '/app' },
-    { label: 'Shipping Manifests', path: '/app/manifests' },
-    { label: manifest?.manifestNumber || id || 'Detail', path: `/app/manifests/${id}` },
+    { label: 'Pickups & Manifests', path: '/app/pickups' },
+    { label: manifest?.manifestNumber || targetId, path: `/app/manifests/${targetId}` },
   ];
 
   if (!manifest) {
     return (
-      <div style={{ padding: 'var(--space-6)' }}>
+      <div style={{ padding: '24px' }}>
         <Alert variant="danger" title="Manifest Not Found">
-          The requested shipping manifest reference does not exist.
+          The requested shipping manifest reference does not exist or has been removed.
         </Alert>
-        <Button variant="outline" size="sm" onClick={() => navigate('/app/manifests')} style={{ marginTop: 'var(--space-4)' }}>
-          Back to Manifests
+        <Button variant="outline" size="sm" onClick={() => navigate('/app/pickups')} style={{ marginTop: '16px' }}>
+          Back to Pickups & Manifests
         </Button>
       </div>
     );
@@ -78,14 +89,25 @@ export const ManifestDetailPage: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
-      {/* Embedded Print CSS Rules */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+      {/* Clean A4 Print Stylesheet */}
       <style>{`
         @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+          body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
           body * {
             visibility: hidden;
           }
-          .printable-manifest-document, .printable-manifest-document * {
+          .printable-manifest-document,
+          .printable-manifest-document * {
             visibility: visible;
           }
           .printable-manifest-document {
@@ -105,30 +127,43 @@ export const ManifestDetailPage: React.FC = () => {
         }
       `}</style>
 
-      {/* PAGE HEADER (Hidden during print) */}
+      {/* PAGE HEADER (Hidden during printing) */}
       <div className="no-print">
         <PageHeader
-          title={`Shipping Manifest ${manifest.manifestNumber}`}
+          title={`Courier Manifest — ${manifest.manifestNumber}`}
           description={`Courier: ${manifest.courierName} • Warehouse: ${manifest.warehouseName} • Status: ${manifest.status}`}
           breadcrumbs={breadcrumbs}
           actions={
-            <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-              <Button variant="outline" size="sm" onClick={() => navigate('/app/manifests')} leftIcon={<ArrowLeft size={16} />}>
-                Back to Manifests
-              </Button>
-
-              <Button variant="outline" size="sm" onClick={handleDownload} leftIcon={<Download size={16} />}>
-                Download PDF
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/app/pickups')}
+                leftIcon={<ArrowLeft size={16} />}
+              >
+                Back to Pickups & Manifests
               </Button>
 
               {manifest.status === 'GENERATED' && (
-                <Button variant="primary" size="sm" onClick={handleMarkHandover} leftIcon={<CheckCircle2 size={16} />}>
-                  Mark as Handed Over
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleMarkHandover}
+                  leftIcon={<CheckCircle2 size={16} />}
+                  style={{ backgroundColor: '#16a34a', borderColor: '#16a34a' }}
+                >
+                  Confirm Physical Handover
                 </Button>
               )}
 
-              <Button variant="primary" size="sm" onClick={handlePrint} leftIcon={<Printer size={16} />}>
-                Print Manifest
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handlePrint}
+                leftIcon={<Printer size={16} />}
+                style={{ backgroundColor: '#0284c7', borderColor: '#0284c7', fontWeight: '700' }}
+              >
+                Print Manifest (A4 Sheet)
               </Button>
             </div>
           }
@@ -137,7 +172,7 @@ export const ManifestDetailPage: React.FC = () => {
 
       {actionAlert && (
         <div className="no-print">
-          <Alert variant="success" title="Handover Status Updated">
+          <Alert variant="success" title="Status Updated">
             {actionAlert}
           </Alert>
         </div>
@@ -149,87 +184,161 @@ export const ManifestDetailPage: React.FC = () => {
           className="printable-manifest-document"
           style={{
             width: '100%',
-            maxWidth: '900px',
-            padding: '32px',
+            maxWidth: '880px',
+            padding: '28px 32px',
             backgroundColor: '#ffffff',
             color: '#000000',
-            border: '1px solid var(--color-border)',
+            border: '2px solid #000000',
+            borderRadius: '4px',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+            fontFamily: 'Arial, Helvetica, sans-serif',
           }}
         >
-          {/* MANIFEST DOCUMENT HEADER */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #000000', paddingBottom: '16px', marginBottom: '20px' }}>
+          {/* 1. MANIFEST DOCUMENT HEADER */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              borderBottom: '2.5px solid #000000',
+              paddingBottom: '14px',
+              marginBottom: '16px',
+            }}
+          >
             <div>
-              <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, textTransform: 'uppercase' }}>
-                COURIER HANDOVER SHIPPING MANIFEST
-              </h1>
-              <div style={{ fontSize: '13px', color: '#555555', marginTop: '4px' }}>
-                Platform Handover & Dispatch Document • Multi-Tenant SaaS Engine
+              <div style={{ fontSize: '22px', fontWeight: '900', letterSpacing: '-0.5px', textTransform: 'uppercase' }}>
+                DELHIVERY COURIER HANDOVER MANIFEST
+              </div>
+              <div style={{ fontSize: '11px', fontWeight: '700', color: '#334155', marginTop: '2px' }}>
+                MAXLINE LOGISTICS AGGREGATOR NETWORK • FIRST-MILE DISPATCH RUN SHEET
               </div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--color-violet-main)', margin: 0 }}>
+
+            <div style={{ textAlign: 'right', minWidth: '220px' }}>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: BarcodeService.generateBarcodeSvg(manifest.manifestNumber, 36, 1.8),
+                }}
+                style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}
+              />
+              <div style={{ fontSize: '14px', fontWeight: '900', fontFamily: 'monospace', marginTop: '2px' }}>
                 {manifest.manifestNumber}
-              </h2>
-              <div style={{ fontSize: '12px', marginTop: '4px' }}>Date: <strong>{manifest.generatedAt}</strong></div>
-              <Badge variant={statusConfig.variant} style={{ marginTop: '6px' }}>{statusConfig.label}</Badge>
+              </div>
+              <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>
+                Date: <strong>{manifest.generatedAt}</strong>
+              </div>
             </div>
           </div>
 
-          {/* COURIER & WAREHOUSE METADATA */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', borderBottom: '1px solid #cccccc', paddingBottom: '16px', marginBottom: '20px', fontSize: '13px' }}>
+          {/* 2. DISPATCH & WAREHOUSE METADATA GRID */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '16px',
+              borderBottom: '2px solid #000000',
+              paddingBottom: '14px',
+              marginBottom: '16px',
+              fontSize: '11px',
+            }}
+          >
             <div>
-              <strong style={{ fontSize: '14px', textTransform: 'uppercase' }}>COURIER PARTNER DETAILS:</strong>
-              <div style={{ marginTop: '4px' }}>Carrier: <strong>{manifest.courierName}</strong></div>
-              <div>Pickup Ref: <strong>{manifest.pickupRequestId}</strong></div>
+              <div style={{ fontSize: '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#475569' }}>
+                COURIER PARTNER & DISPATCH INFO
+              </div>
+              <div style={{ marginTop: '4px', fontSize: '13px', fontWeight: '900' }}>
+                {manifest.courierName}
+              </div>
+              <div style={{ marginTop: '2px' }}>
+                Pickup Request Ref (PRQ): <strong style={{ color: '#0284c7' }}>{manifest.pickupRequestId}</strong>
+              </div>
+              <div style={{ marginTop: '2px' }}>
+                Handover Status: <strong style={{ textTransform: 'uppercase' }}>{manifest.status.replace('_', ' ')}</strong>
+              </div>
             </div>
+
             <div>
-              <strong style={{ fontSize: '14px', textTransform: 'uppercase' }}>PICKUP WAREHOUSE LOCATION:</strong>
-              <div style={{ marginTop: '4px' }}>Location: <strong>{manifest.warehouseName}</strong></div>
-              <div>Address: Plot 42, MIDC Area, Bhiwandi, Thane, MH - 421302</div>
+              <div style={{ fontSize: '11px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#475569' }}>
+                ORIGIN DISPATCH HUB (SHIPPER)
+              </div>
+              <div style={{ marginTop: '4px', fontSize: '13px', fontWeight: '900' }}>
+                {manifest.warehouseName || 'XYZ Logistics Primary Hub'}
+              </div>
+              <div style={{ marginTop: '2px' }}>
+                Plot 42, Industrial Area Phase 1, Panchkula, Haryana - <strong>134113</strong>
+              </div>
+              <div style={{ marginTop: '2px' }}>
+                Contact: <strong>Mohit Sharma (+91 70091 74879)</strong>
+              </div>
             </div>
           </div>
 
-          {/* SHIPMENT ITEMS TABLE */}
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '12px', textTransform: 'uppercase' }}>
-              Handover Parcel Specifications ({manifest.items.length} Shipments)
-            </h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+          {/* 3. SHIPMENT ITEMS SPECIFICATIONS TABLE */}
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '12px', fontWeight: '900', textTransform: 'uppercase', marginBottom: '8px' }}>
+              Handover Parcel Breakdown ({manifest.items.length} Shipments)
+            </div>
+
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
               <thead>
-                <tr style={{ backgroundColor: '#f2f2f2', borderBottom: '2px solid #000000', textAlign: 'left' }}>
-                  <th style={{ padding: '8px' }}>#</th>
-                  <th style={{ padding: '8px' }}>AWB Tracking Number</th>
-                  <th style={{ padding: '8px' }}>Order Ref</th>
-                  <th style={{ padding: '8px' }}>Recipient & Destination</th>
-                  <th style={{ padding: '8px' }}>Pkgs</th>
-                  <th style={{ padding: '8px' }}>Weight</th>
-                  <th style={{ padding: '8px' }}>Mode</th>
-                  <th style={{ padding: '8px', textAlign: 'right' }}>COD Amount</th>
+                <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '2px solid #000000', textAlign: 'left' }}>
+                  <th style={{ padding: '8px 6px', width: '32px' }}>#</th>
+                  <th style={{ padding: '8px 6px' }}>AWB Number</th>
+                  <th style={{ padding: '8px 6px' }}>Order ID</th>
+                  <th style={{ padding: '8px 6px' }}>Recipient & Destination</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center' }}>Pkgs</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center' }}>Weight</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center' }}>Mode</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'right' }}>COD Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {manifest.items.map((item, idx) => (
-                  <tr key={item.shipmentId} style={{ borderBottom: '1px solid #eeeeee' }}>
-                    <td style={{ padding: '8px' }}>{idx + 1}</td>
-                    <td style={{ padding: '8px', fontWeight: 'bold', fontFamily: 'monospace' }}>{item.awb}</td>
-                    <td style={{ padding: '8px' }}>{item.orderRef}</td>
-                    <td style={{ padding: '8px' }}>{item.recipientName} ({item.recipientCity})</td>
-                    <td style={{ padding: '8px' }}>{item.packageCount}</td>
-                    <td style={{ padding: '8px' }}>{(item.weightGrams / 1000).toFixed(2)} kg</td>
-                    <td style={{ padding: '8px' }}>{item.paymentMode}</td>
-                    <td style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold' }}>
+                  <tr key={item.shipmentId || idx} style={{ borderBottom: '1px solid #cbd5e1' }}>
+                    <td style={{ padding: '8px 6px' }}>{idx + 1}</td>
+                    <td style={{ padding: '8px 6px', fontWeight: '900', fontFamily: 'monospace', fontSize: '12px' }}>
+                      {item.awb}
+                    </td>
+                    <td style={{ padding: '8px 6px' }}>{item.orderRef}</td>
+                    <td style={{ padding: '8px 6px' }}>
+                      <strong>{item.recipientName}</strong>
+                      <div style={{ fontSize: '10px', color: '#475569' }}>{item.recipientCity}</div>
+                    </td>
+                    <td style={{ padding: '8px 6px', textAlign: 'center' }}>{item.packageCount}</td>
+                    <td style={{ padding: '8px 6px', textAlign: 'center', fontWeight: '700' }}>
+                      {(item.weightGrams / 1000).toFixed(2)} KG
+                    </td>
+                    <td style={{ padding: '8px 6px', textAlign: 'center' }}>
+                      <span
+                        style={{
+                          padding: '2px 6px',
+                          borderRadius: '2px',
+                          fontSize: '10px',
+                          fontWeight: '800',
+                          backgroundColor: item.paymentMode === 'COD' ? '#fee2e2' : '#f0fdf4',
+                          color: item.paymentMode === 'COD' ? '#b91c1c' : '#15803d',
+                        }}
+                      >
+                        {item.paymentMode}
+                      </span>
+                    </td>
+                    <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: '900' }}>
                       {item.paymentMode === 'COD' ? `₹${(item.codAmountMinor / 100).toFixed(2)}` : '₹0.00'}
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr style={{ backgroundColor: '#f9f9f9', borderTop: '2px solid #000000', fontWeight: 'bold' }}>
-                  <td colSpan={4} style={{ padding: '10px', textAlign: 'right' }}>TOTAL MANIFEST SUMMARY:</td>
-                  <td style={{ padding: '10px' }}>{manifest.totalPackages} Pkgs</td>
-                  <td style={{ padding: '10px' }}>{(manifest.totalWeightGrams / 1000).toFixed(2)} kg</td>
-                  <td style={{ padding: '10px' }}>-</td>
-                  <td style={{ padding: '10px', textAlign: 'right', color: 'var(--color-violet-main)' }}>
+                <tr style={{ backgroundColor: '#f8fafc', borderTop: '2px solid #000000', fontWeight: '900', fontSize: '12px' }}>
+                  <td colSpan={4} style={{ padding: '10px 6px', textAlign: 'right' }}>
+                    TOTAL MANIFEST DISPATCH SUMMARY:
+                  </td>
+                  <td style={{ padding: '10px 6px', textAlign: 'center' }}>{manifest.totalPackages} Box(es)</td>
+                  <td style={{ padding: '10px 6px', textAlign: 'center' }}>
+                    {(manifest.totalWeightGrams / 1000).toFixed(2)} KG
+                  </td>
+                  <td style={{ padding: '10px 6px', textAlign: 'center' }}>-</td>
+                  <td style={{ padding: '10px 6px', textAlign: 'right', color: '#16a34a' }}>
                     ₹{(manifest.totalCodAmountMinor / 100).toFixed(2)}
                   </td>
                 </tr>
@@ -237,23 +346,49 @@ export const ManifestDetailPage: React.FC = () => {
             </table>
           </div>
 
-          {/* DRIVER SIGNATURE & HANDOVER SIGN-OFF BOX */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', border: '1.5px solid #000000', padding: '16px', borderRadius: '4px', fontSize: '12px' }}>
+          {/* 4. DUAL VERIFICATION & SIGN-OFF BOXES */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '24px',
+              border: '2px solid #000000',
+              padding: '14px 18px',
+              borderRadius: '2px',
+              fontSize: '11px',
+              backgroundColor: '#fafafa',
+            }}
+          >
             <div>
-              <strong style={{ fontSize: '13px', textTransform: 'uppercase' }}>WAREHOUSE DISPATCH SIGN-OFF:</strong>
-              <div style={{ marginTop: '8px' }}>Handover Manager: <strong>{manifest.handoverBy || 'Rajesh Kumar'}</strong></div>
-              <div style={{ marginTop: '4px' }}>Timestamp: <strong>{manifest.handedOverAt || manifest.generatedAt}</strong></div>
-              <div style={{ marginTop: '24px', borderTop: '1px dashed #000000', paddingTop: '4px' }}>
-                Authorized Warehouse Signature
+              <div style={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#1e293b' }}>
+                WAREHOUSE DISPATCH SIGN-OFF
+              </div>
+              <div style={{ marginTop: '8px' }}>
+                Handed Over By: <strong>{manifest.handoverBy || 'Mohit Sharma (XYZ LOGISTICS)'}</strong>
+              </div>
+              <div style={{ marginTop: '4px' }}>
+                Date & Time: <strong>{manifest.handedOverAt || manifest.generatedAt}</strong>
+              </div>
+              <div style={{ marginTop: '28px', borderTop: '1px dashed #000000', paddingTop: '4px' }}>
+                Shipper Signature & Warehouse Stamp
               </div>
             </div>
 
             <div>
-              <strong style={{ fontSize: '13px', textTransform: 'uppercase' }}>CARRIER DRIVER HANDOVER ACKNOWLEDGEMENT:</strong>
-              <div style={{ marginTop: '8px' }}>Carrier Driver Name: _______________________</div>
-              <div style={{ marginTop: '4px' }}>Driver Phone Number: _______________________</div>
-              <div style={{ marginTop: '24px', borderTop: '1px dashed #000000', paddingTop: '4px' }}>
-                Carrier Driver Signature & Stamp
+              <div style={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#1e293b' }}>
+                DELHIVERY RIDER HANDOVER ACKNOWLEDGEMENT
+              </div>
+              <div style={{ marginTop: '8px' }}>
+                Field Executive (FE) Name: _______________________
+              </div>
+              <div style={{ marginTop: '4px' }}>
+                FE Phone Number: _______________________
+              </div>
+              <div style={{ marginTop: '4px' }}>
+                Verified Packets Received: [ {manifest.totalPackages} ]
+              </div>
+              <div style={{ marginTop: '12px', borderTop: '1px dashed #000000', paddingTop: '4px' }}>
+                Courier Executive Signature & Vehicle No.
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -9,7 +9,10 @@ import {
   Package,
   Truck,
   Calendar,
-  Edit2,
+  FileText,
+  Clock,
+  MapPin,
+  Check,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import {
@@ -17,72 +20,143 @@ import {
   Card,
   Badge,
   Input,
-  Radio,
   Checkbox,
   Alert,
   ConfirmationDialog,
   Table,
 } from '../../components/ui';
-import { DEMO_WAREHOUSES, demoPickupProvider } from '../../mocks/pickups.mock';
-import { DEMO_SHIPMENT_ITEMS } from '../../mocks/shipments.mock';
+import { CustomerWarehouseService, type CustomerWarehouse } from '../../services/customerWarehouseService';
+import { CustomerShipmentService, type CustomerShipmentDetail } from '../../services/customerShipmentService';
+import { PickupEngine } from '../../services/pickupEngine';
+import { ManifestEngine } from '../../services/manifestEngine';
 import type { CreatePickupForm, PickupRequest } from '../../types/pickups';
-import type { ShipmentItem } from '../../types/shipments';
 import { formatCurrency } from '../../utils/formatters';
-import { DelhiveryService } from '../../services/delhiveryService';
+import { useTenant } from '../../context/TenantContext';
 
 export const CreatePickupWizardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { activeTenantId } = useTenant();
+  const tenantId = activeTenantId;
 
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [warehouses, setWarehouses] = useState<CustomerWarehouse[]>([]);
+  const [shipments, setShipments] = useState<CustomerShipmentDetail[]>([]);
+
+  // Load real warehouses & shipments from persistent services
+  useEffect(() => {
+    CustomerWarehouseService.syncFromSupabase(tenantId).catch(() => {});
+    CustomerShipmentService.syncFromSupabase(tenantId).catch(() => {});
+
+    const whList = CustomerWarehouseService.getWarehouses(tenantId);
+    setWarehouses(whList);
+
+    const shpList = CustomerShipmentService.getShipments(tenantId);
+    setShipments(shpList);
+  }, [tenantId]);
+
+  const defaultWh = warehouses.find((w) => w.isDefault) || warehouses[0] || {
+    id: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
+    warehouseName: 'XYZ Logistics Primary Hub',
+    addressLine1: 'Plot 42, Industrial Area Phase 1',
+    city: 'Panchkula',
+    state: 'Haryana',
+    pincode: '134113',
+    contactPerson: 'Mohit Sharma',
+    contactPhone: '+91 70091 74879',
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
   const [formData, setFormData] = useState<CreatePickupForm>({
-    warehouseId: 'wh-001',
-    selectedShipmentIds: ['DEMO-9840192', 'DEMO-9840197'],
-    courierId: 'bluedart',
-    pickupDate: '2026-08-22',
-    timeSlot: '10:00 AM – 02:00 PM',
-    contactPerson: 'Main Warehouse Dispatch',
-    contactPhone: '+91 98111 22233',
-    specialInstructions: 'Vehicle must arrive at Gate 2 loading dock.',
+    warehouseId: defaultWh.id,
+    selectedShipmentIds: [],
+    courierId: 'delhivery',
+    pickupDate: todayStr,
+    timeSlot: '02:00 PM – 06:00 PM',
+    contactPerson: defaultWh.contactPerson || 'Mohit Sharma',
+    contactPhone: defaultWh.contactPhone || '+91 70091 74879',
+    specialInstructions: 'Courier van dispatch to main loading dock. Contact warehouse manager before arrival.',
   });
+
+  // Keep contact info updated if warehouse selection changes
+  useEffect(() => {
+    const selected = warehouses.find((w) => w.id === formData.warehouseId) || defaultWh;
+    if (selected) {
+      setFormData((prev) => ({
+        ...prev,
+        contactPerson: selected.contactPerson || 'Mohit Sharma',
+        contactPhone: selected.contactPhone || '+91 70091 74879',
+      }));
+    }
+  }, [formData.warehouseId, warehouses]);
+
+  // Ready-to-Ship Booked Shipments
+  const eligibleShipments = useMemo(() => {
+    return shipments.filter((s) => {
+      const st = (s.bookingStatus || '').toUpperCase();
+      const cf = (s.customerFacingStatus || '').toLowerCase();
+      return (
+        st === 'BOOKING_CONFIRMED' ||
+        st === 'AWB_ASSIGNED' ||
+        st === 'BOOKED' ||
+        st === 'READY_TO_SHIP' ||
+        cf === 'booked' ||
+        cf === 'booking confirmed'
+      );
+    });
+  }, [shipments]);
+
+  // Auto-select eligible shipments if none currently checked
+  useEffect(() => {
+    if (eligibleShipments.length > 0 && formData.selectedShipmentIds.length === 0) {
+      setFormData((prev) => ({
+        ...prev,
+        selectedShipmentIds: eligibleShipments.map((s) => s.shipmentId || s.id),
+      }));
+    }
+  }, [eligibleShipments]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState<boolean>(false);
-  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [createdPickupResult, setCreatedPickupResult] = useState<PickupRequest | null>(null);
+  const [createdManifestId, setCreatedManifestId] = useState<string | null>(null);
 
   const steps = [
     { num: 1, label: 'Warehouse', icon: Warehouse },
-    { num: 2, label: 'Shipments', icon: Package },
-    { num: 3, label: 'Courier', icon: Truck },
+    { num: 2, label: 'Parcels', icon: Package },
+    { num: 3, label: 'Courier Partner', icon: Truck },
     { num: 4, label: 'Schedule', icon: Calendar },
-    { num: 5, label: 'Review', icon: CheckCircle2 },
+    { num: 5, label: 'Review & Dispatch', icon: CheckCircle2 },
   ];
 
-  // Ready-to-Ship Eligible Shipments List
-  const eligibleShipments: ShipmentItem[] = useMemo(() => {
-    return DEMO_SHIPMENT_ITEMS.filter((s) => s.status === 'ready_to_ship' || s.status === 'booked');
-  }, []);
-
-  // Multi-Shipment Calculation Summary
+  // Selected Shipments Summary
   const selectedSummary = useMemo(() => {
-    const selectedList = eligibleShipments.filter((s: ShipmentItem) => formData.selectedShipmentIds.includes(s.awb));
+    const selectedList = eligibleShipments.filter((s) =>
+      formData.selectedShipmentIds.includes(s.shipmentId || s.id)
+    );
     const shipmentCount = selectedList.length;
-    const totalWeightKg = selectedList.reduce((acc: number, s: ShipmentItem) => acc + Number(s.weightKg || 0), 0);
+    const totalWeightKg = selectedList.reduce(
+      (acc, s) => acc + Number(s.chargeableWeightKg || s.actualWeightKg || 1.0),
+      0
+    );
     const totalPackages = selectedList.length;
     const codValue = selectedList
-      .filter((s: ShipmentItem) => s.paymentMode === 'cod')
-      .reduce((acc: number, s: ShipmentItem) => acc + Number(s.invoiceValue || 0), 0);
+      .filter((s) => String(s.paymentMode).toUpperCase() === 'COD')
+      .reduce((acc, s) => acc + Number(s.codAmountINR || 0), 0);
 
     return { shipmentCount, totalWeightKg, totalPackages, codValue };
   }, [eligibleShipments, formData.selectedShipmentIds]);
 
-  const toggleSelectShipment = (awb: string) => {
+  const toggleSelectShipment = (id: string) => {
     setFormData((prev) => ({
       ...prev,
-      selectedShipmentIds: prev.selectedShipmentIds.includes(awb)
-        ? prev.selectedShipmentIds.filter((id) => id !== awb)
-        : [...prev.selectedShipmentIds, awb],
+      selectedShipmentIds: prev.selectedShipmentIds.includes(id)
+        ? prev.selectedShipmentIds.filter((item) => item !== id)
+        : [...prev.selectedShipmentIds, id],
     }));
   };
 
@@ -92,13 +166,13 @@ export const CreatePickupWizardPage: React.FC = () => {
     if (step === 1 && !formData.warehouseId) {
       errs.warehouse = 'Please select a pickup origin warehouse.';
     } else if (step === 2 && formData.selectedShipmentIds.length === 0) {
-      errs.shipments = 'Please select at least one ready-to-ship parcel for courier pickup.';
+      errs.shipments = 'Please select at least one booked parcel for courier pickup.';
     } else if (step === 3 && !formData.courierId) {
-      errs.courier = 'Please select a courier service partner.';
+      errs.courier = 'Please select a courier dispatch partner.';
     } else if (step === 4) {
       if (!formData.pickupDate) errs.date = 'Pickup Date is required.';
-      if (!formData.contactPerson.trim()) errs.contact = 'Contact Person is required.';
-      if (!formData.contactPhone.trim()) errs.phone = 'Contact Phone is required.';
+      if (!formData.contactPerson.trim()) errs.contact = 'Contact Person name is required.';
+      if (!formData.contactPhone.trim()) errs.phone = 'Contact Phone number is required.';
     }
 
     setErrors(errs);
@@ -109,24 +183,7 @@ export const CreatePickupWizardPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      let livePickupRef = '';
-      if (formData.courierId.toLowerCase().includes('delhivery')) {
-        try {
-          const delRes = await DelhiveryService.requestPickup({
-            pickupDate: formData.pickupDate,
-            pickupTime: formData.timeSlot,
-            pickupLocation: selectedWarehouse.name || 'MAXLINE_PRIMARY',
-            expectedPackageCount: formData.selectedShipmentIds.length || 1,
-          });
-          if (delRes.success && delRes.pickupId) {
-            livePickupRef = `DEL-${delRes.pickupId}`;
-          }
-        } catch (delErr) {
-          console.warn('[CreatePickupWizardPage] Delhivery live pickup fallback:', delErr);
-        }
-      }
-
-      const res = await demoPickupProvider.createPickupRequest({
+      const res = await PickupEngine.createPickupRequest({
         warehouseId: formData.warehouseId,
         shipmentIds: formData.selectedShipmentIds,
         courierId: formData.courierId,
@@ -135,17 +192,18 @@ export const CreatePickupWizardPage: React.FC = () => {
         contactPerson: formData.contactPerson,
         contactPhone: formData.contactPhone,
         specialInstructions: formData.specialInstructions,
+        tenantId,
       });
 
       if (res.success && res.pickup) {
-        if (livePickupRef) {
-          res.pickup.pickupNumber = livePickupRef;
-          res.pickup.pickupReference = livePickupRef;
-        }
         setCreatedPickupResult(res.pickup);
-        setIsSuccessDialogOpen(true);
-      } else if (res.failureReason) {
-        setErrors({ submit: res.failureReason });
+        // Pre-generate manifest record for 1-click handover sheet
+        const manifest = await ManifestEngine.generateManifest(res.pickup.id);
+        if (manifest) {
+          setCreatedManifestId(manifest.id);
+        }
+      } else {
+        setErrors({ submit: res.failureReason || 'Failed to schedule pickup request with courier.' });
       }
     } finally {
       setIsSubmitting(false);
@@ -169,20 +227,21 @@ export const CreatePickupWizardPage: React.FC = () => {
     }
   };
 
-  const selectedWarehouse = DEMO_WAREHOUSES.find((w) => w.id === formData.warehouseId) || DEMO_WAREHOUSES[0];
+  const selectedWarehouse =
+    warehouses.find((w) => w.id === formData.warehouseId) || defaultWh;
 
   const breadcrumbs = [
-    { label: 'Customer Portal', path: '/app' },
-    { label: 'Pickup Requests', path: '/app/pickups' },
-    { label: 'Request Pickup', path: '/app/pickups/create' },
+    { label: 'Merchant Portal', path: '/app' },
+    { label: 'Pickups & Manifests', path: '/app/pickups' },
+    { label: 'Schedule Pickup', path: '/app/pickups/create' },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
       {/* Header */}
       <PageHeader
-        title="Request Pickup"
-        description="Select ready-to-ship dispatches and schedule a courier pickup."
+        title="Schedule Courier Pickup Dispatch"
+        description="Select booked shipments and request official vehicle collection from your registered hub."
         breadcrumbs={breadcrumbs}
         actions={
           <Button
@@ -196,9 +255,9 @@ export const CreatePickupWizardPage: React.FC = () => {
         }
       />
 
-      {/* Stepper */}
-      <Card style={{ padding: 'var(--space-4)', overflowX: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 'max-content', width: '100%', gap: 'var(--space-2)' }}>
+      {/* Stepper Card */}
+      <Card style={{ padding: '16px', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 'max-content', width: '100%', gap: '8px' }}>
           {steps.map((st, idx) => {
             const isCompleted = currentStep > st.num;
             const isCurrent = currentStep === st.num;
@@ -213,22 +272,14 @@ export const CreatePickupWizardPage: React.FC = () => {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 'var(--space-2)',
-                    padding: 'var(--space-2) var(--space-3)',
-                    borderRadius: 'var(--radius-default)',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
                     border: 'none',
-                    backgroundColor: isCurrent
-                      ? 'var(--color-violet-light)'
-                      : isCompleted
-                      ? 'var(--color-surface-secondary)'
-                      : 'transparent',
-                    color: isCurrent
-                      ? 'var(--color-violet-main)'
-                      : isCompleted
-                      ? 'var(--color-success)'
-                      : 'var(--color-text-muted)',
-                    fontWeight: isCurrent ? 'var(--font-weight-bold)' : 'var(--font-weight-medium)',
-                    fontSize: 'var(--font-size-small)',
+                    backgroundColor: isCurrent ? '#f0f9ff' : isCompleted ? '#f0fdf4' : 'transparent',
+                    color: isCurrent ? '#0284c7' : isCompleted ? '#16a34a' : '#64748b',
+                    fontWeight: isCurrent ? '800' : '600',
+                    fontSize: '12px',
                     cursor: isCompleted || isCurrent ? 'pointer' : 'default',
                   }}
                 >
@@ -236,7 +287,7 @@ export const CreatePickupWizardPage: React.FC = () => {
                   <span>{st.label}</span>
                 </button>
                 {idx < steps.length - 1 && (
-                  <div style={{ flex: 1, height: '2px', backgroundColor: isCompleted ? 'var(--color-success)' : 'var(--color-border)', minWidth: '16px' }} />
+                  <div style={{ flex: 1, height: '2px', backgroundColor: isCompleted ? '#16a34a' : '#e2e8f0', minWidth: '16px' }} />
                 )}
               </React.Fragment>
             );
@@ -246,127 +297,191 @@ export const CreatePickupWizardPage: React.FC = () => {
 
       {/* Validation Error Alert */}
       {Object.keys(errors).length > 0 && (
-        <Alert variant="danger" title="Please correct highlighted errors">
+        <Alert variant="danger" title="Please resolve required fields">
           {Object.values(errors).join(' • ')}
         </Alert>
       )}
 
       {/* STEP CONTENT CARDS */}
-      <Card style={{ padding: 'var(--space-8)' }}>
+      <Card style={{ padding: '24px' }}>
         {/* STEP 1: WAREHOUSE SELECTION */}
         {currentStep === 1 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <h3 style={{ fontSize: 'var(--font-size-h3)', fontWeight: 'var(--font-weight-bold)' }}>
-                Step 1: Select Origin Pickup Warehouse
+              <h3 style={{ fontSize: '18px', fontWeight: '800', margin: 0 }}>
+                Step 1: Select Origin Dispatch Warehouse
               </h3>
-              <p style={{ fontSize: 'var(--font-size-small)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-                Choose the warehouse facility where the courier vehicle will pick up parcels.
+              <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                Select the warehouse location where Delhivery pickup executives will arrive for parcel collection.
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
-              {DEMO_WAREHOUSES.map((wh) => {
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+              {warehouses.map((wh) => {
                 const isSelected = formData.warehouseId === wh.id;
                 return (
-                  <Card
+                  <div
                     key={wh.id}
-                    onClick={() => setFormData((p) => ({ ...p, warehouseId: wh.id, contactPerson: wh.contactPerson, contactPhone: wh.phone }))}
+                    onClick={() =>
+                      setFormData((p) => ({
+                        ...p,
+                        warehouseId: wh.id,
+                        contactPerson: wh.contactPerson || 'Mohit Sharma',
+                        contactPhone: wh.contactPhone || '+91 70091 74879',
+                      }))
+                    }
                     style={{
-                      padding: 'var(--space-5)',
-                      border: isSelected ? '2px solid var(--color-violet-main)' : '1px solid var(--color-border)',
-                      backgroundColor: isSelected ? 'var(--color-violet-light)' : 'var(--color-surface)',
+                      padding: '16px',
+                      borderRadius: '8px',
+                      border: isSelected ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                      backgroundColor: isSelected ? '#f0f9ff' : '#ffffff',
                       cursor: 'pointer',
+                      boxShadow: isSelected ? '0 2px 8px rgba(2, 132, 199, 0.12)' : 'none',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-2)' }}>
-                      <strong style={{ fontSize: 'var(--font-size-body)', color: 'var(--color-text-primary)' }}>
-                        {wh.name}
-                      </strong>
-                      {isSelected && <Badge variant="brand">Selected</Badge>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <strong style={{ fontSize: '14px', color: '#0f172a' }}>{wh.warehouseName}</strong>
+                      {isSelected && <Badge variant="brand">Selected Hub</Badge>}
                     </div>
-                    <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--color-text-secondary)' }}>
-                      {wh.addressLine1}, {wh.city}, {wh.state} - {wh.pincode}
-                    </p>
-                    <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
-                      Contact: {wh.contactPerson} ({wh.phone})
+                    <div style={{ fontSize: '12px', color: '#475569', lineHeight: '1.4' }}>
+                      {wh.addressLine1}, {wh.city}, {wh.state} - <strong>{wh.pincode}</strong>
                     </div>
-                  </Card>
+                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '8px', borderTop: '1px solid #e2e8f0', paddingTop: '6px' }}>
+                      👤 Contact: {wh.contactPerson || 'Mohit Sharma'} ({wh.contactPhone || '+91 70091 74879'})
+                    </div>
+                  </div>
                 );
               })}
             </div>
           </div>
         )}
 
-        {/* STEP 2: MULTI-SHIPMENT SELECTION & CALCULATIONS */}
+        {/* STEP 2: MULTI-SHIPMENT SELECTION */}
         {currentStep === 2 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <h3 style={{ fontSize: 'var(--font-size-h3)', fontWeight: 'var(--font-weight-bold)' }}>
-                Step 2: Select Ready-to-Ship Dispatches
+              <h3 style={{ fontSize: '18px', fontWeight: '800', margin: 0 }}>
+                Step 2: Select Booked Parcels for Handover
               </h3>
-              <p style={{ fontSize: 'var(--font-size-small)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-                Select dispatches ready for courier vehicle loading. Multiple shipments can be combined into one pickup.
+              <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                Select shipments with generated AWBs to be assigned to this pickup vehicle dispatch.
               </p>
             </div>
 
             {eligibleShipments.length === 0 ? (
-              <Alert variant="warning" title="No shipments are ready for pickup">
-                Shipments must be in "Ready to Ship" status before requesting a pickup.{' '}
+              <Alert variant="warning" title="No unassigned booked shipments found">
+                All currently booked shipments are either already assigned or none exist yet.{' '}
                 <button
                   onClick={() => navigate('/app/shipments/create')}
-                  style={{ textDecoration: 'underline', fontWeight: 'bold', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+                  style={{ textDecoration: 'underline', fontWeight: 'bold', background: 'none', border: 'none', color: '#0284c7', cursor: 'pointer' }}
                 >
-                  Create a Shipment
+                  Click here to Book a Shipment first
                 </button>
               </Alert>
             ) : (
               <>
-                {/* Shipments Selection Table */}
-                <Card style={{ overflow: 'hidden' }}>
-                  <Table<ShipmentItem>
-                    keyExtractor={(r) => r.id}
-                    columns={[
-                      {
-                        key: 'select',
-                        header: 'Select',
-                        render: (r) => (
+                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
+                        <th style={{ padding: '10px 12px', width: '36px' }}>
                           <Checkbox
-                            checked={formData.selectedShipmentIds.includes(r.awb)}
-                            onChange={() => toggleSelectShipment(r.awb)}
+                            checked={
+                              formData.selectedShipmentIds.length === eligibleShipments.length &&
+                              eligibleShipments.length > 0
+                            }
+                            onChange={() => {
+                              if (formData.selectedShipmentIds.length === eligibleShipments.length) {
+                                setFormData((p) => ({ ...p, selectedShipmentIds: [] }));
+                              } else {
+                                setFormData((p) => ({
+                                  ...p,
+                                  selectedShipmentIds: eligibleShipments.map((s) => s.shipmentId || s.id),
+                                }));
+                              }
+                            }}
                           />
-                        ),
-                      },
-                      { key: 'awb', header: 'AWB' },
-                      { key: 'orderId', header: 'Order Ref' },
-                      { key: 'customerName', header: 'Customer' },
-                      { key: 'destinationCity', header: 'Destination' },
-                      { key: 'weightKg', header: 'Weight (kg)', align: 'right', render: (r) => `${r.weightKg} kg` },
-                      { key: 'paymentMode', header: 'Payment', render: (r) => <Badge variant={r.paymentMode === 'cod' ? 'warning' : 'info'}>{r.paymentMode.toUpperCase()}</Badge> },
-                    ]}
-                    data={eligibleShipments}
-                  />
-                </Card>
+                        </th>
+                        <th style={{ padding: '10px' }}>AWB Number</th>
+                        <th style={{ padding: '10px' }}>Order ID</th>
+                        <th style={{ padding: '10px' }}>Consignee Destination</th>
+                        <th style={{ padding: '10px', textAlign: 'center' }}>Weight</th>
+                        <th style={{ padding: '10px', textAlign: 'center' }}>Payment</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {eligibleShipments.map((s) => {
+                        const sid = s.shipmentId || s.id;
+                        const isChecked = formData.selectedShipmentIds.includes(sid);
+                        return (
+                          <tr
+                            key={sid}
+                            onClick={() => toggleSelectShipment(sid)}
+                            style={{
+                              borderBottom: '1px solid #f1f5f9',
+                              backgroundColor: isChecked ? '#f0f9ff' : 'transparent',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <td style={{ padding: '10px 12px' }}>
+                              <Checkbox
+                                checked={isChecked}
+                                onChange={() => toggleSelectShipment(sid)}
+                              />
+                            </td>
+                            <td style={{ padding: '10px', fontWeight: '800', fontFamily: 'monospace', color: '#0284c7' }}>
+                              {s.awbNumber || 'AWB-ASSIGNED'}
+                            </td>
+                            <td style={{ padding: '10px' }}>{s.orderId}</td>
+                            <td style={{ padding: '10px' }}>
+                              <strong>{s.deliveryContact}</strong>
+                              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                {s.deliveryCity} ({s.deliveryPincode})
+                              </div>
+                            </td>
+                            <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>
+                              {s.chargeableWeightKg || 1.0} KG
+                            </td>
+                            <td style={{ padding: '10px', textAlign: 'center' }}>
+                              <Badge variant={String(s.paymentMode).toUpperCase() === 'COD' ? 'warning' : 'info'}>
+                                {s.paymentMode}
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
 
-                {/* Live Calculations Summary Bar */}
-                <Card style={{ padding: 'var(--space-5)', backgroundColor: 'var(--color-violet-light)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
-                    <div>
-                      <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--color-text-secondary)' }}>
-                        Combined Multi-Shipment Summary
-                      </span>
-                      <h3 style={{ fontSize: 'var(--font-size-h3)', fontWeight: 'bold', color: 'var(--color-violet-main)' }}>
-                        {selectedSummary.shipmentCount} Shipments Selected
-                      </h3>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 'var(--space-6)', fontSize: 'var(--font-size-small)' }}>
-                      <div>Total Weight: <strong>{selectedSummary.totalWeightKg.toFixed(1)} kg</strong></div>
-                      <div>Packages: <strong>{selectedSummary.totalPackages}</strong></div>
-                      <div>COD Remittance Value: <strong>{formatCurrency(selectedSummary.codValue)}</strong></div>
-                    </div>
+                {/* Calculation Bar */}
+                <div
+                  style={{
+                    padding: '16px',
+                    borderRadius: '8px',
+                    backgroundColor: '#f0f9ff',
+                    border: '1px solid #bae6fd',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                  }}
+                >
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#0369a1', fontWeight: '800', textTransform: 'uppercase' }}>
+                      Selected Handover Parcels
+                    </span>
+                    <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0c4a6e', margin: '2px 0 0 0' }}>
+                      {selectedSummary.shipmentCount} Shipments ({selectedSummary.totalWeightKg.toFixed(1)} KG)
+                    </h3>
                   </div>
-                </Card>
+
+                  <div style={{ display: 'flex', gap: '20px', fontSize: '12px', color: '#0369a1' }}>
+                    <div>Packages: <strong>{selectedSummary.totalPackages} Box(es)</strong></div>
+                    <div>COD Value: <strong>₹{selectedSummary.codValue.toFixed(2)}</strong></div>
+                  </div>
+                </div>
               </>
             )}
           </div>
@@ -374,45 +489,55 @@ export const CreatePickupWizardPage: React.FC = () => {
 
         {/* STEP 3: COURIER PARTNER */}
         {currentStep === 3 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <h3 style={{ fontSize: 'var(--font-size-h3)', fontWeight: 'var(--font-weight-bold)' }}>
-                Step 3: Courier Partner Service Allocation
+              <h3 style={{ fontSize: '18px', fontWeight: '800', margin: 0 }}>
+                Step 3: Select Courier Dispatch Carrier
               </h3>
-              <p style={{ fontSize: 'var(--font-size-small)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-                Select courier logistics partner assigned for vehicle arrival.
+              <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                Delhivery First Mile (FM) fleet is authorized for direct warehouse dispatch.
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 'var(--space-4)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
               {[
-                { id: 'bluedart', name: 'BlueDart Express', type: 'Air Express Priority', cutoff: 'Daily 04:00 PM Cutoff' },
-                { id: 'fedex', name: 'FedEx Express', type: 'Surface Heavy Parcel', cutoff: 'Daily 05:30 PM Cutoff' },
-                { id: 'delhivery', name: 'Delhivery Surface', type: 'E-commerce Standard', cutoff: 'Daily 06:00 PM Cutoff' },
+                {
+                  id: 'delhivery',
+                  name: 'Delhivery Surface Express',
+                  type: 'Standard Fleet Van Dispatch',
+                  eta: 'Same Day Pickup Guaranteed',
+                  tag: 'Recommended Partner',
+                },
+                {
+                  id: 'delhivery_air',
+                  name: 'Delhivery Priority Air Cargo',
+                  type: 'Express Dedicated Van',
+                  eta: 'Priority Slot Dispatch',
+                  tag: 'Air Cargo',
+                },
               ].map((c) => {
                 const isSelected = formData.courierId === c.id;
                 return (
-                  <Card
+                  <div
                     key={c.id}
                     onClick={() => setFormData((p) => ({ ...p, courierId: c.id }))}
                     style={{
-                      padding: 'var(--space-5)',
-                      border: isSelected ? '2px solid var(--color-violet-main)' : '1px solid var(--color-border)',
-                      backgroundColor: isSelected ? 'var(--color-violet-light)' : 'var(--color-surface)',
+                      padding: '16px',
+                      borderRadius: '8px',
+                      border: isSelected ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                      backgroundColor: isSelected ? '#f0f9ff' : '#ffffff',
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-2)' }}>
-                      <strong style={{ fontSize: 'var(--font-size-body)', color: 'var(--color-text-primary)' }}>
-                        {c.name}
-                      </strong>
-                      {isSelected && <Badge variant="brand">Selected</Badge>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong style={{ fontSize: '14px', color: '#0f172a' }}>{c.name}</strong>
+                      {isSelected ? <Badge variant="brand">Active</Badge> : <Badge variant="neutral">{c.tag}</Badge>}
                     </div>
-                    <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--color-text-secondary)' }}>
-                      {c.type}
-                    </p>
-                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{c.cutoff}</span>
-                  </Card>
+                    <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px' }}>{c.type}</div>
+                    <div style={{ fontSize: '11px', color: '#16a34a', fontWeight: '700', marginTop: '6px' }}>
+                      ⚡ {c.eta}
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -421,131 +546,156 @@ export const CreatePickupWizardPage: React.FC = () => {
 
         {/* STEP 4: SCHEDULE & CONTACT */}
         {currentStep === 4 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <h3 style={{ fontSize: 'var(--font-size-h3)', fontWeight: 'var(--font-weight-bold)' }}>
-                Step 4: Pickup Date & Time Slot Schedule
+              <h3 style={{ fontSize: '18px', fontWeight: '800', margin: 0 }}>
+                Step 4: Select Pickup Date & Slot
               </h3>
-              <p style={{ fontSize: 'var(--font-size-small)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-                Specify expected courier vehicle arrival date and time window.
+              <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                Specify pickup date, convenient time window, and origin hub dispatch contact.
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--space-4)' }}>
-              <Input
-                label="Pickup Date *"
-                type="date"
-                value={formData.pickupDate}
-                onChange={(e) => setFormData((p) => ({ ...p, pickupDate: e.target.value }))}
-                error={errors.date}
-              />
-              <Input
-                label="Contact Person Name *"
-                value={formData.contactPerson}
-                onChange={(e) => setFormData((p) => ({ ...p, contactPerson: e.target.value }))}
-                error={errors.contact}
-              />
-              <Input
-                label="Contact Phone *"
-                value={formData.contactPhone}
-                onChange={(e) => setFormData((p) => ({ ...p, contactPhone: e.target.value }))}
-                error={errors.phone}
-              />
-            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '6px' }}>
+                  Pickup Date *
+                </label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, pickupDate: todayStr }))}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: formData.pickupDate === todayStr ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                      backgroundColor: formData.pickupDate === todayStr ? '#f0f9ff' : '#ffffff',
+                      fontWeight: '700',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    📅 Today ({new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })})
+                  </button>
 
-            <div>
-              <label style={{ fontSize: 'var(--font-size-small)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
-                Preferred Time Slot *
-              </label>
-              <div style={{ display: 'flex', gap: 'var(--space-6)', marginTop: 'var(--space-2)', flexWrap: 'wrap' }}>
-                <Radio
-                  name="puTimeSlot"
-                  label="Morning Slot (09:00 AM – 12:00 PM)"
-                  checked={formData.timeSlot.includes('09:00')}
-                  onChange={() => setFormData((p) => ({ ...p, timeSlot: '09:00 AM – 12:00 PM' }))}
+                  <button
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, pickupDate: tomorrowStr }))}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: formData.pickupDate === tomorrowStr ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                      backgroundColor: formData.pickupDate === tomorrowStr ? '#f0f9ff' : '#ffffff',
+                      fontWeight: '700',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    📅 Tomorrow ({tomorrow.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })})
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '6px' }}>
+                  Preferred Time Slot *
+                </label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {['10:00 AM – 01:00 PM', '02:00 PM – 06:00 PM'].map((slot) => (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setFormData((p) => ({ ...p, timeSlot: slot }))}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        borderRadius: '6px',
+                        border: formData.timeSlot === slot ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                        backgroundColor: formData.timeSlot === slot ? '#f0f9ff' : '#ffffff',
+                        fontWeight: '700',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ⏰ {slot}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Input
+                  label="Dispatch Contact Person *"
+                  value={formData.contactPerson}
+                  onChange={(e) => setFormData((p) => ({ ...p, contactPerson: e.target.value }))}
+                  placeholder="e.g. Mohit Sharma"
                 />
-                <Radio
-                  name="puTimeSlot"
-                  label="Afternoon Slot (10:00 AM – 02:00 PM)"
-                  checked={formData.timeSlot.includes('10:00')}
-                  onChange={() => setFormData((p) => ({ ...p, timeSlot: '10:00 AM – 02:00 PM' }))}
-                />
-                <Radio
-                  name="puTimeSlot"
-                  label="Evening Slot (02:00 PM – 06:00 PM)"
-                  checked={formData.timeSlot.includes('02:00')}
-                  onChange={() => setFormData((p) => ({ ...p, timeSlot: '02:00 PM – 06:00 PM' }))}
+              </div>
+
+              <div>
+                <Input
+                  label="Contact Phone Number *"
+                  value={formData.contactPhone}
+                  onChange={(e) => setFormData((p) => ({ ...p, contactPhone: e.target.value }))}
+                  placeholder="e.g. +91 70091 74879"
                 />
               </div>
             </div>
-
-            <Input
-              label="Special Instructions for Courier Driver (Optional)"
-              value={formData.specialInstructions || ''}
-              onChange={(e) => setFormData((p) => ({ ...p, specialInstructions: e.target.value }))}
-            />
           </div>
         )}
 
-        {/* STEP 5: REVIEW AND CONFIRM */}
+        {/* STEP 5: REVIEW & DISPATCH */}
         {currentStep === 5 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <h3 style={{ fontSize: 'var(--font-size-h3)', fontWeight: 'var(--font-weight-bold)' }}>
-                Step 5: Review & Confirm Pickup Request
+              <h3 style={{ fontSize: '18px', fontWeight: '800', margin: 0 }}>
+                Step 5: Final Review & Schedule Dispatch
               </h3>
-              <p style={{ fontSize: 'var(--font-size-small)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-                Review warehouse, scheduled date, and included shipments before submitting.
+              <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                Verify pickup origin, scheduled date, and package counts before dispatching to Delhivery fleet.
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
-              {/* Warehouse Card */}
-              <Card style={{ padding: 'var(--space-4)', backgroundColor: 'var(--color-surface-secondary)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-                  <strong style={{ fontSize: 'var(--font-size-small)' }}>Pickup Warehouse</strong>
-                  <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)} leftIcon={<Edit2 size={12} />}>Edit</Button>
-                </div>
-                <div style={{ fontSize: 'var(--font-size-caption)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <strong>{selectedWarehouse.name}</strong>
-                  <span>{selectedWarehouse.addressLine1}, {selectedWarehouse.city}</span>
-                </div>
-              </Card>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>ORIGIN WAREHOUSE</span>
+                <div style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', marginTop: '2px' }}>{selectedWarehouse.warehouseName}</div>
+                <div style={{ fontSize: '11px', color: '#475569' }}>{selectedWarehouse.city} - {selectedWarehouse.pincode}</div>
+              </div>
 
-              {/* Shipments Card */}
-              <Card style={{ padding: 'var(--space-4)', backgroundColor: 'var(--color-surface-secondary)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-                  <strong style={{ fontSize: 'var(--font-size-small)' }}>Selected Dispatches</strong>
-                  <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)} leftIcon={<Edit2 size={12} />}>Edit</Button>
-                </div>
-                <div style={{ fontSize: 'var(--font-size-caption)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span>Count: <strong>{selectedSummary.shipmentCount} Parcels</strong></span>
-                  <span>Total Weight: {selectedSummary.totalWeightKg.toFixed(1)} kg</span>
-                  <span>COD Value: {formatCurrency(selectedSummary.codValue)}</span>
-                </div>
-              </Card>
+              <div>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>COURIER FLEET</span>
+                <div style={{ fontSize: '13px', fontWeight: '800', color: '#0284c7', marginTop: '2px' }}>DELHIVERY SURFACE</div>
+                <div style={{ fontSize: '11px', color: '#16a34a', fontWeight: '700' }}>First-Mile (FM) Fleet Collection</div>
+              </div>
 
-              {/* Schedule Card */}
-              <Card style={{ padding: 'var(--space-4)', backgroundColor: 'var(--color-surface-secondary)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-                  <strong style={{ fontSize: 'var(--font-size-small)' }}>Schedule & Contact</strong>
-                  <Button variant="ghost" size="sm" onClick={() => setCurrentStep(4)} leftIcon={<Edit2 size={12} />}>Edit</Button>
+              <div>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>SCHEDULED SLOT</span>
+                <div style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', marginTop: '2px' }}>{formData.pickupDate}</div>
+                <div style={{ fontSize: '11px', color: '#475569' }}>{formData.timeSlot}</div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>TOTAL PARCELS</span>
+                <div style={{ fontSize: '14px', fontWeight: '900', color: '#16a34a', marginTop: '2px' }}>
+                  {selectedSummary.shipmentCount} Parcels ({selectedSummary.totalWeightKg.toFixed(1)} KG)
                 </div>
-                <div style={{ fontSize: 'var(--font-size-caption)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span>Date: <strong>{formData.pickupDate}</strong></span>
-                  <span>Time Window: {formData.timeSlot}</span>
-                  <span>Contact: {formData.contactPerson} ({formData.contactPhone})</span>
-                </div>
-              </Card>
+              </div>
             </div>
+
+            <Alert variant="info" title="Direct Delhivery Fleet Integration">
+              Clicking <strong>Confirm & Dispatch Pickup</strong> sends a First-Mile scheduling request directly to Delhivery HQ. You will immediately receive a PRQ Reference number and can generate the Handover Manifest.
+            </Alert>
           </div>
         )}
 
         {/* Wizard Footer Controls */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-8)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
           <Button
             variant="outline"
-            disabled={currentStep === 1}
+            disabled={currentStep === 1 || isSubmitting}
             onClick={handleBack}
             leftIcon={<ArrowLeft size={16} />}
           >
@@ -557,49 +707,46 @@ export const CreatePickupWizardPage: React.FC = () => {
             onClick={handleNext}
             isLoading={isSubmitting}
             rightIcon={currentStep === 5 ? <CheckCircle2 size={16} /> : <ArrowRight size={16} />}
+            style={{
+              backgroundColor: currentStep === 5 ? '#16a34a' : '#0284c7',
+              borderColor: currentStep === 5 ? '#16a34a' : '#0284c7',
+              fontWeight: '800',
+            }}
           >
-            {currentStep === 5 ? (isSubmitting ? 'Scheduling...' : 'Confirm & Request Pickup') : 'Continue'}
+            {currentStep === 5 ? (isSubmitting ? 'Dispatching...' : 'Confirm & Dispatch Pickup') : 'Continue'}
           </Button>
         </div>
       </Card>
 
-      {/* Cancel Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={isCancelDialogOpen}
-        onClose={() => setIsCancelDialogOpen(false)}
-        onConfirm={() => navigate('/app/pickups')}
-        title="Discard Pickup Request?"
-        description="Are you sure you want to discard this pickup request? Selected shipments and schedule choices will be cleared."
-        confirmLabel="Discard Pickup"
-        cancelLabel="Continue Editing"
-        variant="danger"
-      />
-
-      {/* Demo Success Dialog */}
-      {isSuccessDialogOpen && (
+      {/* SUCCESS CONFIRMATION DIALOG */}
+      {createdPickupResult && (
         <ConfirmationDialog
-          isOpen={isSuccessDialogOpen}
+          isOpen={!!createdPickupResult}
           onClose={() => navigate('/app/pickups')}
-          onConfirm={() => navigate(`/app/pickups/${createdPickupResult?.pickupNumber || 'PU-DEMO-001'}`)}
-          title="Pickup Request Scheduled Successfully!"
+          onConfirm={() => {
+            if (createdManifestId) {
+              navigate(`/app/manifests/${createdManifestId}`);
+            } else {
+              navigate('/app/pickups');
+            }
+          }}
+          title="Courier Pickup Scheduled Successfully!"
           description={
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginTop: 'var(--space-2)' }}>
-              <Alert variant="info" title="Demo Pickup Scheduled">
-                Demo pickup request logged. Live courier driver dispatch will occur after courier API integration.
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+              <Alert variant="success" title="Delhivery Pickup Request Confirmed">
+                Pickup vehicle request dispatched to Delhivery network. A courier field executive will arrive at your Panchkula hub during the scheduled window.
               </Alert>
-              {createdPickupResult && (
-                <div style={{ fontSize: 'var(--font-size-body)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div>Pickup Reference: <strong style={{ color: 'var(--color-violet-main)' }}>{createdPickupResult.pickupReference}</strong></div>
-                  <div>Pickup ID: <strong>{createdPickupResult.pickupNumber}</strong></div>
-                  <div>Warehouse: <strong>{createdPickupResult.warehouseName}</strong></div>
-                  <div>Scheduled Slot: <strong>{createdPickupResult.pickupDate} ({createdPickupResult.timeSlot})</strong></div>
-                  <div>Parcels Count: <strong>{createdPickupResult.shipmentCount} Shipments ({createdPickupResult.totalWeightKg} KG)</strong></div>
-                </div>
-              )}
+
+              <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div>Pickup Reference (PRQ): <strong style={{ color: '#0284c7', fontSize: '14px', fontFamily: 'monospace' }}>{createdPickupResult.pickupNumber}</strong></div>
+                <div>Warehouse Hub: <strong>{createdPickupResult.warehouseName}</strong></div>
+                <div>Scheduled Date & Slot: <strong>{createdPickupResult.pickupDate} ({createdPickupResult.timeSlot})</strong></div>
+                <div>Parcels Count: <strong>{createdPickupResult.shipmentCount} Packages ({createdPickupResult.totalWeightKg} KG)</strong></div>
+              </div>
             </div>
           }
-          confirmLabel="View Pickup Workspace"
-          cancelLabel="Go to Pickups List"
+          confirmLabel="📑 View & Print Handover Manifest"
+          cancelLabel="Go to Pickups & Manifests"
           variant="primary"
         />
       )}

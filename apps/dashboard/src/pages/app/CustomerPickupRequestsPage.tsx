@@ -1,119 +1,400 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle } from 'lucide-react';
+import {
+  Truck,
+  FileText,
+  Plus,
+  Printer,
+  Eye,
+  CheckCircle2,
+  Clock,
+  Warehouse,
+  RotateCcw,
+  AlertTriangle,
+  ExternalLink,
+} from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
+import { StatCard } from '../../components/common/StatCard';
 import {
   Button,
   Card,
   Badge,
   Table,
+  Alert,
 } from '../../components/ui';
-
-export interface CustomerPickupRecord extends Record<string, unknown> {
-  id: string;
-  pickupId: string;
-  shipmentCount: number;
-  pickupAddress: string;
-  pincode: string;
-  requestedDate: string;
-  status: 'PENDING_COURIER' | 'CONFIRMED' | 'COMPLETED';
-}
-
-export const DEMO_CUSTOMER_PICKUPS: CustomerPickupRecord[] = [
-  {
-    id: 'pkp-101',
-    pickupId: 'PKP-847102',
-    shipmentCount: 1,
-    pickupAddress: 'Plot 42, Block B, Connaught Place, New Delhi',
-    pincode: '110001',
-    requestedDate: '2026-08-21 16:35 PM',
-    status: 'PENDING_COURIER',
-  },
-  {
-    id: 'pkp-102',
-    pickupId: 'PKP-774129',
-    shipmentCount: 3,
-    pickupAddress: 'Warehouse 4, Okhla Industrial Area Phase 3, New Delhi',
-    pincode: '110020',
-    requestedDate: '2026-08-19 10:15 AM',
-    status: 'COMPLETED',
-  },
-];
+import { PickupEngine } from '../../services/pickupEngine';
+import { ManifestEngine } from '../../services/manifestEngine';
+import type { PickupRequest } from '../../types/pickups';
+import type { Manifest } from '../../types/manifests';
+import { useTenant } from '../../context/TenantContext';
 
 export const CustomerPickupRequestsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { activeTenantId } = useTenant();
+  const tenantId = activeTenantId;
+
+  const [activeTab, setActiveTab] = useState<'pickups' | 'manifests'>('pickups');
+  const [pickups, setPickups] = useState<PickupRequest[]>([]);
+  const [manifests, setManifests] = useState<Manifest[]>([]);
+  const [actionAlert, setActionAlert] = useState<string | null>(null);
+
+  const loadData = () => {
+    setPickups(PickupEngine.getAllPickups(tenantId));
+    setManifests(ManifestEngine.getAllManifests(tenantId));
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [tenantId]);
+
+  const handleGenerateManifestForPickup = async (pickupId: string) => {
+    const manifest = await ManifestEngine.generateManifest(pickupId);
+    if (manifest) {
+      loadData();
+      navigate(`/app/manifests/${manifest.id}`);
+    }
+  };
+
+  const handleMarkHandover = async (manifestId: string) => {
+    const updated = await ManifestEngine.markHandover(manifestId, 'Mohit Sharma (XYZ LOGISTICS)');
+    if (updated) {
+      loadData();
+      setActionAlert(`Manifest ${updated.manifestNumber} marked as HANDED OVER! Included parcels updated to Picked Up.`);
+    }
+  };
+
+  // Operational metrics
+  const pendingPickupsCount = pickups.filter((p) => p.status === 'SCHEDULED' || p.status === 'REQUESTED').length;
+  const handedOverParcelsCount = manifests
+    .filter((m) => m.status === 'HANDED_OVER')
+    .reduce((acc, m) => acc + m.shipmentCount, 0);
 
   const breadcrumbs = [
-    { label: 'Customer Portal', path: '/app' },
-    { label: 'Pickup Requests', path: '/app/pickups' },
+    { label: 'Merchant Portal', path: '/app' },
+    { label: 'Pickups & Manifests', path: '/app/pickups' },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Pickup Requests"
-        description="Monitor merchant warehouse pickup requests and scheduled carrier dispatches."
+        title="Pickups & Manifests Center"
+        description="Schedule carrier vehicle collections from your Panchkula hub and generate official handover run sheets."
         breadcrumbs={breadcrumbs}
         actions={
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<PlusCircle size={16} />}
-            onClick={() => navigate('/app/orders/create')}
-          >
-            + Create New Dispatch Order
-          </Button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<FileText size={16} />}
+              onClick={() => navigate('/app/manifests/create')}
+            >
+              + Create Manifest
+            </Button>
+
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Truck size={16} />}
+              onClick={() => navigate('/app/pickups/create')}
+              style={{ backgroundColor: '#0284c7', borderColor: '#0284c7', fontWeight: '700' }}
+            >
+              + Schedule Courier Pickup
+            </Button>
+          </div>
         }
       />
 
-      {/* 2. Pickup Requests Table */}
-      <Card style={{ padding: 'var(--space-6)' }}>
-        <Table<CustomerPickupRecord>
-          keyExtractor={(r) => r.id}
-          columns={[
-            {
-              key: 'pickupId',
-              header: 'Pickup ID',
-              render: (r) => (
-                <div>
-                  <strong style={{ color: 'var(--color-violet-main)' }}>{r.pickupId}</strong>
-                </div>
-              ),
-            },
-            {
-              key: 'shipmentCount',
-              header: 'Shipments Count',
-              render: (r) => <strong>{r.shipmentCount} Shipment{r.shipmentCount > 1 ? 's' : ''}</strong>,
-            },
-            {
-              key: 'pickupAddress',
-              header: 'Pickup Address & PIN',
-              render: (r) => (
-                <div>
-                  <span>{r.pickupAddress}</span>
-                  <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>PIN: {r.pincode}</div>
-                </div>
-              ),
-            },
-            {
-              key: 'status',
-              header: 'Carrier Pickup Status',
-              render: (r) => (
-                <Badge variant={r.status === 'COMPLETED' ? 'success' : 'neutral'}>
-                  {r.status === 'PENDING_COURIER' ? 'PENDING COURIER ASSIGNMENT' : r.status}
-                </Badge>
-              ),
-            },
-            {
-              key: 'requestedDate',
-              header: 'Requested Date',
-              render: (r) => <span>{r.requestedDate}</span>,
-            },
-          ]}
-          data={DEMO_CUSTOMER_PICKUPS}
+      {/* 2. Key Operational Metrics Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+        <StatCard
+          title="Scheduled Pickups"
+          value={pickups.length.toString()}
+          subtitle="Total vehicle requests"
+          icon={Truck}
         />
-      </Card>
+        <StatCard
+          title="Pending Collection"
+          value={pendingPickupsCount.toString()}
+          subtitle="Awaiting courier rider"
+          icon={Clock}
+        />
+        <StatCard
+          title="Active Manifests"
+          value={manifests.length.toString()}
+          subtitle="Handover run sheets"
+          icon={FileText}
+        />
+        <StatCard
+          title="Parcels Handed Over"
+          value={handedOverParcelsCount.toString()}
+          subtitle="Successfully dispatched"
+          icon={CheckCircle2}
+        />
+      </div>
+
+      {actionAlert && (
+        <Alert variant="success" title="Status Updated">
+          {actionAlert}
+        </Alert>
+      )}
+
+      {/* 3. Tabbed Operations Switcher */}
+      <div style={{ display: 'flex', gap: '10px', borderBottom: '2px solid #e2e8f0', paddingBottom: '4px' }}>
+        <button
+          onClick={() => setActiveTab('pickups')}
+          style={{
+            padding: '10px 16px',
+            fontSize: '13px',
+            fontWeight: '800',
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'pickups' ? '3px solid #0284c7' : '3px solid transparent',
+            color: activeTab === 'pickups' ? '#0284c7' : '#64748b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <Truck size={16} />
+          <span>Pickup Requests ({pickups.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('manifests')}
+          style={{
+            padding: '10px 16px',
+            fontSize: '13px',
+            fontWeight: '800',
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'manifests' ? '3px solid #0284c7' : '3px solid transparent',
+            color: activeTab === 'manifests' ? '#0284c7' : '#64748b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <FileText size={16} />
+          <span>Handover Manifests ({manifests.length})</span>
+        </button>
+      </div>
+
+      {/* 4. Tab 1: Pickup Requests Table */}
+      {activeTab === 'pickups' && (
+        <Card style={{ padding: '0px', overflow: 'hidden' }}>
+          <Table<PickupRequest>
+            keyExtractor={(r) => r.id}
+            columns={[
+              {
+                key: 'pickupNumber',
+                header: 'Pickup PRQ Ref',
+                render: (r) => (
+                  <div>
+                    <strong style={{ color: '#0284c7', fontFamily: 'monospace', fontSize: '13px' }}>
+                      {r.pickupNumber || r.pickupReference}
+                    </strong>
+                    <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
+                      {r.courierName || 'Delhivery Surface'}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'schedule',
+                header: 'Scheduled Slot',
+                render: (r) => (
+                  <div>
+                    <strong style={{ color: '#0f172a' }}>{r.pickupDate}</strong>
+                    <div style={{ fontSize: '11px', color: '#475569' }}>{r.timeSlot}</div>
+                  </div>
+                ),
+              },
+              {
+                key: 'warehouse',
+                header: 'Origin Hub (Shipper)',
+                render: (r) => (
+                  <div>
+                    <strong style={{ color: '#0f172a' }}>{r.warehouseName}</strong>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>
+                      Panchkula (134113) • Contact: {r.contactPerson}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'shipments',
+                header: 'Parcels',
+                render: (r) => (
+                  <div>
+                    <strong>{r.shipmentCount} Parcel(s)</strong>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>{r.totalWeightKg} KG Total</div>
+                  </div>
+                ),
+              },
+              {
+                key: 'status',
+                header: 'Dispatch Status',
+                render: (r) => (
+                  <Badge variant={r.status === 'SCHEDULED' ? 'info' : r.status === 'PICKED_UP' ? 'success' : 'neutral'}>
+                    {r.statusText || r.status}
+                  </Badge>
+                ),
+              },
+              {
+                key: 'actions',
+                header: 'Actions',
+                render: (r) => (
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGenerateManifestForPickup(r.id)}
+                      style={{
+                        fontSize: '11px',
+                        padding: '4px 10px',
+                        color: '#0284c7',
+                        borderColor: '#0284c7',
+                        backgroundColor: '#f0f9ff',
+                        fontWeight: '700',
+                      }}
+                    >
+                      <FileText size={12} style={{ marginRight: '4px' }} />
+                      Generate Manifest
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      title="View Details"
+                      onClick={() => navigate(`/app/pickups/${r.id}`)}
+                      style={{ padding: '4px 8px', color: '#64748b' }}
+                    >
+                      <Eye size={14} />
+                    </Button>
+                  </div>
+                ),
+              },
+            ]}
+            data={pickups}
+          />
+        </Card>
+      )}
+
+      {/* 5. Tab 2: Manifests Table */}
+      {activeTab === 'manifests' && (
+        <Card style={{ padding: '0px', overflow: 'hidden' }}>
+          <Table<Manifest>
+            keyExtractor={(r) => r.id}
+            columns={[
+              {
+                key: 'manifestNumber',
+                header: 'Manifest Number',
+                render: (r) => (
+                  <div>
+                    <strong style={{ color: '#0284c7', fontFamily: 'monospace', fontSize: '13px' }}>
+                      {r.manifestNumber}
+                    </strong>
+                    <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
+                      PRQ: {r.pickupRequestId}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'carrier',
+                header: 'Carrier Fleet',
+                render: (r) => (
+                  <div>
+                    <strong>{r.courierName}</strong>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>Delhivery First-Mile Fleet</div>
+                  </div>
+                ),
+              },
+              {
+                key: 'warehouse',
+                header: 'Origin Hub',
+                render: (r) => (
+                  <div>
+                    <strong>{r.warehouseName}</strong>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>Panchkula, Haryana - 134113</div>
+                  </div>
+                ),
+              },
+              {
+                key: 'parcels',
+                header: 'Total Parcels',
+                render: (r) => (
+                  <div>
+                    <strong>{r.shipmentCount} Packages</strong>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>
+                      {(r.totalWeightGrams / 1000).toFixed(2)} KG Total
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'status',
+                header: 'Handover Status',
+                render: (r) => (
+                  <Badge variant={r.status === 'HANDED_OVER' ? 'success' : 'info'}>
+                    {r.status === 'HANDED_OVER' ? 'HANDED OVER TO COURIER' : 'MANIFEST GENERATED'}
+                  </Badge>
+                ),
+              },
+              {
+                key: 'actions',
+                header: 'Actions',
+                render: (r) => (
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/app/manifests/${r.id}?autoPrint=1`)}
+                      style={{
+                        fontSize: '11px',
+                        padding: '4px 10px',
+                        color: '#0284c7',
+                        borderColor: '#0284c7',
+                        backgroundColor: '#f0f9ff',
+                        fontWeight: '700',
+                      }}
+                    >
+                      <Printer size={12} style={{ marginRight: '4px' }} />
+                      Print Run Sheet
+                    </Button>
+
+                    {r.status === 'GENERATED' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Confirm Handover to Rider"
+                        onClick={() => handleMarkHandover(r.id)}
+                        style={{ padding: '4px 8px', color: '#16a34a' }}
+                      >
+                        <CheckCircle2 size={14} />
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      title="View Handover Details"
+                      onClick={() => navigate(`/app/manifests/${r.id}`)}
+                      style={{ padding: '4px 8px', color: '#64748b' }}
+                    >
+                      <Eye size={14} />
+                    </Button>
+                  </div>
+                ),
+              },
+            ]}
+            data={manifests}
+          />
+        </Card>
+      )}
     </div>
   );
 };

@@ -24,14 +24,17 @@ import {
 import type { Manifest } from '../../types/manifests';
 import { MANIFEST_STATUS_CONFIG } from '../../types/manifests';
 import { ManifestEngine } from '../../services/manifestEngine';
+import { useTenant } from '../../context/TenantContext';
 
 export const ManifestsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { activeTenantId } = useTenant();
+  const tenantId = activeTenantId;
 
   // Submenu Manifest Type Tabs: ALL | DAILY | COURIER_WISE | WAREHOUSE_WISE | PICKUP
   const [activeManifestTab, setActiveManifestTab] = useState<'ALL' | 'DAILY' | 'COURIER_WISE' | 'WAREHOUSE_WISE' | 'PICKUP'>('ALL');
 
-  const [manifests, setManifests] = useState<Manifest[]>(() => ManifestEngine.getAllManifests());
+  const [manifests, setManifests] = useState<Manifest[]>(() => ManifestEngine.getAllManifests(tenantId));
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [actionAlert, setActionAlert] = useState<string | null>(null);
@@ -58,7 +61,7 @@ export const ManifestsPage: React.FC = () => {
     const updated = await ManifestEngine.markHandover(manifestId, 'Operations Manager', 'Handed over parcels to courier associate');
     if (updated) {
       setActionAlert(`Manifest ${updated.manifestNumber} marked HANDED_OVER successfully.`);
-      setManifests(ManifestEngine.getAllManifests());
+      setManifests(ManifestEngine.getAllManifests(tenantId));
     }
   };
 
@@ -69,7 +72,7 @@ export const ManifestsPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Merchant Portal', path: '/app' },
-    { label: 'Bulk Operations Center', path: '/app/orders/bulk-upload' },
+    { label: 'Pickups & Manifests', path: '/app/pickups' },
     { label: 'Carrier Manifest Center', path: '/app/manifests' },
   ];
 
