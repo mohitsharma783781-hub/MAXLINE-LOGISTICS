@@ -629,13 +629,14 @@ export const CreateShipmentWizardPage: React.FC = () => {
 
   // Eligible Couriers list via Centralized Rate Assignment Service
   const eligibleCouriers = useMemo(() => {
-    if (!currentWarehouse || !deliveryPincode || deliveryPincode.length !== 6) return [];
+    const originPin = (currentWarehouse?.pincode as string) || '134113';
+    if (!deliveryPincode || deliveryPincode.length !== 6) return [];
     
     const mode = shipmentCategory === 'b2b_freight' ? 'B2B' : 'B2C';
     const list = CustomerRateAssignmentService.getEligibleCouriersForCustomer(
       tenantId,
       mode as 'B2B' | 'B2C',
-      currentWarehouse.pincode as string,
+      originPin,
       deliveryPincode,
       packageMath.totalChargeableWeightKg * 1000,
       paymentMode === 'cod' ? 'COD' : 'PREPAID',
@@ -652,7 +653,7 @@ export const CreateShipmentWizardPage: React.FC = () => {
     return list.map((c) => ({
       ...c,
       rating: 4.8,
-      zoneRoute: `${currentWarehouse.pincode.slice(0, 2)} → ${deliveryPincode.slice(0, 2)}`,
+      zoneRoute: `${originPin.slice(0, 2)} → ${deliveryPincode.slice(0, 2)}`,
       isCheapest: c.courierId === cheapestId,
       isFastest: c.courierId === fastestId,
       isRecommended: c.courierId === cheapestId || c.courierId === fastestId,
@@ -702,13 +703,14 @@ export const CreateShipmentWizardPage: React.FC = () => {
 
   // Authoritative B2B Multi-Courier Comparison via Platform Pricing Engine
   useEffect(() => {
-    if (currentStep === 4 && shipmentCategory === 'b2b_freight' && currentWarehouse?.pincode && deliveryPincode?.length === 6) {
+    const originPin = (currentWarehouse?.pincode as string) || '134113';
+    if (currentStep === 4 && shipmentCategory === 'b2b_freight' && deliveryPincode?.length === 6) {
       let isMounted = true;
       setIsB2bCalculating(true);
       setQuoteValidationError(null);
 
       AdminB2BRateService.compareB2BCouriers({
-        originPincode: currentWarehouse.pincode as string,
+        originPincode: originPin,
         destinationPincode: deliveryPincode,
         deadWeightKg: packageTotals.totalDeadWeightKg || 20,
         boxes: packages.map((p) => ({

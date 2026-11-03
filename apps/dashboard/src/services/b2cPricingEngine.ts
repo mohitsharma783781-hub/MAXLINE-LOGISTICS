@@ -9,33 +9,38 @@ import { ServiceabilityEngine } from './serviceabilityEngine';
 export const B2CPricingEngine = {
   // Zone Resolution helper for B2C destination routes
   resolveB2CZone: (originPincode: string, destinationPincode: string, _courierId?: string): { zoneCode: string; zoneName: string } => {
-    const orig = originPincode.trim();
-    const dest = destinationPincode.trim();
+    const orig = (originPincode || '').replace(/\D/g, '').trim();
+    const dest = (destinationPincode || '').replace(/\D/g, '').trim();
 
-    if (orig === dest) {
-      return { zoneCode: 'LOCAL', zoneName: 'Within City (Local)' };
+    if (orig && dest && orig === dest) {
+      return { zoneCode: 'ZONE_A', zoneName: 'Within City (Local - Zone A)' };
     }
 
-    if (orig.substring(0, 2) === dest.substring(0, 2)) {
-      return { zoneCode: 'WITHIN_STATE', zoneName: 'Within State' };
-    }
-
-    if (dest.startsWith('799') || dest.startsWith('190') || dest.startsWith('790')) {
-      return { zoneCode: 'SPECIAL_ZONE', zoneName: 'Special / NE / J&K' };
+    if (orig && dest && orig.substring(0, 2) === dest.substring(0, 2)) {
+      return { zoneCode: 'ZONE_B', zoneName: 'Within State (Zone B)' };
     }
 
     if (
-      (orig.startsWith('11') || orig.startsWith('40') || orig.startsWith('56') || orig.startsWith('70')) &&
-      (dest.startsWith('11') || dest.startsWith('40') || dest.startsWith('56') || dest.startsWith('70'))
+      dest.startsWith('79') ||
+      dest.startsWith('18') ||
+      dest.startsWith('19') ||
+      dest.startsWith('737')
     ) {
-      return { zoneCode: 'METRO', zoneName: 'Metro to Metro' };
+      return { zoneCode: 'ZONE_E', zoneName: 'Special / NE / J&K (Zone E)' };
     }
 
-    if (orig.substring(0, 1) === dest.substring(0, 1)) {
-      return { zoneCode: 'REGIONAL', zoneName: 'Regional Zone' };
+    if (
+      (orig.startsWith('11') || orig.startsWith('40') || orig.startsWith('56') || orig.startsWith('70') || orig.startsWith('60') || orig.startsWith('50')) &&
+      (dest.startsWith('11') || dest.startsWith('40') || dest.startsWith('56') || dest.startsWith('70') || dest.startsWith('60') || dest.startsWith('50'))
+    ) {
+      return { zoneCode: 'ZONE_C1', zoneName: 'Metro to Metro (Zone C1)' };
     }
 
-    return { zoneCode: 'REST_OF_INDIA', zoneName: 'Rest of India' };
+    if (orig && dest && orig.substring(0, 1) === dest.substring(0, 1)) {
+      return { zoneCode: 'ZONE_C2', zoneName: 'Regional Zone (Zone C2)' };
+    }
+
+    return { zoneCode: 'ZONE_C3', zoneName: 'Rest of India (Zone C3)' };
   },
 
   // Calculate Volumetric Weight: (L * W * H * count) / divisor * 1000 grams

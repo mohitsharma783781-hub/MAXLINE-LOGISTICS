@@ -11,14 +11,14 @@ import { toValidTenantUUID } from '../utils/uuidHelper';
 
 export const INITIAL_RATE_ASSIGNMENTS: CustomerRateAssignment[] = [
   {
-    id: 'assign-b2c-01',
-    tenantId: 'tenant-demo-01',
-    tenantName: 'MAXLINE Partner Merchant',
+    id: 'assign-b2c-xyz-01',
+    tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
+    tenantName: 'XYZ LOGISTICS',
     mode: 'B2C',
     courierId: 'delhivery',
     courierName: 'Delhivery Surface',
-    serviceId: 'express-surface',
-    serviceName: 'Express Surface Cargo',
+    serviceId: 'srv-del-01',
+    serviceName: 'Delhivery Surface Standard',
     rateCardId: 'b2c-src-standard',
     rateCardName: 'Standard Customer B2C Selling Card',
     rateCardVersion: 'v1.2',
@@ -29,34 +29,34 @@ export const INITIAL_RATE_ASSIGNMENTS: CustomerRateAssignment[] = [
     updatedAt: '2026-08-01',
   },
   {
-    id: 'assign-b2c-02',
-    tenantId: 'tenant-demo-01',
-    tenantName: 'MAXLINE Partner Merchant',
+    id: 'assign-b2c-xyz-02',
+    tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
+    tenantName: 'XYZ LOGISTICS',
     mode: 'B2C',
-    courierId: 'bluedart',
-    courierName: 'Blue Dart Air',
-    serviceId: 'express-air',
-    serviceName: 'Express Priority Air',
-    rateCardId: 'b2c-src-enterprise',
-    rateCardName: 'Enterprise VIP B2C Rate Card',
-    rateCardVersion: 'v2.0',
+    courierId: 'delhivery',
+    courierName: 'Delhivery Express Air',
+    serviceId: 'srv-del-02',
+    serviceName: 'Delhivery Express Air Priority',
+    rateCardId: 'b2c-src-standard',
+    rateCardName: 'Standard Customer B2C Selling Card',
+    rateCardVersion: 'v1.2',
     isDefault: false,
     status: 'ACTIVE',
-    effectiveFrom: '2026-08-10',
-    createdAt: '2026-08-10',
-    updatedAt: '2026-08-10',
+    effectiveFrom: '2026-08-01',
+    createdAt: '2026-08-01',
+    updatedAt: '2026-08-01',
   },
   {
-    id: 'assign-b2b-01',
-    tenantId: 'tenant-demo-01',
-    tenantName: 'MAXLINE Partner Merchant',
+    id: 'assign-b2b-xyz-01',
+    tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
+    tenantName: 'XYZ LOGISTICS',
     mode: 'B2B',
     courierId: 'delhivery',
-    courierName: 'Delhivery Surface',
-    serviceId: 'express-surface',
-    serviceName: 'Express Surface Cargo',
+    courierName: 'Delhivery Surface B2B',
+    serviceId: 'srv-del-03',
+    serviceName: 'Commercial Surface Freight',
     rateCardId: 'b2b-src-merchant-tier1',
-    rateCardName: 'Tier 1 Standard Merchant B2B Card',
+    rateCardName: 'Delhivery Surface B2B Standard',
     rateCardVersion: 'v1.0',
     isDefault: true,
     status: 'ACTIVE',
@@ -140,17 +140,24 @@ export const CustomerRateAssignmentService = {
   },
 
   getAssignments: (tenantId?: string, mode?: 'B2B' | 'B2C'): CustomerRateAssignment[] => {
-    const list = ASSIGNMENT_STORE.filter((item) => {
+    let list = ASSIGNMENT_STORE.filter((item) => {
       if (tenantId && tenantId !== 'all' && item.tenantId !== tenantId) return false;
       if (mode && item.mode !== mode) return false;
       return true;
     });
+
     if (list.length === 0 && tenantId && tenantId !== 'all') {
-      return ASSIGNMENT_STORE.filter((item) => {
-        if (item.tenantId !== 'tenant-demo-01') return false;
-        if (mode && item.mode !== mode) return false;
-        return true;
-      });
+      const defaults = INITIAL_RATE_ASSIGNMENTS.filter((item) => !mode || item.mode === mode);
+      if (defaults.length > 0) {
+        const adapted = defaults.map((item) => ({
+          ...item,
+          id: `assign-${tenantId.slice(0, 8)}-${item.mode}-${item.courierId}`,
+          tenantId,
+        }));
+        ASSIGNMENT_STORE = [...adapted, ...ASSIGNMENT_STORE.filter((a) => a.tenantId !== tenantId)];
+        saveAssignmentsToStorage(ASSIGNMENT_STORE);
+        return adapted;
+      }
     }
     return list;
   },
