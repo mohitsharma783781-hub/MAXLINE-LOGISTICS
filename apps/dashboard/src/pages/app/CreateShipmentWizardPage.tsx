@@ -51,6 +51,7 @@ import {
   type B2BCompareCouriersResult,
 } from '../../services/adminB2BRateService';
 import { CustomerWarehouseService, type CustomerWarehouse } from '../../services/customerWarehouseService';
+import { BarcodeService } from '../../services/barcodeService';
 import { OnboardingService } from '../../services/onboardingService';
 import { useRbac } from '../../context/RbacContext';
 import { useTenant } from '../../context/TenantContext';
@@ -2696,107 +2697,191 @@ export const CreateShipmentWizardPage: React.FC = () => {
               )}
 
               {/* Thermal Label Selection Controls */}
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', marginBottom: '24px', backgroundColor: '#ffffff', textAlign: 'left' }}>
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', marginBottom: '20px', backgroundColor: '#ffffff', textAlign: 'left' }}>
                 <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '8px' }}>
                   Select Label Print Format *
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
                   <button
                     onClick={() => setLabelFormat('thermal_4x6')}
                     style={{
-                      padding: '10px',
+                      padding: '10px 14px',
                       borderRadius: '6px',
                       border: labelFormat === 'thermal_4x6' ? '2px solid #0284c7' : '1px solid #cbd5e1',
                       backgroundColor: labelFormat === 'thermal_4x6' ? '#f0f9ff' : '#ffffff',
                       fontSize: '12px',
                       fontWeight: '700',
                       cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
                     }}
                   >
-                    🏷️ 4x6 Thermal Label
+                    🏷️ 4x6 Thermal Label (Standard)
                   </button>
 
                   <button
                     onClick={() => setLabelFormat('a4_sheet')}
                     style={{
-                      padding: '10px',
+                      padding: '10px 14px',
                       borderRadius: '6px',
                       border: labelFormat === 'a4_sheet' ? '2px solid #0284c7' : '1px solid #cbd5e1',
                       backgroundColor: labelFormat === 'a4_sheet' ? '#f0f9ff' : '#ffffff',
                       fontSize: '12px',
                       fontWeight: '700',
                       cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
                     }}
                   >
-                    📄 A4 Sheet Format
-                  </button>
-
-                  <button
-                    onClick={() => setLabelFormat('single')}
-                    style={{
-                      padding: '10px',
-                      borderRadius: '6px',
-                      border: labelFormat === 'single' ? '2px solid #0284c7' : '1px solid #cbd5e1',
-                      backgroundColor: labelFormat === 'single' ? '#f0f9ff' : '#ffffff',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    🔖 Single Sticker
-                  </button>
-
-                  <button
-                    onClick={() => setLabelFormat('bulk')}
-                    style={{
-                      padding: '10px',
-                      borderRadius: '6px',
-                      border: labelFormat === 'bulk' ? '2px solid #0284c7' : '1px solid #cbd5e1',
-                      backgroundColor: labelFormat === 'bulk' ? '#f0f9ff' : '#ffffff',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    📑 Bulk Label Sheet
+                    📄 A4 Sheet Format (Laser)
                   </button>
                 </div>
               </div>
+
+              {/* LIVE 4X6 THERMAL SHIPPING LABEL PREVIEW */}
+              {bookingResult && (
+                <div style={{ margin: '0 auto 24px auto', maxWidth: '380px', textAlign: 'left' }}>
+                  <div style={{ fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>Live 4x6 Shipping Label Preview</span>
+                    <span style={{ fontSize: '10px', color: '#16a34a', backgroundColor: '#dcfce7', padding: '2px 6px', borderRadius: '4px', fontWeight: '800' }}>READY TO PRINT</span>
+                  </div>
+
+                  <div
+                    style={{
+                      backgroundColor: '#ffffff',
+                      border: '2.5px solid #000000',
+                      borderRadius: '2px',
+                      padding: '12px',
+                      color: '#000000',
+                      fontFamily: 'Arial, Helvetica, sans-serif',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                    }}
+                  >
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #000', paddingBottom: '6px' }}>
+                      <div>
+                        <div style={{ fontSize: '18px', fontWeight: '900', letterSpacing: '-0.5px' }}>DELHIVERY</div>
+                        <div style={{ fontSize: '10px', fontWeight: '800', color: '#333' }}>{bookingResult.courierName?.toUpperCase() || 'DELHIVERY SURFACE'}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ border: paymentMode === 'cod' ? '2px solid #000' : '1.5px solid #000', backgroundColor: paymentMode === 'cod' ? '#000' : '#fff', color: paymentMode === 'cod' ? '#fff' : '#000', padding: '2px 6px', fontWeight: '900', fontSize: '11px' }}>
+                          {paymentMode === 'cod' ? `COD: ₹${codAmount || 0}` : 'PREPAID'}
+                        </div>
+                        <div style={{ fontSize: '9px', fontWeight: 'bold', marginTop: '2px' }}>
+                          SORT: {deliveryPincode ? `DEL/${deliveryPincode.slice(0, 3)}` : 'DEL/HUB'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Barcode */}
+                    <div style={{ textAlign: 'center', padding: '8px 0 4px 0', borderBottom: '2px solid #000' }}>
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: BarcodeService.generateBarcodeSvg(bookingResult.awbNumber, 48, 2),
+                        }}
+                        style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+                      />
+                      <div style={{ fontSize: '15px', fontWeight: '900', letterSpacing: '2px', fontFamily: 'monospace', marginTop: '2px' }}>
+                        {bookingResult.awbNumber}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', fontWeight: '700', color: '#475569', marginTop: '2px' }}>
+                        <span>ORDER: {bookingResult.orderId}</span>
+                        <span>DATE: {new Date().toLocaleDateString('en-IN')}</span>
+                        <span>PKG: 1 OF 1</span>
+                      </div>
+                    </div>
+
+                    {/* Ship To Consignee */}
+                    <div style={{ borderBottom: '2px solid #000', padding: '8px 0', fontSize: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div style={{ flex: 1, paddingRight: '6px' }}>
+                          <span style={{ fontSize: '9px', fontWeight: '800', color: '#555' }}>DELIVER TO:</span>
+                          <div style={{ fontSize: '12px', fontWeight: '900' }}>{deliveryContactName || 'Consignee Name'}</div>
+                          <div style={{ fontSize: '10px', marginTop: '2px', lineHeight: '1.3' }}>{deliveryAddressLine1} {deliveryAddressLine2}</div>
+                          <div style={{ fontSize: '10px', fontWeight: '700' }}>{deliveryCity}</div>
+                          <div style={{ fontSize: '10px', fontWeight: 'bold' }}>📞 {deliveryPhone}</div>
+                        </div>
+                        <div style={{ border: '2px solid #000', padding: '4px 8px', textAlign: 'center', minWidth: '80px' }}>
+                          <div style={{ fontSize: '8px', fontWeight: 'bold' }}>PINCODE</div>
+                          <div style={{ fontSize: '18px', fontWeight: '900' }}>{deliveryPincode}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Weight & Payment Notice */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: '2px solid #000', padding: '4px 0', fontSize: '10px', textAlign: 'center' }}>
+                      <div style={{ borderRight: '1px solid #000' }}>
+                        <div style={{ fontSize: '8px', color: '#555' }}>WEIGHT</div>
+                        <div style={{ fontWeight: '900' }}>{actualWeightKg || 1} KG</div>
+                      </div>
+                      <div style={{ borderRight: '1px solid #000' }}>
+                        <div style={{ fontSize: '8px', color: '#555' }}>DIMENSIONS</div>
+                        <div style={{ fontWeight: '900' }}>{packages[0] ? `${packages[0].lengthCm}×${packages[0].widthCm}×${packages[0].heightCm}` : '20×15×10'} CM</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '8px', color: '#555' }}>INVOICE</div>
+                        <div style={{ fontWeight: '900' }}>₹{invoiceValueINR || 1499}</div>
+                      </div>
+                    </div>
+
+                    {/* Shipper */}
+                    <div style={{ padding: '6px 0', fontSize: '9px' }}>
+                      <span style={{ fontWeight: '800', color: '#555' }}>RETURN TO SENDER (RTO):</span>
+                      <div style={{ fontWeight: '900' }}>{currentWarehouse?.warehouseName || 'XYZ LOGISTICS Primary Hub'} ({currentWarehouse?.contactPerson || 'Mohit Sharma'})</div>
+                      <div style={{ color: '#333' }}>{currentWarehouse?.addressLine1 || 'Plot 42, Industrial Area Phase 1'}, {currentWarehouse?.city || 'Panchkula'} - <strong>{currentWarehouse?.pincode || '134113'}</strong></div>
+                      <div style={{ fontWeight: 'bold' }}>Origin Phone: {currentWarehouse?.contactPhone || '+91 70091 74879'}</div>
+                    </div>
+
+                    <div style={{ borderTop: '1px solid #000', paddingTop: '4px', display: 'flex', justifyContent: 'space-between', fontSize: '8px', fontWeight: '700', color: '#555' }}>
+                      <span>ROUTING: {currentWarehouse?.pincode || '134113'} ➔ {deliveryPincode}</span>
+                      <span>MAXLINE LOGISTICS AGGREGATOR</span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 <Button
                   variant="primary"
                   leftIcon={<Printer size={16} />}
-                  onClick={() => navigate(`/app/shipments/${bookingResult?.shipmentId || 'shp-demo'}/label`)}
-                  style={{ backgroundColor: '#0284c7', borderColor: '#0284c7' }}
+                  onClick={() => navigate(`/app/shipments/${bookingResult?.shipmentId || 'shp-demo'}/label?autoPrint=1&format=${labelFormat}`)}
+                  style={{ backgroundColor: '#0284c7', borderColor: '#0284c7', fontWeight: '700' }}
                 >
-                  Print Label ({labelFormat.replace('_', ' ').toUpperCase()})
+                  Print 4x6 Label
+                </Button>
+
+                <Button
+                  variant="outline"
+                  leftIcon={<ExternalLink size={16} />}
+                  onClick={() => navigate(`/app/shipments/${bookingResult?.shipmentId || 'shp-demo'}/label?format=${labelFormat}`)}
+                >
+                  Open Full Label Page
                 </Button>
 
                 <Button
                   variant="outline"
                   leftIcon={<Download size={16} />}
                   onClick={() => {
-                    const awb = bookingResult?.awbNumber || 'AWB-LIVE-1001';
-                    const element = document.createElement('a');
-                    const file = new Blob([`SHIPPING LABEL DOCUMENT\nAWB: ${awb}\nOrder ID: ${bookingResult?.orderId || 'ORD-1001'}\nCourier: ${bookingResult?.courierName || 'Delhivery Surface'}\nDate: ${new Date().toLocaleDateString()}`], { type: 'text/plain' });
-                    element.href = URL.createObjectURL(file);
-                    element.download = `Shipping-Label-${awb}.pdf`;
-                    document.body.appendChild(element);
-                    element.click();
-                    document.body.removeChild(element);
+                    const awb = bookingResult?.awbNumber;
+                    if (awb) {
+                      window.open(`/api/delhivery/label?awb=${encodeURIComponent(awb)}`, '_blank');
+                    } else {
+                      navigate(`/app/shipments/${bookingResult?.shipmentId || 'shp-demo'}/label?autoPrint=1`);
+                    }
                   }}
                 >
-                  Download Label PDF
+                  Download Carrier PDF
                 </Button>
 
                 <Button
                   variant="outline"
-                  leftIcon={<FileText size={16} />}
-                  onClick={() => alert(`Downloading GST Shipping Invoice...`)}
+                  leftIcon={<Package size={16} />}
+                  onClick={() => navigate('/app/orders')}
                 >
-                  Download Invoice
+                  View in Orders Center
                 </Button>
 
                 <Button
@@ -2804,7 +2889,7 @@ export const CreateShipmentWizardPage: React.FC = () => {
                   leftIcon={<RotateCcw size={16} />}
                   onClick={() => window.location.reload()}
                 >
-                  Create New Shipment
+                  Book Another Shipment
                 </Button>
               </div>
             </Card>

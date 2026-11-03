@@ -421,10 +421,10 @@ export const ShippingLabelsPage: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '10px', borderBottom: '2px solid #000', paddingBottom: '8px' }}>
                 <div style={{ borderRight: '1px solid #000', paddingRight: '6px' }}>
                   <strong style={{ fontSize: '11px', textTransform: 'uppercase' }}>SHIP FROM (SENDER):</strong>
-                  <div>Acme Logistics Fulfillment FC</div>
-                  <div>Plot 42 MIDC Industrial Area, Bhiwandi</div>
-                  <div>Thane, Maharashtra - 421302</div>
-                  <div>Phone: 9820011223</div>
+                  <div>XYZ LOGISTICS (Mohit Sharma)</div>
+                  <div>Plot 42, Industrial Area Phase 1</div>
+                  <div>Panchkula, Haryana - 134113</div>
+                  <div>Phone: +91 70091 74879</div>
                 </div>
 
                 <div>
@@ -440,9 +440,9 @@ export const ShippingLabelsPage: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
                 <QrCode size={46} />
                 <div style={{ textAlign: 'right', fontSize: '10px' }}>
-                  <div>HUB: <strong>BHIWANDI / BOM-FC1</strong></div>
-                  <div>ROUTING CODE: <strong>BOM/BLR/{activeLabel.destinationPincode.slice(0, 3)}</strong></div>
-                  <div style={{ fontSize: '9px', color: '#666' }}>RETURN IF UNDELIVERED TO ORIGIN HUB</div>
+                  <div>HUB: <strong>PANCHKULA / 134113</strong></div>
+                  <div>ROUTING CODE: <strong>DEL/PNK/{activeLabel.destinationPincode.slice(0, 3)}</strong></div>
+                  <div style={{ fontSize: '9px', color: '#666' }}>RETURN IF UNDELIVERED TO PANCHKULA HUB</div>
                 </div>
               </div>
 

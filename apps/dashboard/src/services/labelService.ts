@@ -9,20 +9,20 @@ import { BookingEngine } from './bookingEngine';
 
 const LABELS_STORE: Map<string, LabelDocument> = new Map();
 
-// PRE-POPULATE INITIAL DEMO LABEL
+// PRE-POPULATE INITIAL DEFAULT LABEL
 const INITIAL_LABEL: LabelDocument = {
-  id: 'lbl-9840192',
-  tenantId: 'tenant-demo-01',
-  shipmentId: 'SHP-9840192',
-  bookingId: 'book-9840192',
-  awb: 'DELHIVERY-849201',
+  id: 'lbl-xyz-primary',
+  tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
+  shipmentId: 'SHP-ORD-1001',
+  bookingId: 'book-ORD-1001',
+  awb: '474740192831',
   format: 'THERMAL_4X6',
   template: 'DEFAULT_4X6',
   status: 'GENERATED',
-  fileReference: 'https://demo.shipping-saas.com/labels/DELHIVERY-849201.pdf',
-  generatedAt: '2026-08-20 16:31 PM',
-  createdAt: '2026-08-20 16:31 PM',
-  updatedAt: '2026-08-20 16:31 PM',
+  fileReference: '/api/delhivery/label?awb=474740192831',
+  generatedAt: new Date().toLocaleString(),
+  createdAt: new Date().toLocaleString(),
+  updatedAt: new Date().toLocaleString(),
 };
 
 LABELS_STORE.set(INITIAL_LABEL.shipmentId, INITIAL_LABEL);
@@ -89,14 +89,18 @@ export const LabelService = {
     const shipment = CustomerShipmentService.getShipmentById(shipmentId);
     const booking = BookingEngine.getBooking(shipmentId);
 
-    const awb = shipment?.awbNumber || booking?.awb || 'DELHIVERY-849201';
-    const courierName = shipment?.courierName || booking?.courierName || 'Delhivery Surface';
+    const awb = shipment?.awbNumber || booking?.awb || '474740192831';
+    const courierName = shipment?.courierName || booking?.courierName || 'Delhivery Surface Express';
     const serviceName = shipment?.serviceName || booking?.serviceName || 'Express Surface Cargo';
-    const senderName = shipment?.pickupContact || 'Acme Logistics Hub';
-    const senderAddress = shipment ? `${shipment.pickupAddress}, ${shipment.pickupCity} - ${shipment.pickupPincode}` : 'Connaught Place, New Delhi - 110001';
-    const senderPhone = shipment?.pickupPhone || '+91 98765 43210';
+    const senderName = shipment?.pickupContact || 'Mohit Sharma (XYZ LOGISTICS)';
+    const senderAddress = shipment
+      ? `${shipment.pickupAddress}, ${shipment.pickupCity} - ${shipment.pickupPincode}`
+      : 'Plot 42, Industrial Area Phase 1, Panchkula, Haryana - 134113';
+    const senderPhone = shipment?.pickupPhone || '+91 70091 74879';
     const recipientName = shipment?.deliveryContact || 'Rohan Sharma';
-    const recipientAddress = shipment ? `${shipment.deliveryAddress}, ${shipment.deliveryCity} - ${shipment.deliveryPincode}` : 'Indiranagar, Bengaluru - 560038';
+    const recipientAddress = shipment
+      ? `${shipment.deliveryAddress}, ${shipment.deliveryCity} - ${shipment.deliveryPincode}`
+      : 'Indiranagar, Bengaluru, Karnataka - 560038';
     const recipientPhone = shipment?.deliveryPhone || '+91 98112 34567';
     const shipmentType = (shipment?.mode || 'B2C') as 'B2C' | 'B2B';
     const paymentMode = (shipment?.paymentMode || 'PREPAID') as 'PREPAID' | 'COD';
@@ -128,12 +132,12 @@ export const LabelService = {
       packageIndex,
       actualWeightKg,
       chargeableWeightKg,
-      orderRef: shipment?.orderId || booking?.orderId || 'ORD-9840192',
-      shipmentRef: shipmentId || 'SHP-9840192',
+      orderRef: shipment?.orderId || booking?.orderId || 'ORD-1001',
+      shipmentRef: shipmentId || 'SHP-1001',
       trackingRef: awb,
-      qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://track.courrier.com/${awb}`,
-      brandLogoUrl: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=120',
-      brandName: 'Skyonship Express',
+      qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://www.maxlinelogistics.com/track?awb=${awb}`,
+      brandLogoUrl: '/logo.png',
+      brandName: 'MAXLINE LOGISTICS',
     };
   },
 

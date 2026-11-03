@@ -828,9 +828,18 @@ export const CustomerOrdersPage: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        title="Print 4x6 Thermal Label"
+                        onClick={() => navigate(`/app/shipments/${r.id}/label?autoPrint=1`)}
+                        style={{ padding: '4px 6px', color: '#0284c7' }}
+                      >
+                        <Printer size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         title="Control Center (Full Page)"
                         onClick={() => navigate(`/app/shipment-control-center/${r.id}`)}
-                        style={{ padding: '4px 6px', color: '#0284c7' }}
+                        style={{ padding: '4px 6px', color: '#64748b' }}
                       >
                         <ExternalLink size={14} />
                       </Button>
