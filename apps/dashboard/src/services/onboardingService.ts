@@ -140,7 +140,13 @@ export const OnboardingService = {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) records = parsed;
+        if (Array.isArray(parsed)) {
+          const demoIds = ['CUST-1001', 'CUST-1002', 'CUST-1003', 'CUST-1004', 'CUST-1005', 'demo-01', 'demo-02'];
+          const demoNames = ['apex logistics', 'zenith electronics', 'freshkart', 'vastra fashions', 'bharat tools', 'xyz logistics'];
+          records = parsed.filter(
+            (r) => !demoIds.includes(r.customerId) && !demoNames.some((d) => r.companyName?.toLowerCase().includes(d))
+          );
+        }
       }
     } catch {}
 

@@ -96,7 +96,7 @@ export const AdminKycVerificationPage: React.FC = () => {
     });
 
     if (newStatus === 'Approved') {
-      const targetCustId = selectedRecord.id.replace('cust-', 'CUST-100');
+      const targetCustId = selectedRecord.id;
       OnboardingService.markStageComplete(
         targetCustId,
         6,

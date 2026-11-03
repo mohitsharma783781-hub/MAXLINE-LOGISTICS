@@ -78,9 +78,10 @@ export const WalletRechargeWizardPage: React.FC = () => {
           tenantId,
           rechargeId: rechargeRecord.rechargeId,
         },
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
           // Credit the wallet upon verified payment
           const newTx = WalletService.recharge(rechargeRecord.amountINR, `Razorpay (${data.payment_id})`, tenantId);
+          await WalletService.syncFromSupabase(tenantId).catch(() => {});
           const updatedWallet = WalletService.getWallet(tenantId);
           setFinalWalletBalance(updatedWallet.availableBalanceMinor / 100);
 

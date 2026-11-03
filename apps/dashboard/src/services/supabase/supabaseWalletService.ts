@@ -142,7 +142,7 @@ export const SupabaseWalletService = {
           await supabase.from('wallet_transactions').insert({
             merchant_id: validTid,
             wallet_id: wRow.id,
-            type: 'SHIPMENT_CHARGE',
+            type: 'FREIGHT_DEBIT',
             direction: 'DEBIT',
             amount_minor: Math.round(params.amountMinor),
             currency: 'INR',
