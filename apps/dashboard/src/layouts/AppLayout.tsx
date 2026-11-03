@@ -25,6 +25,7 @@ import type { NavGroupConfig } from '../components/common/Sidebar';
 import { useRbac } from '../context/RbacContext';
 import { useTenant } from '../context/TenantContext';
 import { authService } from '../services/auth.service';
+import { AdminManagementService } from '../services/adminManagementService';
 import { Spinner } from '../components/ui';
 import { MerchantSetupRequired } from '../components/common/MerchantSetupRequired';
 import { PageFallback } from '../components/common/PageFallback';
@@ -133,6 +134,26 @@ export const AppLayout: React.FC = () => {
       isMounted = false;
     };
   }, [navigate]);
+
+  // Auto-synchronize merchant tenant with Supabase Cloud Database in background
+  useEffect(() => {
+    if (currentUser?.businessName && currentUser?.role !== 'super_admin') {
+      AdminManagementService.ensureMerchantInCloud({
+        id: currentUser.tenantId || activeTenantId,
+        businessName: currentUser.businessName,
+        email: currentUser.workEmail || '',
+        name: currentUser.fullName || 'Merchant Admin',
+        phone: currentUser.phoneNumber || '',
+      }).then((cloudId) => {
+        if (cloudId && currentUser.tenantId && cloudId !== currentUser.tenantId) {
+          const updated = { ...currentUser, tenantId: cloudId };
+          setCurrentUser(updated);
+          localStorage.setItem('courrier3_current_user', JSON.stringify(updated));
+          localStorage.setItem('courrier3_active_tenant_id', cloudId);
+        }
+      });
+    }
+  }, [currentUser?.businessName, currentUser?.workEmail]);
 
   // Filter navigation groups dynamically based on RBAC permissions
   const computedNavGroups = BASE_ENTERPRISE_B2B_NAV_GROUPS.map((group) => {

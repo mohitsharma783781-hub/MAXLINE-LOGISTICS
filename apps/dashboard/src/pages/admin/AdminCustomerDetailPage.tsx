@@ -80,13 +80,41 @@ export const AdminCustomerDetailPage: React.FC = () => {
 
   const [alertMessage, setAlertMessage] = useState<{ variant: 'success' | 'danger'; title: string; text: string } | null>(null);
 
-  const wallet = WalletService.getWallet();
-  const transactions = WalletService.getTransactions();
+  const [wallet, setWallet] = useState(() => (id ? WalletService.getWallet(id) : WalletService.getWallet()));
+  const transactions = id ? WalletService.getTransactions(id) : WalletService.getTransactions();
 
-  const handleExecuteAdjustment = () => {
+  const handleExecuteAdjustment = async () => {
     const amount = parseFloat(adjustAmount) || 0;
-    const res = WalletService.adjust(amount, adjustDirection, adjustReason);
+    if (amount <= 0) return;
 
+    if (id) {
+      const res = await AdminManagementService.adjustWallet({
+        merchantId: id,
+        amountINR: amount,
+        type: adjustDirection === 'CREDIT' ? 'MANUAL_CREDIT' : 'MANUAL_DEBIT',
+        description: adjustReason || 'Admin Manual Adjustment',
+      });
+
+      setIsAdjustModalOpen(false);
+
+      if (res.success) {
+        setAlertMessage({
+          variant: 'success',
+          title: 'Wallet Adjustment Posted',
+          text: `Successfully posted ${adjustDirection} adjustment of ₹${amount.toFixed(2)} to customer wallet.`,
+        });
+        setWallet(WalletService.getWallet(id));
+      } else {
+        setAlertMessage({
+          variant: 'danger',
+          title: 'Adjustment Failed',
+          text: res.message,
+        });
+      }
+      return;
+    }
+
+    const res = WalletService.adjust(amount, adjustDirection, adjustReason);
     setIsAdjustModalOpen(false);
 
     if (res.success && res.transaction) {
@@ -95,6 +123,7 @@ export const AdminCustomerDetailPage: React.FC = () => {
         title: 'Wallet Adjustment Posted',
         text: `Successfully posted ${adjustDirection} adjustment of ₹${amount.toFixed(2)} to customer wallet.`,
       });
+      setWallet(WalletService.getWallet());
     } else {
       setAlertMessage({
         variant: 'danger',
@@ -132,15 +161,15 @@ export const AdminCustomerDetailPage: React.FC = () => {
       }
       localStorage.setItem('courrier3_admin_impersonating', 'true');
       localStorage.setItem('courrier3_active_portal', 'CUSTOMER');
-      localStorage.setItem('courrier3_active_tenant_id', id || foundMerchant?.id || '');
+      localStorage.setItem('courrier3_active_tenant_id', id || merchantItem?.id || '');
 
       const sellerUser = {
-        id: id || foundMerchant?.id || '',
+        id: id || merchantItem?.id || '',
         fullName: merchantOwner,
         workEmail: merchantEmail,
         role: 'customer',
         businessName: merchantName,
-        tenantId: id || foundMerchant?.id || '',
+        tenantId: id || merchantItem?.id || '',
         phoneNumber: merchantPhone,
       };
       localStorage.setItem('courrier3_current_user', JSON.stringify(sellerUser));

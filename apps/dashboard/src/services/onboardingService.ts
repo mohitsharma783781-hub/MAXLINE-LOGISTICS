@@ -205,6 +205,74 @@ export const OnboardingService = {
     return records;
   },
 
+  syncWithMerchants: (merchants: any[]): CustomerOnboardingRecord[] => {
+    let records = OnboardingService.getRecords();
+    for (const m of merchants) {
+      const idx = records.findIndex(
+        (r) =>
+          r.customerId === m.id ||
+          (r.companyName && m.businessName && r.companyName.trim().toLowerCase() === m.businessName.trim().toLowerCase())
+      );
+      const wal = WalletService.getWallet(m.id);
+      const hasBalance = (wal.availableBalanceMinor || 0) > 0 || (m.walletBalanceINR || 0) > 0;
+      const now = m.createdAt ? m.createdAt.split('T')[0] : new Date().toISOString().split('T')[0];
+
+      if (idx === -1) {
+        const newRec: CustomerOnboardingRecord = {
+          customerId: m.id,
+          companyName: m.businessName,
+          contactPerson: m.ownerName || 'Merchant Admin',
+          email: m.ownerEmail || '',
+          mobile: m.ownerPhone || '',
+          gstNumber: '',
+          currentStageNumber: hasBalance ? 9 : 5,
+          currentStageTitle: hasBalance ? 'Account Go-Live' : 'KYC Submitted',
+          completionPercentage: hasBalance ? 100 : 60,
+          assignedManager: 'Maxline Onboarding Desk',
+          expectedGoLiveDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+          status: hasBalance ? 'LIVE' : 'PENDING_KYC',
+          isEmailVerified: true,
+          isMobileVerified: true,
+          isProfileCompleted: true,
+          isKycSubmitted: true,
+          isKycApproved: hasBalance,
+          isRateCardAssigned: true,
+          isWalletActivated: hasBalance,
+          isGoLive: hasBalance,
+          createdAt: now,
+          lastUpdated: now,
+          stages: [
+            { stageId: 'ACCOUNT_CREATED', stageNumber: 1, title: 'Account Created', isComplete: true, completedAt: now },
+            { stageId: 'EMAIL_VERIFIED', stageNumber: 2, title: 'Email Verified', isComplete: true, completedAt: now },
+            { stageId: 'MOBILE_VERIFIED', stageNumber: 3, title: 'Mobile Verified', isComplete: true, completedAt: now },
+            { stageId: 'PROFILE_COMPLETED', stageNumber: 4, title: 'Company Profile Completed', isComplete: true, completedAt: now },
+            { stageId: 'KYC_SUBMITTED', stageNumber: 5, title: 'KYC Submitted', isComplete: true, completedAt: now },
+            { stageId: 'KYC_APPROVED', stageNumber: 6, title: 'KYC Approved', isComplete: hasBalance, remarks: hasBalance ? 'Verified with active balance' : 'Under review' },
+            { stageId: 'RATE_CARD_ASSIGNED', stageNumber: 7, title: 'Rate Card Assigned', isComplete: true, completedAt: now },
+            { stageId: 'WALLET_ACTIVATED', stageNumber: 8, title: 'Wallet Activated', isComplete: hasBalance },
+            { stageId: 'ACCOUNT_GO_LIVE', stageNumber: 9, title: 'Account Go-Live', isComplete: hasBalance },
+          ],
+        };
+        records.unshift(newRec);
+      } else {
+        records[idx].companyName = m.businessName;
+        records[idx].contactPerson = m.ownerName || records[idx].contactPerson;
+        records[idx].email = m.ownerEmail || records[idx].email;
+        if (hasBalance) {
+          records[idx].isWalletActivated = true;
+          records[idx].isKycApproved = true;
+          records[idx].isGoLive = true;
+          records[idx].status = 'LIVE';
+          records[idx].currentStageNumber = 9;
+          records[idx].currentStageTitle = 'Account Go-Live';
+          records[idx].completionPercentage = 100;
+        }
+      }
+    }
+    OnboardingService.saveRecords(records);
+    return records;
+  },
+
   saveRecords: (records: CustomerOnboardingRecord[]) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
   },

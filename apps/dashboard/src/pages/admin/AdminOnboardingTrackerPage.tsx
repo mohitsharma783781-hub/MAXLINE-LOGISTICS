@@ -16,8 +16,13 @@ export const AdminOnboardingTrackerPage: React.FC = () => {
   );
 
   useEffect(() => {
-    AdminManagementService.getMerchants().then(() => {
-      setRecords(OnboardingService.getRecords());
+    AdminManagementService.getMerchants().then((merchants) => {
+      if (merchants && merchants.length > 0) {
+        const synced = OnboardingService.syncWithMerchants(merchants);
+        setRecords(synced);
+      } else {
+        setRecords(OnboardingService.getRecords());
+      }
     });
   }, []);
 

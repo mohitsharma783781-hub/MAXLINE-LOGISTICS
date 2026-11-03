@@ -198,7 +198,14 @@ export const AdminManagementService = {
       // Merge local and cloud merchants seamlessly
       const merged = [...cloudList];
       for (const loc of localRegistered) {
-        if (!merged.some((m) => m.id === loc.id || (m.ownerEmail && loc.ownerEmail && m.ownerEmail.toLowerCase() === loc.ownerEmail.toLowerCase()))) {
+        if (
+          !merged.some(
+            (m) =>
+              m.id === loc.id ||
+              (m.ownerEmail && loc.ownerEmail && m.ownerEmail.toLowerCase() === loc.ownerEmail.toLowerCase()) ||
+              (m.businessName && loc.businessName && m.businessName.trim().toLowerCase() === loc.businessName.trim().toLowerCase())
+          )
+        ) {
           const wal = WalletService.getWallet(loc.id);
           merged.push({
             ...loc,
@@ -206,6 +213,9 @@ export const AdminManagementService = {
           });
         }
       }
+
+      // Persist unified list to local cache so all admin modules stay instantly in sync
+      saveRegisteredMerchantsToStorage(merged);
 
       return merged;
     } catch (err: any) {
@@ -219,6 +229,114 @@ export const AdminManagementService = {
         walletBalanceINR: wal.availableBalanceMinor / 100,
       };
     });
+  },
+
+  /**
+   * Ensure merchant and user exist in Supabase Cloud Database.
+   * Resolves and aligns client tenant ID with authoritative cloud merchant UUID.
+   */
+  async ensureMerchantInCloud(params: {
+    id: string;
+    businessName: string;
+    email: string;
+    name: string;
+    phone?: string;
+  }): Promise<string> {
+    try {
+      // 1. Query existing merchants in Supabase Cloud
+      const { data: cloudMerchants } = await supabase.from('merchants').select('*');
+
+      const matchedMerchant = (cloudMerchants || []).find(
+        (m: any) =>
+          m.id === params.id ||
+          (m.business_name && params.businessName && m.business_name.trim().toLowerCase() === params.businessName.trim().toLowerCase())
+      );
+
+      const targetMerchantId = matchedMerchant ? matchedMerchant.id : params.id;
+
+      if (!matchedMerchant) {
+        await supabase.from('merchants').upsert({
+          id: targetMerchantId,
+          business_name: params.businessName,
+          status: 'ACTIVE',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      // 2. Query existing users in Supabase Cloud
+      const { data: cloudUsers } = await supabase.from('users').select('*');
+      let matchedUser = (cloudUsers || []).find(
+        (u: any) =>
+          (params.email && u.email && u.email.toLowerCase() === params.email.toLowerCase()) ||
+          u.id === targetMerchantId
+      );
+
+      const targetUserId = matchedUser ? matchedUser.id : targetMerchantId;
+      if (!matchedUser) {
+        await supabase.from('users').upsert({
+          id: targetUserId,
+          email: params.email || `${targetMerchantId}@maxlinelogistics.com`,
+          full_name: params.name || 'Merchant Admin',
+          phone: params.phone || '+91 70000 00000',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      // 3. Ensure merchant member association
+      await supabase.from('merchant_members').upsert({
+        merchant_id: targetMerchantId,
+        user_id: targetUserId,
+        role: 'OWNER',
+        is_default: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      // 4. Ensure wallet row exists in cloud
+      const { data: cloudWallet } = await supabase
+        .from('wallets')
+        .select('id, available_balance_minor')
+        .eq('merchant_id', targetMerchantId)
+        .maybeSingle();
+
+      if (!cloudWallet) {
+        await supabase.from('wallets').upsert({
+          merchant_id: targetMerchantId,
+          currency: 'INR',
+          available_balance_minor: 0,
+          reserved_balance_minor: 0,
+          total_recharged_minor: 0,
+          total_spent_minor: 0,
+          low_balance_threshold_minor: 50000,
+          status: 'ACTIVE',
+          version: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      // 5. Update local cache with verified merchant
+      AdminManagementService.registerNewMerchant({
+        id: targetMerchantId,
+        businessName: params.businessName,
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        ownerName: params.name,
+        ownerEmail: params.email,
+        ownerPhone: params.phone || '',
+        warehouseCount: 0,
+        walletBalanceINR: cloudWallet ? Number(cloudWallet.available_balance_minor || 0) / 100 : 0,
+        walletStatus: 'ACTIVE',
+      });
+
+      return targetMerchantId;
+    } catch (err: any) {
+      console.warn('[AdminManagementService] ensureMerchantInCloud warning:', err?.message);
+      return params.id;
+    }
   },
 
   /**
@@ -245,20 +363,57 @@ export const AdminManagementService = {
    */
   async getWallets(): Promise<AdminWalletItem[]> {
     const merchants = await AdminManagementService.getMerchants();
-    return merchants.map((m) => {
-      const wal = WalletService.getWallet(m.id);
-      return {
-        id: `wal-${m.id}`,
-        merchantId: m.id,
-        merchantName: m.businessName,
-        email: m.ownerEmail,
-        balanceINR: wal.availableBalanceMinor / 100,
-        totalRechargedINR: wal.totalRefundedMinor / 100,
-        totalSpentINR: wal.totalSpentMinor / 100,
-        status: wal.status === 'ACTIVE' ? 'ACTIVE' : 'FROZEN',
-        updatedAt: wal.updatedAt,
-      };
-    });
+
+    try {
+      const { data: cloudWallets } = await supabase.from('wallets').select('*');
+      const cloudMap = new Map((cloudWallets || []).map((w: any) => [w.merchant_id, w]));
+
+      return merchants.map((m) => {
+        const wal = WalletService.getWallet(m.id);
+        const cloudW: any = cloudMap.get(m.id);
+        const cloudBal = cloudW ? Number(cloudW.available_balance_minor || 0) / 100 : 0;
+        const cloudRecharged = cloudW ? Number(cloudW.total_recharged_minor || 0) / 100 : 0;
+        const cloudSpent = cloudW ? Number(cloudW.total_spent_minor || 0) / 100 : 0;
+
+        const liveBal = wal.availableBalanceMinor > 0 ? wal.availableBalanceMinor / 100 : cloudBal;
+        const liveRecharged = wal.totalRefundedMinor > 0 ? wal.totalRefundedMinor / 100 : cloudRecharged;
+        const liveSpent = wal.totalSpentMinor > 0 ? wal.totalSpentMinor / 100 : cloudSpent;
+
+        // Keep local WalletService in sync with cloud balance
+        if (cloudBal > 0 && wal.availableBalanceMinor === 0) {
+          wal.availableBalanceMinor = Math.round(cloudBal * 100);
+          wal.totalRefundedMinor = Math.round(cloudRecharged * 100);
+          wal.totalSpentMinor = Math.round(cloudSpent * 100);
+        }
+
+        return {
+          id: `wal-${m.id}`,
+          merchantId: m.id,
+          merchantName: m.businessName,
+          email: m.ownerEmail,
+          balanceINR: liveBal,
+          totalRechargedINR: liveRecharged,
+          totalSpentINR: liveSpent,
+          status: (cloudW?.status || wal.status) === 'ACTIVE' ? 'ACTIVE' : 'FROZEN',
+          updatedAt: cloudW?.updated_at || wal.updatedAt,
+        };
+      });
+    } catch {
+      return merchants.map((m) => {
+        const wal = WalletService.getWallet(m.id);
+        return {
+          id: `wal-${m.id}`,
+          merchantId: m.id,
+          merchantName: m.businessName,
+          email: m.ownerEmail,
+          balanceINR: wal.availableBalanceMinor / 100,
+          totalRechargedINR: wal.totalRefundedMinor / 100,
+          totalSpentINR: wal.totalSpentMinor / 100,
+          status: wal.status === 'ACTIVE' ? 'ACTIVE' : 'FROZEN',
+          updatedAt: wal.updatedAt,
+        };
+      });
+    }
   },
 
   /**

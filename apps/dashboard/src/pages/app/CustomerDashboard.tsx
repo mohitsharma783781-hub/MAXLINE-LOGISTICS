@@ -117,11 +117,23 @@ export const CustomerDashboard: React.FC = () => {
     }
   };
 
-  // Background non-blocking sync on mount for instantaneous rendering
+  // Background non-blocking sync on mount & focus for instantaneous rendering
   useEffect(() => {
     if (activeTenantId) {
       handleSync(false);
     }
+
+    const onFocus = () => {
+      if (activeTenantId) {
+        handleSync(false);
+      }
+    };
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('maxline_wallet_updated', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('maxline_wallet_updated', onFocus);
+    };
   }, [activeTenantId]);
 
   const wallet = WalletService.getWallet(activeTenantId);

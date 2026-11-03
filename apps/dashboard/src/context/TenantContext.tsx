@@ -218,6 +218,30 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
           }
         } catch (_err) {}
+
+        if (!resolvedTid && u.email) {
+          try {
+            const { data: profile } = await supabase
+              .from('users')
+              .select('id')
+              .eq('email', u.email.toLowerCase())
+              .maybeSingle();
+
+            if (profile?.id) {
+              const { data: member } = await supabase
+                .from('merchant_members')
+                .select('merchant_id')
+                .eq('user_id', profile.id)
+                .order('is_default', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (member?.merchant_id) {
+                resolvedTid = member.merchant_id;
+              }
+            }
+          } catch (_err) {}
+        }
       }
 
       if (resolvedTid) {

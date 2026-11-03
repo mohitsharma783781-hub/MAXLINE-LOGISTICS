@@ -50,13 +50,36 @@ export const Topbar: React.FC<TopbarProps> = ({
       }
     };
     updateBal();
+
+    // Sync authoritative cloud balance on mount & window focus
+    if (activeTenantId) {
+      WalletService.syncFromSupabase(activeTenantId).then(() => updateBal()).catch(() => {});
+    }
+
+    const onFocus = () => {
+      if (activeTenantId) {
+        WalletService.syncFromSupabase(activeTenantId).then(() => updateBal()).catch(() => {});
+      }
+    };
+
     window.addEventListener('maxline_wallet_updated', updateBal);
     window.addEventListener('storage', updateBal);
+    window.addEventListener('focus', onFocus);
+
+    // Periodic 15-second background sync
+    const interval = setInterval(() => {
+      if (activeTenantId && isCustomerPortal) {
+        WalletService.syncFromSupabase(activeTenantId).then(() => updateBal()).catch(() => {});
+      }
+    }, 15000);
+
     return () => {
       window.removeEventListener('maxline_wallet_updated', updateBal);
       window.removeEventListener('storage', updateBal);
+      window.removeEventListener('focus', onFocus);
+      clearInterval(interval);
     };
-  }, [activeTenantId]);
+  }, [activeTenantId, isCustomerPortal]);
 
   const walletBalanceINR = (walletBalancePaise / 100).toFixed(2);
 
