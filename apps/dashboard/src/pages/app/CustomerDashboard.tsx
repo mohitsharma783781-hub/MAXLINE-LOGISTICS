@@ -100,8 +100,8 @@ export const CustomerDashboard: React.FC = () => {
 
   const merchantDisplayName = !isGenericOrMissing ? rawMerchantName.trim() : 'Merchant Setup Pending';
 
-  const handleSync = async () => {
-    setIsRefreshing(true);
+  const handleSync = async (interactive = false) => {
+    if (interactive) setIsRefreshing(true);
     try {
       await Promise.all([
         CustomerShipmentService.syncFromSupabase(activeTenantId),
@@ -111,13 +111,17 @@ export const CustomerDashboard: React.FC = () => {
     } catch {
       // non-blocking
     } finally {
-      setTimeout(() => setIsRefreshing(false), 350);
+      if (interactive) {
+        setTimeout(() => setIsRefreshing(false), 300);
+      }
     }
   };
 
-  // Synchronize shipments and wallet from Supabase Cloud DB on mount
+  // Background non-blocking sync on mount for instantaneous rendering
   useEffect(() => {
-    handleSync();
+    if (activeTenantId) {
+      handleSync(false);
+    }
   }, [activeTenantId]);
 
   const wallet = WalletService.getWallet(activeTenantId);
@@ -422,7 +426,7 @@ export const CustomerDashboard: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             type="button"
-            onClick={handleSync}
+            onClick={() => handleSync(true)}
             disabled={isRefreshing}
             style={{
               padding: '8px 12px',

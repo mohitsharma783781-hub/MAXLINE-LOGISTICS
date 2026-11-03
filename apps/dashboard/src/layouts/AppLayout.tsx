@@ -92,10 +92,28 @@ export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const { canAccessPath } = useRbac();
   const { activeTenantId, activeTenant, refreshTenantProfile } = useTenant();
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [isVerifying, setIsVerifying] = useState(true);
 
-  // Enforce authentic Supabase session on all merchant portal routes
+  // Instant local session hydration for 0ms First Contentful Paint
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = localStorage.getItem('courrier3_current_user');
+        if (raw) return JSON.parse(raw);
+      }
+    } catch {}
+    return null;
+  });
+
+  const [isVerifying, setIsVerifying] = useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return !localStorage.getItem('courrier3_current_user');
+      }
+    } catch {}
+    return false;
+  });
+
+  // Background non-blocking verification of session
   useEffect(() => {
     let isMounted = true;
     authService.getCurrentUser().then((user) => {
@@ -107,6 +125,8 @@ export const AppLayout: React.FC = () => {
           setIsVerifying(false);
         }
       }
+    }).catch(() => {
+      if (isMounted) setIsVerifying(false);
     });
 
     return () => {

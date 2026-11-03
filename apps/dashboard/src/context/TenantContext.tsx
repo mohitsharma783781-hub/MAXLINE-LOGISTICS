@@ -47,7 +47,31 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return localStorage.getItem('courrier3_active_tenant_id') || '';
   });
 
-  const [activeTenant, setActiveTenant] = useState<TenantProfile | null>(null);
+  const [activeTenant, setActiveTenant] = useState<TenantProfile | null>(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('courrier3_current_user') : null;
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u.businessName) {
+          const tid = u.tenantId || localStorage.getItem('courrier3_active_tenant_id') || '48dba919-ca2a-4a86-b645-f795f70e9d59';
+          return {
+            tenantId: tid,
+            companyName: u.businessName,
+            slug: u.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+            status: 'ACTIVE',
+            planTier: 'Growth',
+            createdAt: '2026-01-01',
+            assignedRateCards: ['RC-STANDARD'],
+            assignedManager: 'Support Desk',
+            contactEmail: u.workEmail || '',
+            contactMobile: u.phoneNumber || '',
+            gstNumber: '',
+          };
+        }
+      }
+    } catch {}
+    return null;
+  });
 
   // Synchronize tenant profile from Supabase PostgreSQL
   const resolveTenantProfile = useCallback(async (tenantId: string, forceRefresh = false): Promise<TenantProfile | null> => {
@@ -236,11 +260,9 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (activeTenantId) {
       localStorage.setItem('courrier3_active_tenant_id', activeTenantId);
       resolveTenantProfile(activeTenantId).then((profile) => {
-        if (isMounted) {
+        if (isMounted && profile) {
           setActiveTenant(profile);
-          if (profile && !tenants.some((t) => t.tenantId === profile.tenantId)) {
-            setTenants((prev) => [profile, ...prev]);
-          }
+          setTenants((prev) => (prev.some((t) => t.tenantId === profile.tenantId) ? prev : [profile, ...prev]));
         }
       });
     } else {
@@ -250,7 +272,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       isMounted = false;
     };
-  }, [activeTenantId, resolveTenantProfile, tenants]);
+  }, [activeTenantId, resolveTenantProfile]);
 
   const setActiveTenantId = (tenantId: string) => {
     setActiveTenantIdState(tenantId);

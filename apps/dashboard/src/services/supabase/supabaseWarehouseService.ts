@@ -18,7 +18,12 @@ export const SupabaseWarehouseService = {
         query = query.eq('merchant_id', validTid);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await Promise.race([
+        query,
+        new Promise<{ data: null; error: { message: string } }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: 'Timeout' } }), 2500)
+        ),
+      ]);
 
       if (error) {
         console.warn('[SupabaseWarehouseService] Fetch warehouses warning:', error.message);

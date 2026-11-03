@@ -18,7 +18,15 @@ export const SupabaseShipmentService = {
         query = query.eq('merchant_id', validTid);
       }
 
-      const { data, error } = await query;
+      // Fast 2.5s network timeout protection to ensure UI never freezes
+      const fetchPromise = Promise.race([
+        query,
+        new Promise<{ data: null; error: { message: string } }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: 'Network timeout (2.5s)' } }), 2500)
+        ),
+      ]);
+
+      const { data, error } = await fetchPromise;
 
       if (error) {
         console.warn('[SupabaseShipmentService] Fetch shipments warning:', error.message);

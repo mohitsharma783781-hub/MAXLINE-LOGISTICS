@@ -9,11 +9,18 @@ export const SupabaseWalletService = {
   async fetchWallet(tenantId?: string): Promise<Wallet | null> {
     try {
       const validTid = toValidTenantUUID(tenantId);
-      const { data, error } = await supabase
+      const query = supabase
         .from('wallets')
         .select('*')
         .eq('merchant_id', validTid)
         .maybeSingle();
+
+      const { data, error } = await Promise.race([
+        query,
+        new Promise<{ data: null; error: { message: string } }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: 'Timeout' } }), 2500)
+        ),
+      ]);
 
       if (error) {
         console.warn('[SupabaseWalletService] Fetch wallet warning:', error.message);
@@ -54,11 +61,18 @@ export const SupabaseWalletService = {
   async fetchTransactions(tenantId?: string): Promise<WalletTransaction[]> {
     try {
       const validTid = toValidTenantUUID(tenantId);
-      const { data, error } = await supabase
+      const query = supabase
         .from('wallet_transactions')
         .select('*')
         .eq('merchant_id', validTid)
         .order('created_at', { ascending: false });
+
+      const { data, error } = await Promise.race([
+        query,
+        new Promise<{ data: null; error: { message: string } }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: 'Timeout' } }), 2500)
+        ),
+      ]);
 
       if (error) {
         console.warn('[SupabaseWalletService] Fetch transactions warning:', error.message);

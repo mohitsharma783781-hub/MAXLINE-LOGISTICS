@@ -480,7 +480,7 @@ export const CustomerShipmentService = {
     if (!tenantId) return CustomerShipmentService.getShipments(tenantId);
     try {
       const cloudShipments = await SupabaseShipmentService.fetchShipments(tenantId);
-      if (Array.isArray(cloudShipments)) {
+      if (Array.isArray(cloudShipments) && cloudShipments.length > 0) {
         // Retain other tenants' records if any
         const otherTenants = SHIPMENT_STORE.filter((s) => s.tenantId !== tenantId);
         SHIPMENT_STORE = [...cloudShipments, ...otherTenants];

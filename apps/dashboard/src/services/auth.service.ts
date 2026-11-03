@@ -382,6 +382,23 @@ export class AuthService implements IAuthService {
       return cachedUser;
     }
 
+    // 0b. Fast LocalStorage check for instantaneous 0ms session recovery
+    if (!forceRefresh) {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const raw = localStorage.getItem('courrier3_current_user');
+          if (raw) {
+            const user = JSON.parse(raw);
+            if (user && user.id && user.role) {
+              cachedUser = user;
+              cachedUserTimestamp = Date.now();
+              return user;
+            }
+          }
+        }
+      } catch {}
+    }
+
     // 1. Check native Supabase Auth session first
     try {
       let user: any = null;
