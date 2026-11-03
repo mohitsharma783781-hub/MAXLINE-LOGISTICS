@@ -48,7 +48,7 @@ export const PublicTrackingPage: React.FC = () => {
       setBranding(b);
     }
 
-    const targetQuery = awb || 'DEL847192031';
+    const targetQuery = awb || '474740192831';
     setIsLoading(true);
     setErrorMsg(null);
 

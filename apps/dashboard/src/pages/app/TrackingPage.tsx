@@ -24,6 +24,7 @@ import {
   Alert,
 } from '../../components/ui';
 import { CustomerShipmentService } from '../../services/customerShipmentService';
+import { TrackingService } from '../../services/trackingService';
 
 export interface TrackingTimelineEvent {
   id: string;
@@ -529,9 +530,130 @@ export const TrackingPage: React.FC = () => {
     setSyncStatusMsg(null);
 
     try {
+      const liveRes = await TrackingService.fetchLiveTracking(q);
       const matchedShipment = CustomerShipmentService.getShipmentById(q);
 
-      if (matchedShipment) {
+      if (liveRes.success && liveRes.data) {
+        const live = liveRes.data;
+        const statusStr = String(live.currentStatus || 'BOOKED').toUpperCase();
+        const stepIdx =
+          statusStr === 'DELIVERED'
+            ? 6
+            : statusStr === 'OUT_FOR_DELIVERY'
+            ? 5
+            : statusStr === 'IN_TRANSIT'
+            ? 3
+            : statusStr === 'PICKED_UP'
+            ? 2
+            : statusStr === 'PICKUP_REQUESTED'
+            ? 1
+            : 0;
+
+        const displayStatus =
+          statusStr === 'DELIVERED'
+            ? 'Delivered'
+            : statusStr === 'OUT_FOR_DELIVERY'
+            ? 'OFD'
+            : statusStr === 'IN_TRANSIT'
+            ? 'In Transit'
+            : statusStr === 'PICKED_UP'
+            ? 'Picked Up'
+            : statusStr === 'NDR'
+            ? 'NDR'
+            : statusStr.startsWith('RTO')
+            ? 'RTO'
+            : 'Booked';
+
+        const events: TrackingTimelineEvent[] = (live.events || []).map((e, idx) => ({
+          id: e.id || `live-evt-${idx}-${Date.now()}`,
+          date: e.eventTime ? String(e.eventTime).split(',')[0] : new Date().toLocaleDateString(),
+          time: e.eventTime ? String(e.eventTime).split(',')[1] || '' : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          location: e.location || 'Delhivery Hub',
+          statusTitle: e.providerStatus || e.status,
+          remarks: e.description || 'Carrier scan recorded',
+          source: (liveRes.source === 'LIVE_CARRIER' ? 'Carrier Webhook' : 'API Auto-Sync') as any,
+        }));
+
+        const updated: TrackingShipmentRecord = {
+          id: matchedShipment?.id || live.shipmentId || `shp-${q}`,
+          awbNumber: (live.awb || q).toUpperCase(),
+          orderId: matchedShipment?.orderId || live.orderId || `ORD-${q}`,
+          customerName: matchedShipment?.deliveryContact || live.recipientName || 'Customer Consignee',
+          customerPhone: matchedShipment?.deliveryPhone || '',
+          customerEmail: (matchedShipment as any)?.deliveryEmail || 'customer@example.com',
+          deliveryAddress: matchedShipment?.deliveryAddress || 'Registered Delivery Location',
+          deliveryCity: matchedShipment?.deliveryCity || live.destinationCity || 'Destination',
+          deliveryState: (matchedShipment as any)?.deliveryState || '',
+          deliveryPincode: matchedShipment?.deliveryPincode || '',
+          courierName: live.courierName || matchedShipment?.courierName || 'Delhivery Surface Express',
+          courierLogoBg: '#0284c7',
+          serviceType: 'Express',
+          mode: (matchedShipment?.mode || 'B2C') as any,
+          zoneRoute: matchedShipment ? `${matchedShipment.pickupPincode} → ${matchedShipment.deliveryPincode}` : `Panchkula Hub (134113) → ${live.destinationCity}`,
+          transitSlaDays: '2-4 Days',
+          deadWeightKg: matchedShipment?.actualWeightKg || 0.5,
+          volumetricWeightKg: matchedShipment?.chargeableWeightKg || 0.5,
+          chargeableWeightKg: matchedShipment?.chargeableWeightKg || 0.5,
+          dimensionsCm: matchedShipment?.dimensionsCm || '20 × 15 × 10 CM',
+          packageCount: matchedShipment?.packages?.length || 1,
+          contentsDescription: 'E-Commerce Package',
+          baseFreight: matchedShipment?.baseFreightINR || 65,
+          fuelSurcharge: matchedShipment?.fuelSurchargeINR || 6.5,
+          docketCharges: 15,
+          codCharges: matchedShipment?.codFeeINR || 0,
+          rovCharges: 0,
+          insuranceCharges: 0,
+          gstAmount: Math.round(((matchedShipment?.totalCustomerChargeINR || 71.5) * 0.18) * 100) / 100,
+          finalAmount: matchedShipment?.totalCustomerChargeINR || 84.37,
+          walletReferenceId: matchedShipment?.transactionId || `TXN-${q}`,
+          status: displayStatus as any,
+          stepIndex: stepIdx,
+          etaDate: live.estimatedDeliveryDate || '2-3 Business Days',
+          transitDaysCount: '1-2 Days',
+          lastUpdatedTime: new Date().toLocaleString(),
+          timelineEvents: events.length > 0 ? events : [
+            {
+              id: 'ev-0',
+              date: new Date().toLocaleDateString(),
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              location: live.originCity || 'Panchkula Hub (134113)',
+              statusTitle: 'Shipment Registered',
+              remarks: 'Registered on Delhivery carrier network',
+              source: 'Carrier Webhook' as const,
+            }
+          ],
+          activityLogs: [
+            {
+              id: `act-sync-${Date.now()}`,
+              timestamp: new Date().toLocaleString(),
+              action: `Live carrier sync verified AWB ${live.awb} with Delhivery Production Network (${liveRes.source})`,
+              user: 'Delhivery Live Sync Engine',
+            },
+          ],
+          adminLogs: {
+            courierApiPayload: JSON.stringify(live, null, 2),
+            webhookLog: `Live Carrier API feed active for AWB: ${q} (Source: ${liveRes.source})`,
+            syncHistory: `Live Carrier Synced at ${new Date().toLocaleTimeString()} (Source: ${liveRes.source})`,
+            errorLogs: 'No carrier exceptions recorded.',
+          },
+        };
+
+        if (matchedShipment) {
+          CustomerShipmentService.updateStatus(
+            matchedShipment.shipmentId,
+            statusStr as any,
+            `Live carrier sync: ${displayStatus}`,
+            'CARRIER',
+            'Delhivery Live Network'
+          );
+        }
+
+        setLiveRecordOverride(updated);
+        setSyncStatusMsg({
+          type: 'success',
+          message: `Live carrier status synchronized successfully! (${liveRes.source} - ${displayStatus})`,
+        });
+      } else if (matchedShipment) {
         const stepIdx =
           matchedShipment.bookingStatus === 'DELIVERED'
             ? 6

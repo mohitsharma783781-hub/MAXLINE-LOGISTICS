@@ -50,20 +50,45 @@ export interface AdminBrandingGlobalControl {
 let GLOBAL_ADMIN_CONTROL: AdminBrandingGlobalControl = {
   globalPromoBannersEnabled: true,
   maxBannerSizeBytes: 1024 * 1024 * 2, // 2MB
-  aggregatorFooterText: 'Powered by Courrier3 Post-Purchase Logistics Engine',
+  aggregatorFooterText: 'Powered by MAXLINE LOGISTICS Post-Purchase Network',
   aggregatorBrandingDominance: 'SUBTLE',
 };
 
 const DEFAULT_BRANDING_STORE: Record<string, MerchantBrandingConfig> = {
+  '48dba919-ca2a-4a86-b645-f795f70e9d59': {
+    tenantId: '48dba919-ca2a-4a86-b645-f795f70e9d59',
+    merchantSlug: 'xyz-logistics',
+    brandName: 'XYZ LOGISTICS Track & Trace',
+    logoUrl: '/images/maxline_icon.png',
+    primaryColor: '#0284c7',
+    secondaryColor: '#0f172a',
+    supportEmail: 'mohitsharma99229@gmail.com',
+    supportPhone: '+91 70091 74879',
+    showCourierBranding: true,
+    showAggregatorFooter: true,
+    promotionalBanner: {
+      enabled: false,
+      imageUrl: '',
+      headline: '',
+      description: '',
+      ctaText: '',
+      ctaUrl: '',
+      disabledByAdmin: false,
+    },
+    customDomain: 'track.maxlinelogistics.com',
+    customDomainVerified: true,
+    auditLogs: [],
+    updatedAt: new Date().toISOString(),
+  },
   'tenant-demo-01': {
     tenantId: 'tenant-demo-01',
     merchantSlug: 'maxline-logistics',
     brandName: 'MAXLINE LOGISTICS Track & Trace',
     logoUrl: '/images/maxline_icon.png',
-    primaryColor: '#2563eb', // Brand blue
-    secondaryColor: '#0f172a', // Dark slate
-    supportEmail: 'support@maxlinelogistics.com',
-    supportPhone: '+91 98765 43210',
+    primaryColor: '#2563eb',
+    secondaryColor: '#0f172a',
+    supportEmail: 'maxlinelogistic@gmail.com',
+    supportPhone: '+91 70091 74879',
     showCourierBranding: true,
     showAggregatorFooter: true,
     promotionalBanner: {
