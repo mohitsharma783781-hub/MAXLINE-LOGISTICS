@@ -224,15 +224,18 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setActiveTenantIdState((prev) => (prev !== resolvedTid ? resolvedTid : prev));
         localStorage.setItem('courrier3_active_tenant_id', resolvedTid);
       } else {
-        // Authenticated user with no merchant organization provisioned yet
-        const currentStored = localStorage.getItem('courrier3_active_tenant_id');
-        if (currentStored && currentStored.startsWith('tenant-demo')) {
-          // preserve demo tenant in demo mode
-        } else if (currentStored && isValidUUID(currentStored) && currentStored !== u.id) {
-          // preserve non-auth UUID
-        } else {
-          setActiveTenantIdState('');
-          localStorage.removeItem('courrier3_active_tenant_id');
+        // Authenticated user with no merchant organization provisioned in cloud yet
+        const uRaw = localStorage.getItem('courrier3_current_user');
+        let fallbackTid = '';
+        if (uRaw) {
+          try {
+            fallbackTid = JSON.parse(uRaw).tenantId || '';
+          } catch {}
+        }
+        const currentStored = localStorage.getItem('courrier3_active_tenant_id') || fallbackTid;
+        if (currentStored) {
+          setActiveTenantIdState(currentStored);
+          localStorage.setItem('courrier3_active_tenant_id', currentStored);
         }
       }
     };
@@ -260,9 +263,40 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (activeTenantId) {
       localStorage.setItem('courrier3_active_tenant_id', activeTenantId);
       resolveTenantProfile(activeTenantId).then((profile) => {
-        if (isMounted && profile) {
-          setActiveTenant(profile);
-          setTenants((prev) => (prev.some((t) => t.tenantId === profile.tenantId) ? prev : [profile, ...prev]));
+        if (isMounted) {
+          if (profile) {
+            setActiveTenant(profile);
+            setTenants((prev) => (prev.some((t) => t.tenantId === profile.tenantId) ? prev : [profile, ...prev]));
+          } else {
+            const uRaw = localStorage.getItem('courrier3_current_user');
+            if (uRaw) {
+              try {
+                const u = JSON.parse(uRaw);
+                const fallbackProfile: TenantProfile = {
+                  tenantId: activeTenantId,
+                  companyName: u.businessName || 'My Store',
+                  slug: (u.businessName || 'my-store').toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                  status: 'ACTIVE',
+                  planTier: 'Starter',
+                  createdAt: new Date().toISOString().split('T')[0],
+                  assignedRateCards: ['RC-DELHIVERY-B2C-STD'],
+                  assignedManager: 'Maxline Support Desk',
+                  contactEmail: u.workEmail || '',
+                  contactMobile: u.phoneNumber || '',
+                  gstNumber: '',
+                };
+                setActiveTenant(fallbackProfile);
+                setTenants((prev) => (prev.some((t) => t.tenantId === fallbackProfile.tenantId) ? prev : [fallbackProfile, ...prev]));
+
+                // Auto-heal: Ensure merchant exists in Supabase Cloud DB
+                supabase.from('merchants').upsert({
+                  id: activeTenantId,
+                  business_name: fallbackProfile.companyName,
+                  status: 'ACTIVE',
+                }).then(() => {});
+              } catch {}
+            }
+          }
         }
       });
     } else {

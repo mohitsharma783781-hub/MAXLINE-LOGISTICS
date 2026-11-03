@@ -8,11 +8,18 @@ import {
   ONBOARDING_STAGES_CONFIG,
 } from '../../services/onboardingService';
 import type { CustomerOnboardingRecord } from '../../services/onboardingService';
+import { AdminManagementService } from '../../services/adminManagementService';
 
 export const AdminOnboardingTrackerPage: React.FC = () => {
   const [records, setRecords] = useState<CustomerOnboardingRecord[]>(() =>
     OnboardingService.getRecords()
   );
+
+  useEffect(() => {
+    AdminManagementService.getMerchants().then(() => {
+      setRecords(OnboardingService.getRecords());
+    });
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');

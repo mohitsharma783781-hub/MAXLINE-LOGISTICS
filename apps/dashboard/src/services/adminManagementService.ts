@@ -165,15 +165,17 @@ export const AdminManagementService = {
     const localRegistered = getRegisteredMerchantsFromStorage();
 
     try {
-      const [merchantsRes, usersRes, walletsRes, whRes] = await Promise.all([
+      const [merchantsRes, usersRes, membersRes, walletsRes, whRes] = await Promise.all([
         supabase.from('merchants').select('*').order('created_at', { ascending: false }),
         supabase.from('users').select('*'),
+        supabase.from('merchant_members').select('*'),
         supabase.from('wallets').select('*'),
         supabase.from('warehouses').select('merchant_id'),
       ]);
 
       const cloudList: AdminMerchantItem[] = (merchantsRes.data || []).map((m: any) => {
-        const matchedUser = (usersRes.data || []).find((u: any) => u.id === m.id || u.auth_user_id === m.id);
+        const member = (membersRes.data || []).find((mm: any) => mm.merchant_id === m.id);
+        const matchedUser = (usersRes.data || []).find((u: any) => (member && u.id === member.user_id) || u.id === m.id || u.auth_user_id === m.id);
         const matchedWallet = (walletsRes.data || []).find((w: any) => w.merchant_id === m.id);
         const whCount = (whRes.data || []).filter((w: any) => w.merchant_id === m.id).length;
         const wal = WalletService.getWallet(m.id);
@@ -184,11 +186,11 @@ export const AdminManagementService = {
           businessName: m.business_name || 'Registered Seller',
           status: m.status || 'ACTIVE',
           createdAt: m.created_at || new Date().toISOString(),
-          ownerName: matchedUser?.full_name || 'Seller Owner',
-          ownerEmail: matchedUser?.email || 'seller@maxlinelogistics.com',
+          ownerName: matchedUser?.full_name || 'Merchant Admin',
+          ownerEmail: matchedUser?.email || '',
           ownerPhone: matchedUser?.phone || '',
           warehouseCount: whCount || 0,
-          walletBalanceINR: liveBal !== undefined ? liveBal : (matchedWallet ? Number(matchedWallet.available_balance_minor || 0) / 100 : 0),
+          walletBalanceINR: liveBal > 0 ? liveBal : (matchedWallet ? Number(matchedWallet.available_balance_minor || 0) / 100 : 0),
           walletStatus: matchedWallet?.status || 'ACTIVE',
         };
       });
@@ -323,6 +325,20 @@ export const AdminManagementService = {
           description: payload.description || `Super Admin ${isCredit ? 'Credit' : 'Debit'} Adjustment`,
           reference_type: 'ADJUSTMENT',
           reference_id: `ADJ-${Date.now()}`,
+          idempotency_key: `adj-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        });
+      } else {
+        const initialMinor = isCredit ? amountMinor : 0;
+        await supabase.from('wallets').upsert({
+          merchant_id: payload.merchantId,
+          currency: 'INR',
+          available_balance_minor: initialMinor,
+          reserved_balance_minor: 0,
+          total_spent_minor: isCredit ? 0 : amountMinor,
+          total_refunded_minor: isCredit ? amountMinor : 0,
+          status: 'ACTIVE',
+          version: 1,
+          updated_at: new Date().toISOString(),
         });
       }
     } catch (err: any) {

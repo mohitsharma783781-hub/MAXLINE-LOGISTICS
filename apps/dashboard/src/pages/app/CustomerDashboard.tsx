@@ -472,7 +472,7 @@ export const CustomerDashboard: React.FC = () => {
       </div>
 
       {/* ONBOARDING TRACKER CARD */}
-      <OnboardingTrackerCard customerId="CUST-1001" />
+      <OnboardingTrackerCard customerId={activeTenantId} />
 
       {/* 2. ALERT CENTER (CONDITIONAL OPERATIONAL ALERTS) */}
       {(showDisputesAlert || showNdrAlert || (isWalletLow && showWalletAlert)) && (

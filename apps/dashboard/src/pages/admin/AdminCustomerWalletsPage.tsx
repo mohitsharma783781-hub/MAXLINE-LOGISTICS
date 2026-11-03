@@ -81,7 +81,7 @@ export const AdminCustomerWalletsPage: React.FC = () => {
     const amt = parseFloat(creditAmount);
     if (isNaN(amt) || amt <= 0) return;
 
-    if (selectedWallet && selectedWallet.tenantId.length > 20) {
+    if (selectedWallet && selectedWallet.tenantId) {
       const res = await AdminManagementService.adjustWallet({
         merchantId: selectedWallet.tenantId,
         amountINR: amt,

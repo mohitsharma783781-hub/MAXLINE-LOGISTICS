@@ -1,4 +1,5 @@
 import { WalletService } from '../mocks/wallet.mock';
+import { AdminManagementService } from './adminManagementService';
 
 export interface OnboardingStageDef {
   stageNumber: number;
@@ -128,178 +129,78 @@ export interface CustomerOnboardingRecord extends Record<string, unknown> {
   lastUpdated: string;
 }
 
-export const INITIAL_ONBOARDING_RECORDS: CustomerOnboardingRecord[] = [
-  {
-    customerId: 'CUST-1001',
-    companyName: 'Apex Logistics & Retail',
-    contactPerson: 'Rahul Sharma',
-    email: 'rahul.s@apexlogistics.com',
-    mobile: '+91 98765 11111',
-    gstNumber: '27AABCU9603R1ZM',
-    currentStageNumber: 9,
-    currentStageTitle: 'Account Go-Live',
-    completionPercentage: 100,
-    assignedManager: 'Vikram Singh (KAM)',
-    expectedGoLiveDate: '2026-09-05',
-    status: 'LIVE',
-    isEmailVerified: true,
-    isMobileVerified: true,
-    isProfileCompleted: true,
-    isKycSubmitted: true,
-    isKycApproved: true,
-    isRateCardAssigned: true,
-    isWalletActivated: true,
-    isGoLive: true,
-    createdAt: '2026-08-20',
-    lastUpdated: '2026-09-04 14:10',
-    stages: [
-      { stageId: 'ACCOUNT_CREATED', stageNumber: 1, title: 'Account Created', isComplete: true, completedAt: '2026-08-20' },
-      { stageId: 'EMAIL_VERIFIED', stageNumber: 2, title: 'Email Verified', isComplete: true, completedAt: '2026-08-20' },
-      { stageId: 'MOBILE_VERIFIED', stageNumber: 3, title: 'Mobile Verified', isComplete: true, completedAt: '2026-08-21' },
-      { stageId: 'PROFILE_COMPLETED', stageNumber: 4, title: 'Company Profile Completed', isComplete: true, completedAt: '2026-08-22' },
-      { stageId: 'KYC_SUBMITTED', stageNumber: 5, title: 'KYC Submitted', isComplete: true, completedAt: '2026-08-23' },
-      { stageId: 'KYC_APPROVED', stageNumber: 6, title: 'KYC Approved', isComplete: true, completedAt: '2026-08-25' },
-      { stageId: 'RATE_CARD_ASSIGNED', stageNumber: 7, title: 'Rate Card Assigned', isComplete: true, completedAt: '2026-08-28' },
-      { stageId: 'WALLET_ACTIVATED', stageNumber: 8, title: 'Wallet Activated', isComplete: true, completedAt: '2026-08-30' },
-      { stageId: 'ACCOUNT_GO_LIVE', stageNumber: 9, title: 'Account Go-Live', isComplete: true, completedAt: '2026-09-01' },
-    ],
-  },
-  {
-    customerId: 'CUST-1002',
-    companyName: 'Velocity E-Commerce Pvt Ltd',
-    contactPerson: 'Priya Verma',
-    email: 'priya@velocityecom.com',
-    mobile: '+91 98765 22222',
-    gstNumber: '07AAACV4820K1ZX',
-    currentStageNumber: 5,
-    currentStageTitle: 'KYC Submitted',
-    completionPercentage: 55,
-    assignedManager: 'Priya Sharma (KAM)',
-    expectedGoLiveDate: '2026-09-08',
-    status: 'PENDING_KYC',
-    isEmailVerified: true,
-    isMobileVerified: true,
-    isProfileCompleted: true,
-    isKycSubmitted: true,
-    isKycApproved: false,
-    isRateCardAssigned: true,
-    isWalletActivated: false,
-    isGoLive: false,
-    createdAt: '2026-08-25',
-    lastUpdated: '2026-09-03 16:30',
-    stages: [
-      { stageId: 'ACCOUNT_CREATED', stageNumber: 1, title: 'Account Created', isComplete: true, completedAt: '2026-08-25' },
-      { stageId: 'EMAIL_VERIFIED', stageNumber: 2, title: 'Email Verified', isComplete: true, completedAt: '2026-08-25' },
-      { stageId: 'MOBILE_VERIFIED', stageNumber: 3, title: 'Mobile Verified', isComplete: true, completedAt: '2026-08-26' },
-      { stageId: 'PROFILE_COMPLETED', stageNumber: 4, title: 'Company Profile Completed', isComplete: true, completedAt: '2026-08-27' },
-      { stageId: 'KYC_SUBMITTED', stageNumber: 5, title: 'KYC Submitted', isComplete: true, completedAt: '2026-08-29' },
-      { stageId: 'KYC_APPROVED', stageNumber: 6, title: 'KYC Approved', isComplete: false, remarks: 'Under verification by Compliance desk' },
-      { stageId: 'RATE_CARD_ASSIGNED', stageNumber: 7, title: 'Rate Card Assigned', isComplete: true, completedAt: '2026-08-30' },
-      { stageId: 'WALLET_ACTIVATED', stageNumber: 8, title: 'Wallet Activated', isComplete: false },
-      { stageId: 'ACCOUNT_GO_LIVE', stageNumber: 9, title: 'Account Go-Live', isComplete: false },
-    ],
-  },
-  {
-    customerId: 'CUST-1003',
-    companyName: 'Acme Global Traders',
-    contactPerson: 'Amit Patel',
-    email: 'amit@acmetraders.in',
-    mobile: '+91 98765 33333',
-    gstNumber: '24AABCA5512B1Z6',
-    currentStageNumber: 9,
-    currentStageTitle: 'Account Go-Live',
-    completionPercentage: 100,
-    assignedManager: 'Vikram Singh (KAM)',
-    expectedGoLiveDate: '2026-08-15',
-    status: 'LIVE',
-    isEmailVerified: true,
-    isMobileVerified: true,
-    isProfileCompleted: true,
-    isKycSubmitted: true,
-    isKycApproved: true,
-    isRateCardAssigned: true,
-    isWalletActivated: true,
-    isGoLive: true,
-    createdAt: '2026-08-01',
-    lastUpdated: '2026-08-15 11:20',
-    stages: [
-      { stageId: 'ACCOUNT_CREATED', stageNumber: 1, title: 'Account Created', isComplete: true, completedAt: '2026-08-01' },
-      { stageId: 'EMAIL_VERIFIED', stageNumber: 2, title: 'Email Verified', isComplete: true, completedAt: '2026-08-01' },
-      { stageId: 'MOBILE_VERIFIED', stageNumber: 3, title: 'Mobile Verified', isComplete: true, completedAt: '2026-08-02' },
-      { stageId: 'PROFILE_COMPLETED', stageNumber: 4, title: 'Company Profile Completed', isComplete: true, completedAt: '2026-08-03' },
-      { stageId: 'KYC_SUBMITTED', stageNumber: 5, title: 'KYC Submitted', isComplete: true, completedAt: '2026-08-05' },
-      { stageId: 'KYC_APPROVED', stageNumber: 6, title: 'KYC Approved', isComplete: true, completedAt: '2026-08-07' },
-      { stageId: 'RATE_CARD_ASSIGNED', stageNumber: 7, title: 'Rate Card Assigned', isComplete: true, completedAt: '2026-08-10' },
-      { stageId: 'WALLET_ACTIVATED', stageNumber: 8, title: 'Wallet Activated', isComplete: true, completedAt: '2026-08-12' },
-      { stageId: 'ACCOUNT_GO_LIVE', stageNumber: 9, title: 'Account Go-Live', isComplete: true, completedAt: '2026-08-15' },
-    ],
-  },
-  {
-    customerId: 'CUST-1004',
-    companyName: 'NextGen Direct Commerce',
-    contactPerson: 'Siddharth Mehta',
-    email: 'sid@nextgencommerce.com',
-    mobile: '+91 98765 44444',
-    gstNumber: '06AAAAC1234F1Z2',
-    currentStageNumber: 3,
-    currentStageTitle: 'Mobile Verified',
-    completionPercentage: 33,
-    assignedManager: 'Unassigned',
-    expectedGoLiveDate: '2026-09-12',
-    status: 'PENDING_SETUP',
-    isEmailVerified: true,
-    isMobileVerified: true,
-    isProfileCompleted: false,
-    isKycSubmitted: false,
-    isKycApproved: false,
-    isRateCardAssigned: false,
-    isWalletActivated: false,
-    isGoLive: false,
-    createdAt: '2026-09-01',
-    lastUpdated: '2026-09-02 09:15',
-    stages: [
-      { stageId: 'ACCOUNT_CREATED', stageNumber: 1, title: 'Account Created', isComplete: true, completedAt: '2026-09-01' },
-      { stageId: 'EMAIL_VERIFIED', stageNumber: 2, title: 'Email Verified', isComplete: true, completedAt: '2026-09-01' },
-      { stageId: 'MOBILE_VERIFIED', stageNumber: 3, title: 'Mobile Verified', isComplete: true, completedAt: '2026-09-02' },
-      { stageId: 'PROFILE_COMPLETED', stageNumber: 4, title: 'Company Profile Completed', isComplete: false },
-      { stageId: 'KYC_SUBMITTED', stageNumber: 5, title: 'KYC Submitted', isComplete: false },
-      { stageId: 'KYC_APPROVED', stageNumber: 6, title: 'KYC Approved', isComplete: false },
-      { stageId: 'RATE_CARD_ASSIGNED', stageNumber: 7, title: 'Rate Card Assigned', isComplete: false },
-      { stageId: 'WALLET_ACTIVATED', stageNumber: 8, title: 'Wallet Activated', isComplete: false },
-      { stageId: 'ACCOUNT_GO_LIVE', stageNumber: 9, title: 'Account Go-Live', isComplete: false },
-    ],
-  },
-];
+export const INITIAL_ONBOARDING_RECORDS: CustomerOnboardingRecord[] = [];
 
 const STORAGE_KEY = 'courrier3_onboarding_records';
 
 export const OnboardingService = {
   getRecords: (): CustomerOnboardingRecord[] => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    let records: CustomerOnboardingRecord[] = saved ? JSON.parse(saved) : INITIAL_ONBOARDING_RECORDS;
-    
-    // Auto-sync cached localStorage records with active wallet balance
+    let records: CustomerOnboardingRecord[] = [];
     try {
-      const wallet = WalletService.getWallet();
-      if (wallet.availableBalanceMinor > 0) {
-        records = records.map((r) => {
-          if (r.customerId === 'CUST-1001' && (!r.isWalletActivated || !r.isGoLive)) {
-            const now = new Date().toISOString().split('T')[0];
-            return {
-              ...r,
-              isWalletActivated: true,
-              isGoLive: true,
-              completionPercentage: 100,
-              status: 'LIVE',
-              currentStageNumber: 9,
-              currentStageTitle: 'Account Go-Live',
-              stages: r.stages.map((st) => ({ ...st, isComplete: true, completedAt: st.completedAt || now })),
-            };
-          }
-          return r;
-        });
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) records = parsed;
       }
-    } catch (_e) {}
+    } catch {}
+
+    // Synchronize dynamic registered merchants into the onboarding records
+    try {
+      const merchants = AdminManagementService.getRegisteredMerchantsFromStorage();
+      for (const m of merchants) {
+        const existingIdx = records.findIndex((r) => r.customerId === m.id || r.companyName === m.businessName);
+        const wal = WalletService.getWallet(m.id);
+        const hasBalance = (wal.availableBalanceMinor || 0) > 0;
+        const now = m.createdAt ? m.createdAt.split('T')[0] : new Date().toISOString().split('T')[0];
+
+        if (existingIdx === -1) {
+          const newRec: CustomerOnboardingRecord = {
+            customerId: m.id,
+            companyName: m.businessName,
+            contactPerson: m.ownerName || 'Merchant Admin',
+            email: m.ownerEmail,
+            mobile: m.ownerPhone || '',
+            gstNumber: '',
+            currentStageNumber: hasBalance ? 9 : 5,
+            currentStageTitle: hasBalance ? 'Account Go-Live' : 'KYC Submitted',
+            completionPercentage: hasBalance ? 100 : 60,
+            assignedManager: 'Maxline Onboarding Desk',
+            expectedGoLiveDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+            status: hasBalance ? 'LIVE' : 'PENDING_KYC',
+            isEmailVerified: true,
+            isMobileVerified: true,
+            isProfileCompleted: true,
+            isKycSubmitted: true,
+            isKycApproved: hasBalance,
+            isRateCardAssigned: true,
+            isWalletActivated: hasBalance,
+            isGoLive: hasBalance,
+            createdAt: now,
+            lastUpdated: now,
+            stages: [
+              { stageId: 'ACCOUNT_CREATED', stageNumber: 1, title: 'Account Created', isComplete: true, completedAt: now },
+              { stageId: 'EMAIL_VERIFIED', stageNumber: 2, title: 'Email Verified', isComplete: true, completedAt: now },
+              { stageId: 'MOBILE_VERIFIED', stageNumber: 3, title: 'Mobile Verified', isComplete: true, completedAt: now },
+              { stageId: 'PROFILE_COMPLETED', stageNumber: 4, title: 'Company Profile Completed', isComplete: true, completedAt: now },
+              { stageId: 'KYC_SUBMITTED', stageNumber: 5, title: 'KYC Submitted', isComplete: true, completedAt: now },
+              { stageId: 'KYC_APPROVED', stageNumber: 6, title: 'KYC Approved', isComplete: hasBalance, remarks: hasBalance ? 'Verified with wallet active' : 'Under review' },
+              { stageId: 'RATE_CARD_ASSIGNED', stageNumber: 7, title: 'Rate Card Assigned', isComplete: true, completedAt: now },
+              { stageId: 'WALLET_ACTIVATED', stageNumber: 8, title: 'Wallet Activated', isComplete: hasBalance },
+              { stageId: 'ACCOUNT_GO_LIVE', stageNumber: 9, title: 'Account Go-Live', isComplete: hasBalance },
+            ],
+          };
+          records.unshift(newRec);
+        } else if (hasBalance && !records[existingIdx].isGoLive) {
+          records[existingIdx].isWalletActivated = true;
+          records[existingIdx].isKycApproved = true;
+          records[existingIdx].isGoLive = true;
+          records[existingIdx].status = 'LIVE';
+          records[existingIdx].currentStageNumber = 9;
+          records[existingIdx].currentStageTitle = 'Account Go-Live';
+          records[existingIdx].completionPercentage = 100;
+        }
+      }
+    } catch {}
 
     return records;
   },
@@ -310,11 +211,58 @@ export const OnboardingService = {
 
   getCustomerOnboarding: (customerId: string): CustomerOnboardingRecord => {
     const records = OnboardingService.getRecords();
-    let rec = records.find((r) => r.customerId === customerId) || records[0];
+    let rec = records.find((r) => r.customerId === customerId);
+    if (!rec && records.length > 0) {
+      rec = records[0];
+    }
+    if (!rec) {
+      const uRaw = typeof window !== 'undefined' ? localStorage.getItem('courrier3_current_user') : null;
+      let name = 'Merchant';
+      if (uRaw) {
+        try {
+          name = JSON.parse(uRaw).businessName || name;
+        } catch {}
+      }
+      rec = {
+        customerId: customerId || 'merchant',
+        companyName: name,
+        contactPerson: 'Merchant Admin',
+        email: '',
+        mobile: '',
+        gstNumber: '',
+        currentStageNumber: 5,
+        currentStageTitle: 'KYC Submitted',
+        completionPercentage: 60,
+        assignedManager: 'Maxline Onboarding Desk',
+        expectedGoLiveDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+        status: 'PENDING_KYC',
+        isEmailVerified: true,
+        isMobileVerified: true,
+        isProfileCompleted: true,
+        isKycSubmitted: true,
+        isKycApproved: false,
+        isRateCardAssigned: true,
+        isWalletActivated: false,
+        isGoLive: false,
+        createdAt: new Date().toISOString().split('T')[0],
+        lastUpdated: new Date().toISOString().split('T')[0],
+        stages: [
+          { stageId: 'ACCOUNT_CREATED', stageNumber: 1, title: 'Account Created', isComplete: true },
+          { stageId: 'EMAIL_VERIFIED', stageNumber: 2, title: 'Email Verified', isComplete: true },
+          { stageId: 'MOBILE_VERIFIED', stageNumber: 3, title: 'Mobile Verified', isComplete: true },
+          { stageId: 'PROFILE_COMPLETED', stageNumber: 4, title: 'Company Profile Completed', isComplete: true },
+          { stageId: 'KYC_SUBMITTED', stageNumber: 5, title: 'KYC Submitted', isComplete: true },
+          { stageId: 'KYC_APPROVED', stageNumber: 6, title: 'KYC Approved', isComplete: false },
+          { stageId: 'RATE_CARD_ASSIGNED', stageNumber: 7, title: 'Rate Card Assigned', isComplete: true },
+          { stageId: 'WALLET_ACTIVATED', stageNumber: 8, title: 'Wallet Activated', isComplete: false },
+          { stageId: 'ACCOUNT_GO_LIVE', stageNumber: 9, title: 'Account Go-Live', isComplete: false },
+        ],
+      };
+    }
 
     // Dynamic Wallet Activation Check: If wallet balance exists, auto-mark Stage 8 & 9 as complete
     try {
-      const wallet = WalletService.getWallet();
+      const wallet = WalletService.getWallet(customerId);
       if (wallet.availableBalanceMinor > 0 && (!rec.isWalletActivated || !rec.isGoLive)) {
         rec = OnboardingService.forceGoLive(rec.customerId);
       }

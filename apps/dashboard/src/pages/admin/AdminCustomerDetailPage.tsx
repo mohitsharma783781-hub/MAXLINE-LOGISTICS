@@ -104,12 +104,23 @@ export const AdminCustomerDetailPage: React.FC = () => {
     }
   };
 
-  const registeredMerchants = AdminManagementService.getRegisteredMerchantsFromStorage();
-  const foundMerchant = registeredMerchants.find((m) => m.id === id);
-  const merchantName = foundMerchant?.businessName || 'Partner Merchant';
-  const merchantOwner = foundMerchant?.ownerName || 'Merchant Admin';
-  const merchantEmail = foundMerchant?.ownerEmail || '';
-  const merchantPhone = foundMerchant?.ownerPhone || '';
+  const [merchantItem, setMerchantItem] = useState<any>(() => {
+    return AdminManagementService.getRegisteredMerchantsFromStorage().find((m) => m.id === id) || null;
+  });
+
+  useEffect(() => {
+    if (id) {
+      AdminManagementService.getMerchants().then((list) => {
+        const found = list.find((m) => m.id === id);
+        if (found) setMerchantItem(found);
+      });
+    }
+  }, [id]);
+
+  const merchantName = merchantItem?.businessName || 'Partner Merchant';
+  const merchantOwner = merchantItem?.ownerName || 'Merchant Admin';
+  const merchantEmail = merchantItem?.ownerEmail || '';
+  const merchantPhone = merchantItem?.ownerPhone || '';
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 

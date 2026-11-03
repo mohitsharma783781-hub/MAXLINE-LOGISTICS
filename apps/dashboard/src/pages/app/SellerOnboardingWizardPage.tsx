@@ -13,6 +13,10 @@ import {
 import { PageHeader } from '../../components/common/PageHeader';
 import { Button, Card, Badge, Alert, Input, Select } from '../../components/ui';
 import { useTenant } from '../../context/TenantContext';
+import { AdminManagementService } from '../../services/adminManagementService';
+import { CustomerWarehouseService } from '../../services/customerWarehouseService';
+import { OnboardingService } from '../../services/onboardingService';
+import { supabase } from '../../lib/supabaseClient';
 
 export const SellerOnboardingWizardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -58,11 +62,80 @@ export const SellerOnboardingWizardPage: React.FC = () => {
     }
   };
 
-  const handleFinalSubmit = () => {
-    setSuccessMessage('Onboarding application submitted successfully! Account status set to Under Review.');
+  const handleFinalSubmit = async () => {
+    const activeTenantId = localStorage.getItem('courrier3_active_tenant_id') || '';
+    
+    // 1. Update merchant name in registry & currentUser
+    const registry = AdminManagementService.getRegisteredMerchantsFromStorage();
+    const targetM = registry.find((m) => m.id === activeTenantId);
+    if (targetM) {
+      targetM.businessName = companyName || targetM.businessName;
+      targetM.businessType = businessType || targetM.businessType;
+      AdminManagementService.saveRegisteredMerchantsToStorage(registry);
+    }
+
+    const uRaw = localStorage.getItem('courrier3_current_user');
+    if (uRaw) {
+      try {
+        const u = JSON.parse(uRaw);
+        u.businessName = companyName || u.businessName;
+        localStorage.setItem('courrier3_current_user', JSON.stringify(u));
+      } catch {}
+    }
+
+    // 2. Automatically create default pickup warehouse from the onboarding address
+    // so the seller can immediately start creating and booking shipments!
+    const whId = `wh-${Date.now()}`;
+    const newWh = {
+      id: whId,
+      tenantId: activeTenantId,
+      warehouseName: `${companyName || 'Primary'} Dispatch Hub`,
+      addressLine1: billingAddress || 'Main Street Hub',
+      addressLine2: '',
+      city: city || 'New Delhi',
+      state: state || 'Delhi',
+      pincode: pincode || '110001',
+      contactPerson: accountHolder || 'Dispatch Incharge',
+      contactPhone: '+91 99999 99999',
+      isDefault: true,
+      status: 'ACTIVE' as const,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    CustomerWarehouseService.addWarehouse(newWh);
+
+    // 3. Mark Onboarding Stage as complete in OnboardingService
+    if (activeTenantId) {
+      OnboardingService.markStageComplete(activeTenantId, 4);
+      OnboardingService.markStageComplete(activeTenantId, 5);
+    }
+
+    // 4. Sync updates to Supabase Cloud DB
+    if (activeTenantId) {
+      supabase.from('merchants').update({
+        business_name: companyName,
+        updated_at: new Date().toISOString(),
+      }).eq('id', activeTenantId).then(() => {});
+
+      supabase.from('warehouses').insert({
+        merchant_id: activeTenantId,
+        warehouse_code: `WH-${Math.floor(1000 + Math.random() * 9000)}`,
+        name: `${companyName || 'Primary'} Dispatch Hub`,
+        contact_person: accountHolder || 'Dispatch Incharge',
+        phone: '9999999999',
+        address_line1: billingAddress || 'Main Street Hub',
+        city: city || 'New Delhi',
+        state: state || 'Delhi',
+        pincode: pincode || '110001',
+        is_default: true,
+        is_active: true,
+      }).then(() => {});
+    }
+
+    setSuccessMessage('🎉 Onboarding completed successfully! Your business profile and default warehouse are ready.');
     setTimeout(() => {
-      navigate('/app');
-    }, 2000);
+      window.location.href = '/app';
+    }, 1200);
   };
 
   const breadcrumbs = [

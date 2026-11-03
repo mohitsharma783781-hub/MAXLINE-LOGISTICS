@@ -167,6 +167,7 @@ export const AppLayout: React.FC = () => {
   // Check if authenticated customer user has no active merchant organization linked
   const isMerchantSetupRequired =
     currentUser?.role !== 'super_admin' &&
+    !currentUser?.businessName &&
     (!activeTenantId || !activeTenant || activeTenant.status === 'SUSPENDED');
 
   const isOnboardingRoute = location.pathname.startsWith('/app/onboarding');

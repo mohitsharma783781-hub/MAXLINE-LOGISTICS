@@ -286,7 +286,53 @@ export class AuthService implements IAuthService {
       cachedUser = authUser;
       cachedUserTimestamp = Date.now();
 
-      // Asynchronously attempt Supabase registration in background
+      // Synchronize directly with Supabase Cloud Database so Admin and any browser sees this merchant in real-time
+      const newUserId = generateUUID();
+      try {
+        await Promise.allSettled([
+          supabase.from('merchants').upsert({
+            id: newTenantId,
+            business_name: payload.businessName,
+            status: 'ACTIVE',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }),
+          supabase.from('users').upsert({
+            id: newUserId,
+            email: emailNorm,
+            full_name: payload.fullName,
+            phone: payload.phoneNumber,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }),
+          supabase.from('merchant_members').upsert({
+            merchant_id: newTenantId,
+            user_id: newUserId,
+            role: 'OWNER',
+            is_default: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }),
+          supabase.from('wallets').upsert({
+            merchant_id: newTenantId,
+            currency: 'INR',
+            available_balance_minor: 0,
+            reserved_balance_minor: 0,
+            total_spent_minor: 0,
+            total_refunded_minor: 0,
+            low_balance_threshold_minor: 50000,
+            status: 'ACTIVE',
+            version: 1,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }),
+        ]);
+      } catch (cloudErr) {
+        console.warn('[auth.service] Supabase cloud upsert notice:', cloudErr);
+      }
+
+      // Asynchronously attempt Supabase auth registration in background
       supabase.auth.signUp({
         email: emailNorm,
         password: payload.password,
