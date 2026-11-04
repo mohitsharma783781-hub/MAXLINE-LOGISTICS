@@ -721,12 +721,12 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'date',
                   header: 'Date & Time',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const tx = row as unknown as WalletTransaction;
+                  render: (row: unknown) => {
+                    const tx = (row || {}) as WalletTransaction;
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
-                          {tx.createdAt}
+                          {tx?.createdAt || '—'}
                         </span>
                       </div>
                     );
@@ -735,8 +735,9 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'id',
                   header: 'Transaction ID',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const tx = row as unknown as WalletTransaction;
+                  render: (row: unknown) => {
+                    const tx = (row || {}) as WalletTransaction;
+                    const txId = tx?.id || '';
                     return (
                       <span
                         style={{
@@ -749,7 +750,7 @@ export const WalletPage: React.FC = () => {
                           border: '1px solid #e2e8f0',
                         }}
                       >
-                        {tx.id.length > 20 ? `${tx.id.slice(0, 10)}...${tx.id.slice(-6)}` : tx.id}
+                        {txId.length > 20 ? `${txId.slice(0, 10)}...${txId.slice(-6)}` : txId || '—'}
                       </span>
                     );
                   },
@@ -757,13 +758,13 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'reference',
                   header: 'Reference / AWB',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const tx = row as unknown as WalletTransaction;
-                    const ref = tx.referenceId || 'N/A';
+                  render: (row: unknown) => {
+                    const tx = (row || {}) as WalletTransaction;
+                    const ref = tx?.referenceId || 'N/A';
                     return (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Badge variant="outline" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
-                          {tx.referenceType || tx.type}
+                          {tx?.referenceType || tx?.type || 'TX'}
                         </Badge>
                         <span style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>{ref}</span>
                       </div>
@@ -773,11 +774,11 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'description',
                   header: 'Description',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const tx = row as unknown as WalletTransaction;
+                  render: (row: unknown) => {
+                    const tx = (row || {}) as WalletTransaction;
                     return (
                       <span style={{ fontSize: '13px', color: '#334155', maxWidth: '280px', display: 'inline-block' }}>
-                        {tx.description}
+                        {tx?.description || '—'}
                       </span>
                     );
                   },
@@ -785,12 +786,12 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'credit',
                   header: 'Credit (+)',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const tx = row as unknown as WalletTransaction;
-                    if (tx.direction === 'CREDIT') {
+                  render: (row: unknown) => {
+                    const tx = (row || {}) as WalletTransaction;
+                    if (tx?.direction === 'CREDIT') {
                       return (
                         <span style={{ fontSize: '13px', fontWeight: 700, color: '#16a34a' }}>
-                          +{formatCurrency(tx.amountMinor / 100)}
+                          +{formatCurrency((tx?.amountMinor || 0) / 100)}
                         </span>
                       );
                     }
@@ -800,12 +801,12 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'debit',
                   header: 'Debit (-)',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const tx = row as unknown as WalletTransaction;
-                    if (tx.direction === 'DEBIT') {
+                  render: (row: unknown) => {
+                    const tx = (row || {}) as WalletTransaction;
+                    if (tx?.direction === 'DEBIT') {
                       return (
                         <span style={{ fontSize: '13px', fontWeight: 700, color: '#dc2626' }}>
-                          -{formatCurrency(tx.amountMinor / 100)}
+                          -{formatCurrency((tx?.amountMinor || 0) / 100)}
                         </span>
                       );
                     }
@@ -815,11 +816,11 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'balanceAfter',
                   header: 'Balance After',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const tx = row as unknown as WalletTransaction;
+                  render: (row: unknown) => {
+                    const tx = (row || {}) as WalletTransaction;
                     return (
                       <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
-                        {formatCurrency(tx.balanceAfterMinor / 100)}
+                        {formatCurrency((tx?.balanceAfterMinor || 0) / 100)}
                       </span>
                     );
                   },
@@ -827,11 +828,11 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'status',
                   header: 'Status',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const tx = row as unknown as WalletTransaction;
+                  render: (row: unknown) => {
+                    const tx = (row || {}) as WalletTransaction;
                     return (
                       <Badge variant="success" style={{ fontSize: '11px', padding: '3px 8px' }}>
-                        {tx.status || 'POSTED'}
+                        {tx?.status || 'POSTED'}
                       </Badge>
                     );
                   },
@@ -839,13 +840,13 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'action',
                   header: '',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const tx = row as unknown as WalletTransaction;
+                  render: (row: unknown) => {
+                    const tx = (row || {}) as WalletTransaction;
                     return (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedTx(tx)}
+                        onClick={() => tx && setSelectedTx(tx)}
                         style={{ fontSize: '12px', padding: '4px 8px', color: '#2563eb' }}
                       >
                         View Details
@@ -963,15 +964,15 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'awb',
                   header: 'AWB / Order ID',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const s = row as unknown as CustomerShipmentDetail;
+                  render: (row: unknown) => {
+                    const s = (row || {}) as CustomerShipmentDetail;
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                          {s.awbNumber || 'AWB PENDING'}
+                          {s?.awbNumber || 'AWB PENDING'}
                         </span>
                         <span style={{ fontSize: '12px', color: '#64748b' }}>
-                          Order: {s.orderId}
+                          Order: {s?.orderId || '—'}
                         </span>
                       </div>
                     );
@@ -980,21 +981,21 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'bookingDate',
                   header: 'Booking Date',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const s = row as unknown as CustomerShipmentDetail;
-                    return <span style={{ fontSize: '13px', color: '#334155' }}>{s.bookingDate}</span>;
+                  render: (row: unknown) => {
+                    const s = (row || {}) as CustomerShipmentDetail;
+                    return <span style={{ fontSize: '13px', color: '#334155' }}>{s?.bookingDate || '—'}</span>;
                   },
                 },
                 {
                   key: 'courier',
                   header: 'Courier',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const s = row as unknown as CustomerShipmentDetail;
+                  render: (row: unknown) => {
+                    const s = (row || {}) as CustomerShipmentDetail;
                     return (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Truck size={14} color="#64748b" />
                         <span style={{ fontSize: '13px', fontWeight: 500, color: '#1e293b' }}>
-                          {s.courierName || 'Delhivery Surface'}
+                          {s?.courierName || 'Delhivery Surface'}
                         </span>
                       </div>
                     );
@@ -1003,11 +1004,11 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'type',
                   header: 'Shipment Type',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const s = row as unknown as CustomerShipmentDetail;
+                  render: (row: unknown) => {
+                    const s = (row || {}) as CustomerShipmentDetail;
                     return (
-                      <Badge variant={s.mode === 'B2B' ? 'warning' : 'primary'} style={{ fontSize: '11px', padding: '2px 8px' }}>
-                        {s.mode || 'B2C'}
+                      <Badge variant={s?.mode === 'B2B' ? 'warning' : 'primary'} style={{ fontSize: '11px', padding: '2px 8px' }}>
+                        {s?.mode || 'B2C'}
                       </Badge>
                     );
                   },
@@ -1015,11 +1016,11 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'weight',
                   header: 'Weight',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const s = row as unknown as CustomerShipmentDetail;
+                  render: (row: unknown) => {
+                    const s = (row || {}) as CustomerShipmentDetail;
                     return (
                       <span style={{ fontSize: '13px', color: '#334155' }}>
-                        {(s.chargeableWeightKg || s.actualWeightKg || 0.5).toFixed(2)} kg
+                        {((s?.chargeableWeightKg || s?.actualWeightKg || 0.5)).toFixed(2)} kg
                       </span>
                     );
                   },
@@ -1027,11 +1028,11 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'baseFreight',
                   header: 'Base Freight',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const s = row as unknown as CustomerShipmentDetail;
+                  render: (row: unknown) => {
+                    const s = (row || {}) as CustomerShipmentDetail;
                     return (
                       <span style={{ fontSize: '13px', color: '#334155' }}>
-                        {formatCurrency(s.baseFreightINR || 0)}
+                        {formatCurrency(s?.baseFreightINR || 0)}
                       </span>
                     );
                   },
@@ -1039,9 +1040,9 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'additional',
                   header: 'Additional Charges',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const s = row as unknown as CustomerShipmentDetail;
-                    const add = Math.max(0, (s.totalCustomerChargeINR || 0) - (s.baseFreightINR || 0));
+                  render: (row: unknown) => {
+                    const s = (row || {}) as CustomerShipmentDetail;
+                    const add = Math.max(0, (s?.totalCustomerChargeINR || 0) - (s?.baseFreightINR || 0));
                     return (
                       <span style={{ fontSize: '13px', color: '#64748b' }}>
                         {formatCurrency(add)}
@@ -1059,11 +1060,11 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'totalCharge',
                   header: 'Total Shipping Charge',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const s = row as unknown as CustomerShipmentDetail;
+                  render: (row: unknown) => {
+                    const s = (row || {}) as CustomerShipmentDetail;
                     return (
                       <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                        {formatCurrency(s.totalCustomerChargeINR || 0)}
+                        {formatCurrency(s?.totalCustomerChargeINR || 0)}
                       </span>
                     );
                   },
@@ -1071,9 +1072,9 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'paymentStatus',
                   header: 'Payment Status',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const s = row as unknown as CustomerShipmentDetail;
-                    const isCharged = (s.totalCustomerChargeINR || 0) > 0;
+                  render: (row: unknown) => {
+                    const s = (row || {}) as CustomerShipmentDetail;
+                    const isCharged = (s?.totalCustomerChargeINR || 0) > 0;
                     return (
                       <Badge
                         variant={isCharged ? 'success' : 'outline'}
@@ -1093,13 +1094,13 @@ export const WalletPage: React.FC = () => {
                 {
                   key: 'action',
                   header: '',
-                  render: (_val: unknown, row: Record<string, unknown>) => {
-                    const s = row as unknown as CustomerShipmentDetail;
+                  render: (row: unknown) => {
+                    const s = (row || {}) as CustomerShipmentDetail;
                     return (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedShipment(s)}
+                        onClick={() => s && setSelectedShipment(s)}
                         style={{ fontSize: '12px', padding: '4px 8px', color: '#2563eb' }}
                       >
                         View Breakdown

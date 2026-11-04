@@ -307,7 +307,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                     </p>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>{item.createdAt}</span>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>{item?.createdAt || ''}</span>
                       <Button
                         variant="primary"
                         size="sm"

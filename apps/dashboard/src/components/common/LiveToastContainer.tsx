@@ -138,7 +138,7 @@ export const LiveToastContainer: React.FC = () => {
 
             {/* Action Footer */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px dashed #f1f5f9' }}>
-              <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{toastItem.createdAt}</span>
+              <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{toastItem?.createdAt || ''}</span>
               <button
                 onClick={() => handleActionClick(toastItem)}
                 style={{

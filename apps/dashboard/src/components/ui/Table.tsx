@@ -5,7 +5,7 @@ export interface Column<T> {
   key: string;
   header: React.ReactNode;
   align?: 'left' | 'center' | 'right';
-  render?: (row: T) => React.ReactNode;
+  render?: (rowOrVal: T | any, rowRecord?: T) => React.ReactNode;
 }
 
 export interface TableProps<T> {
@@ -126,7 +126,16 @@ export function Table<T extends Record<string, unknown>>({
                       verticalAlign: 'middle',
                     }}
                   >
-                    {col.render ? col.render(row) : String(row[col.key] ?? '')}
+                    {col.render
+                      ? (() => {
+                          try {
+                            return (col.render as any)(row, row);
+                          } catch (err) {
+                            console.error('[Table] Column render error for key:', col.key, err);
+                            return <span style={{ color: '#94a3b8' }}>—</span>;
+                          }
+                        })()
+                      : String(row?.[col.key] ?? '')}
                   </td>
                 ))}
               </tr>
