@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  const awb = req.query.awb || (req.body && req.body.awb);
+  const awb = req.query.awb || req.query.waybill || (req.body && (req.body.awb || req.body.waybill));
   if (!awb) {
     return res.status(400).json({
       success: false,

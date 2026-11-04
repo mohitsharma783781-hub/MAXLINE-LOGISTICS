@@ -60,6 +60,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/delhivery/:action*", "destination": "/api/delhivery?action=:action" },
     { "source": "/login", "destination": "/app.html" },
     { "source": "/signup", "destination": "/app.html" },
     { "source": "/register", "destination": "/app.html" },
