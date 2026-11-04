@@ -163,6 +163,18 @@ export const CustomerBookingService = {
       }
     }
 
+    // 1c. Duplicate Booking Prevention: Check if order already has an active confirmed shipment
+    const existingShipment = CustomerShipmentService.getShipmentById(input.orderId, tenantId) ||
+      CustomerShipmentService.getShipmentById(`SHP-${input.orderId}`, tenantId);
+
+    if (existingShipment && existingShipment.bookingStatus !== 'PENDING_API') {
+      return {
+        success: false,
+        reason: 'DUPLICATE_ORDER',
+        message: `Shipment already confirmed for Order ${input.orderId} (AWB: ${existingShipment.awbNumber || 'Assigned'}). Duplicate booking prevented.`,
+      };
+    }
+
     // 2. Wallet Sufficiency Check
     const suff = CustomerBookingService.checkWalletSufficiency(tenantId, totalChargeINR);
 
@@ -188,48 +200,55 @@ export const CustomerBookingService = {
     }
 
     // 3. Courier Booking Adapter Execution (AWB & Reference Generation)
-    const firstPkg = input.packages?.[0];
-    const bookingRes = await CourierBookingAdapter.bookShipment({
-      orderId: input.orderId,
-      courierId: input.courierId,
-      serviceId: input.courierId,
-      courierName: input.courierName,
-      serviceName: input.serviceName,
-      originPincode: input.pickupPincode,
-      destinationPincode: input.deliveryPincode,
-      paymentMode: input.paymentMode === 'cod' ? 'COD' : 'PREPAID',
-      actualWeight: input.actualWeightKg,
-      chargeableWeight: input.chargeableWeightKg,
-      sellingPriceINR: input.invoiceValueINR || totalChargeINR,
-      estimatedDays: '2–4 Days',
-      pickupLocation: input.pickupWarehouseName || 'MAXLINE_PRIMARY',
-      pickupContactName: input.pickupContactName,
-      pickupPhone: input.pickupPhone,
-      pickupAddress: input.pickupAddressLine1,
-      pickupCity: input.pickupCity,
-      deliveryContactName: input.deliveryContactName,
-      deliveryPhone: input.deliveryPhone,
-      deliveryAddress: [input.deliveryAddressLine1, input.deliveryAddressLine2].filter(Boolean).join(', '),
-      deliveryCity: input.deliveryCity,
-      deliveryState: input.deliveryState,
-      length: firstPkg?.lengthCm || 10,
-      width: firstPkg?.widthCm || 10,
-      height: firstPkg?.heightCm || 10,
-    });
+    // If recovering an existing pending-payment shipment, reuse the existing carrier AWB rather than generating duplicates
+    let awb = existingShipment?.awbNumber;
+    let bookingRef = existingShipment?.shipmentId;
 
-    if (!bookingRes.success) {
-      return {
-        success: false,
-        reason: 'BOOKING_FAILED',
-        message: bookingRes.message || 'Courier booking failed. Wallet balance was not debited.',
-      };
+    if (!awb || awb.startsWith('AWB-')) {
+      const firstPkg = input.packages?.[0];
+      const bookingRes = await CourierBookingAdapter.bookShipment({
+        orderId: input.orderId,
+        courierId: input.courierId,
+        serviceId: input.courierId,
+        courierName: input.courierName,
+        serviceName: input.serviceName,
+        originPincode: input.pickupPincode,
+        destinationPincode: input.deliveryPincode,
+        paymentMode: input.paymentMode === 'cod' ? 'COD' : 'PREPAID',
+        actualWeight: input.actualWeightKg,
+        chargeableWeight: input.chargeableWeightKg,
+        sellingPriceINR: input.invoiceValueINR || totalChargeINR,
+        estimatedDays: '2–4 Days',
+        pickupLocation: input.pickupWarehouseName || 'MAXLINE_PRIMARY',
+        pickupContactName: input.pickupContactName,
+        pickupPhone: input.pickupPhone,
+        pickupAddress: input.pickupAddressLine1,
+        pickupCity: input.pickupCity,
+        deliveryContactName: input.deliveryContactName,
+        deliveryPhone: input.deliveryPhone,
+        deliveryAddress: [input.deliveryAddressLine1, input.deliveryAddressLine2].filter(Boolean).join(', '),
+        deliveryCity: input.deliveryCity,
+        deliveryState: input.deliveryState,
+        length: firstPkg?.lengthCm || 10,
+        width: firstPkg?.widthCm || 10,
+        height: firstPkg?.heightCm || 10,
+      });
+
+      if (!bookingRes.success) {
+        return {
+          success: false,
+          reason: 'BOOKING_FAILED',
+          message: bookingRes.message || 'Courier booking failed. Wallet balance was not debited.',
+        };
+      }
+      awb = bookingRes.awbNumber || `AWB-${Math.floor(10000000 + Math.random() * 90000000)}`;
+      bookingRef = bookingRes.bookingReference;
     }
 
     const shipmentId = `SHP-${input.orderId}`;
-    const awb = bookingRes.awbNumber || `AWB-${Math.floor(10000000 + Math.random() * 90000000)}`;
 
-    // 4. Wallet Debit & Ledger Transaction Logging
-    const debitRes = WalletService.debit(
+    // 4. Wallet Debit & Ledger Transaction Logging (Authoritative Atomic Gateway Call)
+    const debitRes = await WalletService.debitAsync(
       shipmentId,
       input.orderId,
       input.courierId,
@@ -244,11 +263,63 @@ export const CustomerBookingService = {
       tenantId
     );
 
+    // 4b. Recoverable Failure Handling: If carrier booking succeeded but wallet debit failed,
+    // persist a recoverable pending-payment shipment so the carrier charge is never lost and no duplicate AWB is generated.
     if (!debitRes.success) {
+      const nowStr = new Date().toLocaleString();
+      await CustomerShipmentService.addShipmentRecordAsync({
+        id: existingShipment?.id || `shp-${Date.now()}`,
+        shipmentId,
+        tenantId,
+        orderId: input.orderId,
+        awbNumber: awb,
+        bookingDate: nowStr,
+        courierId: input.courierId,
+        courierName: input.courierName,
+        serviceName: input.serviceName,
+        mode: input.shipmentType === 'b2b' ? 'B2B' : 'B2C',
+        pickupWarehouseId: input.pickupWarehouseId,
+        pickupContact: input.pickupContactName,
+        pickupPhone: input.pickupPhone,
+        pickupAddress: input.pickupAddressLine1,
+        pickupCity: input.pickupCity,
+        pickupPincode: input.pickupPincode,
+        deliveryContact: input.deliveryContactName,
+        deliveryPhone: input.deliveryPhone,
+        deliveryAddress: `${input.deliveryAddressLine1}${input.deliveryAddressLine2 ? `, ${input.deliveryAddressLine2}` : ''}`,
+        deliveryCity: input.deliveryCity,
+        deliveryPincode: input.deliveryPincode,
+        actualWeightKg: input.actualWeightKg,
+        chargeableWeightKg: input.chargeableWeightKg,
+        dimensionsCm: input.packages[0] ? `${input.packages[0].lengthCm} × ${input.packages[0].widthCm} × ${input.packages[0].heightCm} CM` : '20 × 15 × 10 CM',
+        invoiceValueINR: input.invoiceValueINR,
+        invoiceNumber: input.invoiceNumber,
+        invoiceDate: input.invoiceDate,
+        insuranceEnabled: input.insuranceEnabled,
+        insuredValueINR: input.insuredValueINR,
+        packageType: input.packageType,
+        packages: input.packages,
+        paymentMode: input.paymentMode === 'cod' ? 'COD' : 'PREPAID',
+        codAmountINR: input.codAmount || 0,
+        baseFreightINR: input.baseFreightINR,
+        fuelSurchargeINR: input.fuelSurchargeINR,
+        codFeeINR: input.codFeeINR,
+        totalCustomerChargeINR: totalChargeINR,
+        bookingStatus: 'PENDING_API',
+        customerFacingStatus: 'Payment Pending',
+        trackingStatus: 'PAYMENT_PENDING',
+        trackingTimeline: [
+          { statusKey: 'PAYMENT_PENDING', statusTitle: 'Payment Pending', location: `${input.pickupCity} Hub`, timestamp: nowStr, description: `Carrier waybill ${awb} booked, but wallet debit failed (${debitRes.message}). Awaiting wallet recharge.`, completed: false },
+        ],
+        statusHistory: [
+          { id: `hist-${Date.now()}`, shipmentId, oldStatus: 'DRAFT', newStatus: 'PENDING_API', source: 'SYSTEM', timestamp: nowStr, userOrAdmin: 'Merchant User', reason: 'Debit failed; pending payment recovery record created' },
+        ],
+      });
+
       return {
         success: false,
         reason: 'INSUFFICIENT_WALLET_BALANCE',
-        message: debitRes.message,
+        message: `Carrier waybill ${awb} was booked, but wallet debit failed: ${debitRes.message}. Shipment recorded in Pending Payment state. Please recharge wallet to activate dispatch.`,
         requiredAmountINR: totalChargeINR,
         availableBalanceINR: suff.availableINR,
       };

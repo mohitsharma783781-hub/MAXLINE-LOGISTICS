@@ -4,9 +4,15 @@ export type WalletStatus = 'ACTIVE' | 'LOW_BALANCE' | 'SUSPENDED';
 
 export type TransactionType =
   | 'RECHARGE'
+  | 'FREIGHT_DEBIT'
   | 'SHIPMENT_CHARGE'
   | 'REFUND'
   | 'ADJUSTMENT'
+  | 'WEIGHT_ADJUSTMENT'
+  | 'COD_REMITTANCE_CREDIT'
+  | 'MANUAL_CREDIT'
+  | 'MANUAL_DEBIT'
+  | 'RTO_CHARGE'
   | 'RESERVATION'
   | 'RESERVATION_RELEASE';
 

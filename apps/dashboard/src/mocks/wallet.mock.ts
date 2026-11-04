@@ -151,10 +151,20 @@ export const WalletService = {
       }
     });
 
+    // Authoritative reconciliation: Ensure summary cards reflect the authoritative
+    // wallet balance & spent metrics from PostgreSQL even if ledger sync was delayed
+    if (totalUsedMinor === 0 && wallet.totalSpentMinor > 0) {
+      totalUsedMinor = wallet.totalSpentMinor;
+    }
+    if (totalAddedMinor === 0 && (wallet as any).totalRefundedMinor > 0) {
+      totalAddedMinor = (wallet as any).totalRefundedMinor;
+    }
+
     return {
       availableBalanceINR: wallet.availableBalanceMinor / 100,
       totalAddedINR: totalAddedMinor / 100,
       totalUsedINR: totalUsedMinor / 100,
+      reservedBalanceINR: (wallet.reservedBalanceMinor || 0) / 100,
       lowBalanceThresholdINR: wallet.lowBalanceThresholdMinor / 100,
       isLowBalance: wallet.availableBalanceMinor <= wallet.lowBalanceThresholdMinor,
     };
@@ -168,7 +178,13 @@ export const WalletService = {
     return list.filter((item) => {
       if (filters.status !== 'all' && item.status !== filters.status) return false;
       if (filters.direction !== 'all' && item.direction !== filters.direction) return false;
-      if (filters.type !== 'all' && item.type !== filters.type) return false;
+      if (filters.type !== 'all') {
+        if (filters.type === 'FREIGHT_DEBIT' || filters.type === 'SHIPMENT_CHARGE') {
+          if (item.type !== 'FREIGHT_DEBIT' && item.type !== 'SHIPMENT_CHARGE') return false;
+        } else if (item.type !== filters.type) {
+          return false;
+        }
+      }
       if (filters.searchQuery.trim()) {
         const q = filters.searchQuery.toLowerCase();
         const match =
@@ -278,7 +294,7 @@ export const WalletService = {
       id: txId,
       tenantId: tid,
       walletId: wallet.id,
-      type: 'SHIPMENT_CHARGE',
+      type: 'FREIGHT_DEBIT' as any,
       direction: 'DEBIT',
       amountMinor,
       currency: 'INR',
@@ -327,9 +343,112 @@ export const WalletService = {
       orderId,
       courierName,
       idempotencyKey,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.warn('[WalletService] Async RPC sync notice:', err?.message);
+    });
 
     return { success: true, message: 'Shipment charge posted successfully.', transaction: newTx };
+  },
+
+  debitAsync: async (
+    shipmentId: string,
+    orderId: string,
+    courierId: string,
+    courierName: string,
+    amountINR: number,
+    breakdown?: {
+      baseFreightMinor?: number;
+      fuelSurchargeMinor?: number;
+      codFeeMinor?: number;
+      handlingFeeMinor?: number;
+      otherChargesMinor?: number;
+      discountMinor?: number;
+      taxMinor?: number;
+    },
+    tenantId?: string,
+    idempotencyKeyOverride?: string
+  ): Promise<{ success: boolean; message: string; transaction?: WalletTransaction }> => {
+    const tid = tenantId || getActiveTenantId();
+    const amountMinor = parseINRToMinor(amountINR);
+    const idempotencyKey = idempotencyKeyOverride || `debit_${tid}_${orderId || shipmentId}`;
+
+    // 1. Authoritative Gateway Call First (Ensures atomic DB commit before local state update)
+    const gatewayRes = await SupabaseWalletService.debitWalletRPC({
+      tenantId: tid,
+      amountMinor,
+      shipmentId,
+      orderId,
+      courierName,
+      idempotencyKey,
+    });
+
+    if (!gatewayRes.success) {
+      return {
+        success: false,
+        message: gatewayRes.error || 'Authoritative wallet debit failed. Booking aborted.',
+      };
+    }
+
+    // 2. Gateway Succeeded -> Update Local Storage Mirror with Authoritative Balances
+    const wallet = loadWalletFromStorage(tid);
+    const balanceBefore = gatewayRes.balanceBeforeMinor ?? wallet.availableBalanceMinor;
+    const balanceAfter = gatewayRes.balanceAfterMinor ?? (balanceBefore - amountMinor);
+
+    wallet.availableBalanceMinor = balanceAfter;
+    wallet.totalSpentMinor = (wallet.totalSpentMinor || 0) + amountMinor;
+    wallet.updatedAt = new Date().toLocaleString();
+    saveWalletToStorage(wallet);
+
+    const txs = loadTxsFromStorage(tid);
+    const txId = gatewayRes.transactionId || `tx-${Date.now()}`;
+    const newTx: WalletTransaction = {
+      id: txId,
+      tenantId: tid,
+      walletId: wallet.id,
+      type: 'FREIGHT_DEBIT' as any,
+      direction: 'DEBIT',
+      amountMinor,
+      currency: 'INR',
+      referenceType: 'SHIPMENT',
+      referenceId: shipmentId,
+      description: `Shipment Freight Charge (${courierName} • Order ${orderId})`,
+      balanceBeforeMinor: balanceBefore,
+      balanceAfterMinor: balanceAfter,
+      status: 'POSTED',
+      idempotencyKey,
+      createdAt: new Date().toLocaleString(),
+      actorType: 'SYSTEM',
+    };
+
+    txs.unshift(newTx);
+    saveTxsToStorage(tid, txs);
+
+    const chargeRecord: ShipmentCharge = {
+      id: `chg-${Date.now()}`,
+      tenantId: tid,
+      shipmentId,
+      orderId,
+      courierId,
+      courierName,
+      currency: 'INR',
+      baseFreightMinor: breakdown?.baseFreightMinor || parseINRToMinor(amountINR * 0.7),
+      fuelSurchargeMinor: breakdown?.fuelSurchargeMinor || parseINRToMinor(amountINR * 0.15),
+      codFeeMinor: breakdown?.codFeeMinor || 0,
+      handlingFeeMinor: breakdown?.handlingFeeMinor || 0,
+      otherChargesMinor: breakdown?.otherChargesMinor || 0,
+      discountMinor: breakdown?.discountMinor || 0,
+      taxMinor: breakdown?.taxMinor || parseINRToMinor(amountINR * 0.15),
+      totalMinor: amountMinor,
+      status: 'POSTED',
+      createdAt: new Date().toLocaleString(),
+    };
+    CHARGE_STORE.set(shipmentId, chargeRecord);
+
+    return {
+      success: true,
+      message: 'Shipment charge posted successfully.',
+      transaction: newTx,
+    };
   },
 
   reserve: (amountINR: number, referenceId: string, tenantId?: string): { success: boolean; message: string } => {

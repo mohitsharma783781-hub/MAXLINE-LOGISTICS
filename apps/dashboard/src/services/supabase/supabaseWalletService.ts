@@ -106,7 +106,8 @@ export const SupabaseWalletService = {
   },
 
   /**
-   * Execute atomic wallet debit via secure DB RPC procedure.
+   * Execute atomic wallet debit strictly via authoritative server-side gateway.
+   * Direct REST fallback has been removed to guarantee atomic consistency.
    */
   async debitWalletRPC(params: {
     tenantId: string;
@@ -118,56 +119,52 @@ export const SupabaseWalletService = {
   }): Promise<{ success: boolean; message: string; transactionId?: string; isDuplicate?: boolean }> {
     try {
       const validTid = toValidTenantUUID(params.tenantId);
-      const { data, error } = await supabase.rpc('debit_wallet_rpc', {
-        p_merchant_id: validTid,
-        p_amount_minor: Math.round(params.amountMinor),
-        p_reference_type: 'SHIPMENT',
-        p_reference_id: params.shipmentId || params.orderId,
-        p_idempotency_key: params.idempotencyKey,
-        p_description: `Freight debit for ${params.courierName || 'Courier'} - Order ${params.orderId}`,
+
+      // Retrieve caller session token if available
+      let token = 'default-merchant-session';
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.access_token) {
+          token = sessionData.session.access_token;
+        }
+      } catch {}
+
+      // Authoritative server-side debit gateway
+      const res = await fetch('/api/debit-wallet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          merchantId: validTid,
+          amountMinor: Math.round(params.amountMinor),
+          shipmentId: params.shipmentId || params.orderId,
+          orderId: params.orderId,
+          courierName: params.courierName,
+          idempotencyKey: params.idempotencyKey,
+        }),
       });
 
-      if (error) {
-        // Resilient fallback to direct wallets table debit if RPC procedure is unavailable
-        const { data: wRow } = await supabase.from('wallets').select('*').eq('merchant_id', validTid).maybeSingle();
-        if (wRow) {
-          const newBal = Math.max(0, Number(wRow.available_balance_minor || 0) - Math.round(params.amountMinor));
-          const newSpent = Number(wRow.total_spent_minor || 0) + Math.round(params.amountMinor);
-          await supabase.from('wallets').update({
-            available_balance_minor: newBal,
-            total_spent_minor: newSpent,
-            updated_at: new Date().toISOString(),
-          }).eq('id', wRow.id);
-
-          await supabase.from('wallet_transactions').insert({
-            merchant_id: validTid,
-            wallet_id: wRow.id,
-            type: 'FREIGHT_DEBIT',
-            direction: 'DEBIT',
-            amount_minor: Math.round(params.amountMinor),
-            currency: 'INR',
-            description: `Freight debit for ${params.courierName || 'Courier'} - Order ${params.orderId}`,
-            reference_type: 'SHIPMENT',
-            reference_id: params.shipmentId || params.orderId,
-            idempotency_key: params.idempotencyKey,
-          });
-          return { success: true, message: 'Debit posted' };
-        }
-        return { success: false, message: error.message };
-      }
-
-      if (data && typeof data === 'object') {
+      if (res.ok) {
+        const data = await res.json();
         return {
           success: !!data.success,
-          message: data.message || 'Debit posted',
-          transactionId: data.transaction_id,
-          isDuplicate: !!data.is_duplicate,
+          message: data.message || 'Debit posted successfully',
+          transactionId: data.transactionId,
+          isDuplicate: !!data.isDuplicate,
         };
       }
 
-      return { success: true, message: 'Debit successful' };
+      const errData = await res.json().catch(() => ({ error: `Debit gateway status ${res.status}` }));
+      console.warn('[SupabaseWalletService] Debit gateway rejected transaction:', errData.error);
+      return {
+        success: false,
+        message: errData.error || 'Wallet debit rejected by gateway',
+      };
     } catch (err: any) {
-      return { success: false, message: err.message || 'RPC debit error' };
+      console.error('[SupabaseWalletService] Debit gateway exception:', err.message);
+      return { success: false, message: err.message || 'Network exception in debit gateway' };
     }
   },
 
