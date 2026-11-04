@@ -469,7 +469,7 @@ export const AdminWeightDiscrepancyPage: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
                 {selectedRecord.internalNotes.map((n) => (
                   <div key={n.id} style={{ fontSize: '11px', padding: '6px 10px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
-                    <strong>{n.author}</strong> ({n.createdAt}): <em>"{n.note}"</em>
+                    <strong>{n?.author || 'Admin'}</strong> ({n?.createdAt || '—'}): <em>"{n?.note || ''}"</em>
                   </div>
                 ))}
               </div>

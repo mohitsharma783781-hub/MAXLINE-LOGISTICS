@@ -157,7 +157,7 @@ export const OnboardingService = {
         const existingIdx = records.findIndex((r) => r.customerId === m.id || r.companyName === m.businessName);
         const wal = WalletService.getWallet(m.id);
         const hasBalance = (wal.availableBalanceMinor || 0) > 0;
-        const now = m.createdAt ? m.createdAt.split('T')[0] : new Date().toISOString().split('T')[0];
+        const now = m?.createdAt ? m.createdAt.split('T')[0] : new Date().toISOString().split('T')[0];
 
         if (existingIdx === -1) {
           const newRec: CustomerOnboardingRecord = {
@@ -221,7 +221,7 @@ export const OnboardingService = {
       );
       const wal = WalletService.getWallet(m.id);
       const hasBalance = (wal.availableBalanceMinor || 0) > 0 || (m.walletBalanceINR || 0) > 0;
-      const now = m.createdAt ? m.createdAt.split('T')[0] : new Date().toISOString().split('T')[0];
+      const now = m?.createdAt ? m.createdAt.split('T')[0] : new Date().toISOString().split('T')[0];
 
       if (idx === -1) {
         const newRec: CustomerOnboardingRecord = {

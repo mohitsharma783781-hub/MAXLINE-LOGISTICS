@@ -157,8 +157,8 @@ export const ExceptionDetailPage: React.FC = () => {
           </div>
 
           <div style={{ textAlign: 'right', fontSize: 'var(--font-size-caption)', color: 'var(--color-text-secondary)' }}>
-            <div>Created: {detail.createdAt}</div>
-            <div>Updated: {detail.updatedAt}</div>
+            <div>Created: {detail?.createdAt || '—'}</div>
+            <div>Updated: {detail?.updatedAt || '—'}</div>
           </div>
         </div>
 

@@ -52,7 +52,7 @@ export const AdminKycVerificationPage: React.FC = () => {
           companyName: m.businessName || 'Business Entity',
           gstNumber: '22AAAAA0000A1Z5',
           submittedDocsCount: 5,
-          submissionDate: m.createdAt ? m.createdAt.split('T')[0] : '2026-10-30',
+          submissionDate: m?.createdAt ? m.createdAt.split('T')[0] : '2026-10-30',
           status: m.status === 'ACTIVE' ? 'Approved' : 'Under Review',
           remarks: m.status === 'ACTIVE' ? 'Verified in authoritative database' : 'Pending Super Admin document review',
         }));

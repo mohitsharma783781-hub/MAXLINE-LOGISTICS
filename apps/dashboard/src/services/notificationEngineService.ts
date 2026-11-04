@@ -585,9 +585,9 @@ export const NotificationEngineService = {
       'Provider Cost (INR)',
     ];
 
-    const rows = records.map((r) => [
-      r.id,
-      r.createdAt,
+    const rows = records.filter(Boolean).map((r) => [
+      r?.id || '',
+      r?.createdAt || '',
       `"${r.merchantName.replace(/"/g, '""')}"`,
       r.awbNumber,
       r.orderId,

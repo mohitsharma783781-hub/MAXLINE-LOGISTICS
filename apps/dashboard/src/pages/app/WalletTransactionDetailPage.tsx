@@ -89,7 +89,7 @@ export const WalletTransactionDetailPage: React.FC = () => {
       {/* Page Header */}
       <PageHeader
         title={`Transaction Log #${transaction.id}`}
-        description={`${transaction.type} • Reference ${transaction.referenceId} • Posted on ${transaction.createdAt}`}
+        description={`${transaction.type} • Reference ${transaction.referenceId} • Posted on ${transaction?.createdAt || '—'}`}
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
@@ -141,7 +141,7 @@ export const WalletTransactionDetailPage: React.FC = () => {
 
           <div style={{ textAlign: 'right', fontSize: 'var(--font-size-caption)', color: 'var(--color-text-secondary)' }}>
             <div>Status: <Badge variant="success">{transaction.status}</Badge></div>
-            <div>Timestamp: {transaction.createdAt}</div>
+            <div>Timestamp: {transaction?.createdAt || '—'}</div>
           </div>
         </div>
 

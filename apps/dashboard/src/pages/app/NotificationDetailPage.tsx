@@ -105,7 +105,7 @@ export const NotificationDetailPage: React.FC = () => {
           </div>
 
           <div style={{ textAlign: 'right', fontSize: 'var(--font-size-caption)', color: 'var(--color-text-secondary)' }}>
-            <div>Sent: {detail.createdAt}</div>
+            <div>Sent: {detail?.createdAt || '—'}</div>
             <div>Ref: {detail.providerReference || 'N/A'}</div>
           </div>
         </div>

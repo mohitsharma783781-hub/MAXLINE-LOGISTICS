@@ -466,7 +466,7 @@ export const AdminCustomerDetailPage: React.FC = () => {
                   ),
                 },
                 { key: 'balanceAfterMinor', header: 'Balance After', render: (r) => <strong>₹{(r.balanceAfterMinor / 100).toFixed(2)}</strong> },
-                { key: 'createdAt', header: 'Timestamp', render: (r) => <span style={{ fontSize: '11px', color: '#64748b' }}>{r.createdAt}</span> },
+                { key: 'createdAt', header: 'Timestamp', render: (r) => <span style={{ fontSize: '11px', color: '#64748b' }}>{r?.createdAt || '—'}</span> },
               ]}
               data={transactions}
             />

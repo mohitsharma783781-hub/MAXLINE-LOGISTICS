@@ -196,7 +196,7 @@ export const BookingDetailPage: React.FC = () => {
             {
               key: 'createdAt',
               header: 'Timestamp',
-              render: (row) => <span>{row.createdAt}</span>,
+              render: (row) => <span>{row?.createdAt || '—'}</span>,
             },
           ]}
           data={attempts}

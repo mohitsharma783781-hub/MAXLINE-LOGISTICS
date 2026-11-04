@@ -125,9 +125,9 @@ function loadSellerRemittances(): CodRemittanceRecord[] {
             status: (r.status === 'COMPLETED' ? 'REMITTED' : (r.status || 'PROCESSING')) as CodRemittanceStatus,
             payoutType: r.payoutType || 'STANDARD_T7',
             payoutDestination: r.payoutDestination || 'BANK',
-            remittanceDate: r.completedAt || r.remittanceDate || r.createdAt,
-            bankReferenceId: r.bankReferenceId,
-            createdAt: r.createdAt,
+            remittanceDate: r?.completedAt || r?.remittanceDate || r?.createdAt || '—',
+            bankReferenceId: r?.bankReferenceId,
+            createdAt: r?.createdAt || new Date().toISOString(),
           }));
         }
       }

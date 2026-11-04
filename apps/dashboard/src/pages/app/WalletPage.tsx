@@ -157,7 +157,9 @@ export const WalletPage: React.FC = () => {
 
   // TAB A: Filtered Transactions
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((tx) => {
+    return (transactions || []).filter((tx) => {
+      if (!tx) return false;
+
       // Direction filter
       if (txDirection !== 'all' && tx.direction !== txDirection) return false;
 
@@ -172,7 +174,7 @@ export const WalletPage: React.FC = () => {
 
       // Date Range filter
       if (txDateRange !== 'all') {
-        const txDate = new Date(tx.createdAt).getTime();
+        const txDate = new Date(tx?.createdAt || 0).getTime();
         const now = Date.now();
         if (isNaN(txDate)) {
           // keep
@@ -334,9 +336,9 @@ export const WalletPage: React.FC = () => {
         'Description',
       ];
 
-      const rows = filteredTransactions.map((tx) => [
-        `"${tx.id}"`,
-        `"${tx.createdAt}"`,
+      const rows = filteredTransactions.filter(Boolean).map((tx) => [
+        `"${tx?.id || ''}"`,
+        `"${tx?.createdAt || ''}"`,
         tx.type,
         tx.direction,
         `"${tx.referenceId || ''}"`,
@@ -1170,7 +1172,7 @@ export const WalletPage: React.FC = () => {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
                 <span style={{ fontSize: '13px', color: '#64748b' }}>Date & Time</span>
-                <span style={{ fontSize: '13px', color: '#0f172a' }}>{selectedTx.createdAt}</span>
+                <span style={{ fontSize: '13px', color: '#0f172a' }}>{selectedTx?.createdAt || '—'}</span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>

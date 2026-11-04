@@ -236,7 +236,7 @@ export const BillingPage: React.FC = () => {
             {
               key: 'issuedAt',
               header: 'Issue Date',
-              render: (row) => <span>{row.issuedAt || row.createdAt}</span>,
+              render: (row) => <span>{row?.issuedAt || row?.createdAt || '—'}</span>,
             },
             {
               key: 'actions',

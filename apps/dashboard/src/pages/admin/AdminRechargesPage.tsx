@@ -152,7 +152,7 @@ export const AdminRechargesPage: React.FC = () => {
                   </Badge>
                 ),
               },
-              { key: 'createdAt', header: 'Created Date', render: (r) => <span>{r.createdAt}</span> },
+              { key: 'createdAt', header: 'Created Date', render: (r) => <span>{r?.createdAt || '—'}</span> },
               {
                 key: 'actions',
                 header: 'Actions',
@@ -214,7 +214,7 @@ export const AdminRechargesPage: React.FC = () => {
             <div>Gateway Payment ID: <span style={{ fontFamily: 'monospace' }}>{selectedRecord.providerPaymentId || 'N/A'}</span></div>
             <div>Payment Status: <Badge variant={selectedRecord.paymentStatus === 'SUCCESS' ? 'success' : 'danger'}>{selectedRecord.paymentStatus}</Badge></div>
             <div>Wallet Transaction ID: <span style={{ fontFamily: 'monospace' }}>{selectedRecord.walletTransactionId || 'None'}</span></div>
-            <div>Created Date: <span>{selectedRecord.createdAt}</span></div>
+            <div>Created Date: <span>{selectedRecord?.createdAt || '—'}</span></div>
             {selectedRecord.failureReason && (
               <div style={{ color: 'var(--color-danger)', marginTop: '4px' }}>
                 Failure Reason: <strong>{selectedRecord.failureReason}</strong>

@@ -46,9 +46,9 @@ export const WalletTransactionsPage: React.FC = () => {
 
   const handleExportCSV = () => {
     const headers = ['Transaction ID', 'Date', 'Type', 'Direction', 'Reference', 'Amount (INR)', 'Balance Before (INR)', 'Balance After (INR)', 'Status'];
-    const rows = filteredTransactions.map((t) => [
-      t.id,
-      t.createdAt,
+    const rows = filteredTransactions.filter(Boolean).map((t) => [
+      t?.id || '',
+      t?.createdAt || '',
       t.type,
       t.direction,
       t.referenceId,
@@ -161,7 +161,7 @@ export const WalletTransactionsPage: React.FC = () => {
             {
               key: 'createdAt',
               header: 'Date & Time',
-              render: (row) => <span>{row.createdAt}</span>,
+              render: (row) => <span>{row?.createdAt || '—'}</span>,
             },
             {
               key: 'type',

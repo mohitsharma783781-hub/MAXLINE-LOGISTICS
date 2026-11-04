@@ -9,8 +9,8 @@ import type {
 export const deriveCurrentTrackingStatus = (events: TrackingEvent[]): TrackingStatus => {
   if (!events || events.length === 0) return 'CREATED';
   // Sort chronologically descending to get latest event first
-  const sorted = [...events].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  return sorted[0].status;
+  const sorted = [...events].filter(Boolean).sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime());
+  return sorted[0]?.status || 'CREATED';
 };
 
 // INITIAL DEMO TRACKED SHIPMENTS

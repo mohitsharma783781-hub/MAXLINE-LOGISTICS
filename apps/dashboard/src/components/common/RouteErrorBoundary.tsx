@@ -7,6 +7,10 @@ export const RouteErrorBoundary: React.FC = () => {
   const error = useRouteError();
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    console.error('[RouteErrorBoundary] Detailed error trace:', error);
+  }, [error]);
+
   let errorMessage = 'An unexpected error occurred while loading this page.';
   let errorStatus = 'Error';
 
@@ -109,6 +113,23 @@ export const RouteErrorBoundary: React.FC = () => {
             style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#0284c7', borderColor: '#0284c7' }}
           >
             <Home size={14} /> Go to Dashboard
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              try {
+                if (typeof window !== 'undefined') {
+                  window.localStorage.clear();
+                  window.sessionStorage.clear();
+                }
+              } catch {}
+              window.location.href = '/app';
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#dc2626', backgroundColor: '#fef2f2' }}
+          >
+            Clear Cache & Reset
           </Button>
         </div>
       </div>

@@ -97,7 +97,8 @@ export const TrackingService = {
 
     // Insert & sort timeline chronologically
     summary.events.unshift(newEvent);
-    summary.events.sort((a, b) => new Date(b.createdAt || b.eventTime).getTime() - new Date(a.createdAt || a.eventTime).getTime());
+    summary.events = summary.events.filter(Boolean);
+    summary.events.sort((a, b) => new Date(b?.createdAt || b?.eventTime || 0).getTime() - new Date(a?.createdAt || a?.eventTime || 0).getTime());
 
     summary.currentStatus = deriveCurrentTrackingStatus(summary.events);
     summary.lastUpdated = eventTime;
@@ -150,7 +151,7 @@ export const TrackingService = {
         location: e.location,
         eventTime: e.eventTime,
         source: 'COURIER',
-        createdAt: e.createdAt,
+        createdAt: e?.createdAt || new Date().toISOString(),
       })),
     };
   },

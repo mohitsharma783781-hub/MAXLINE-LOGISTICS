@@ -90,7 +90,7 @@ export const AdminCustomersPage: React.FC = () => {
           rateCardAssigned: true,
           totalOrders: 0,
           status: m.status === 'PENDING_KYC' ? 'PENDING' : m.status === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE',
-          createdAt: m.createdAt ? m.createdAt.split('T')[0] : '2026-09-01',
+          createdAt: m?.createdAt ? m.createdAt.split('T')[0] : '2026-09-01',
           monthlyVolume: 0,
         }));
 

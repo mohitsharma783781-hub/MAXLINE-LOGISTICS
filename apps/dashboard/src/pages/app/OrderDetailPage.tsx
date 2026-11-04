@@ -95,7 +95,7 @@ export const OrderDetailPage: React.FC = () => {
       {/* 1. Page Header */}
       <PageHeader
         title={`Order Master Control Center — ${order.orderNumber}`}
-        description={`AWB: ${awbNumber} • LRN: ${lrnNumber} • Placed: ${order.createdAt}`}
+        description={`AWB: ${awbNumber} • LRN: ${lrnNumber} • Placed: ${order?.createdAt || '—'}`}
         breadcrumbs={breadcrumbs}
         actions={
           <Button
@@ -161,7 +161,7 @@ export const OrderDetailPage: React.FC = () => {
           {/* Right Action Buttons */}
           <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
             <div style={{ fontSize: '12px', color: '#64748b' }}>
-              Booking Date: <strong>{order.createdAt}</strong> • Last Scan: <strong>10 mins ago</strong>
+              Booking Date: <strong>{order?.createdAt || '—'}</strong> • Last Scan: <strong>10 mins ago</strong>
             </div>
           </div>
 

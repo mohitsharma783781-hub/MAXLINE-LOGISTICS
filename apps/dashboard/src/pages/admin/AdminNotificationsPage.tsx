@@ -271,7 +271,7 @@ export const AdminNotificationsPage: React.FC = () => {
                 render: (row) => (
                   <div>
                     <strong style={{ fontSize: '12px', display: 'block' }}>{row.id}</strong>
-                    <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{row.createdAt}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{row?.createdAt || '—'}</span>
                   </div>
                 ),
               },

@@ -79,7 +79,7 @@ export const NotificationsPage: React.FC = () => {
       n.awbNumber || '',
       n.orderId || '',
       n.isRead ? 'Read' : 'Unread',
-      n.createdAt,
+      n?.createdAt || '',
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
@@ -304,7 +304,7 @@ export const NotificationsPage: React.FC = () => {
             {
               key: 'createdAt',
               header: 'Time',
-              render: (r) => <span style={{ fontSize: '11px', color: '#64748b' }}>{r.createdAt}</span>,
+              render: (r) => <span style={{ fontSize: '11px', color: '#64748b' }}>{r?.createdAt || '—'}</span>,
             },
             {
               key: 'actions',

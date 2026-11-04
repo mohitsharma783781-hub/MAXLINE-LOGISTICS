@@ -98,7 +98,7 @@ export const AdminUsersRolesPage: React.FC = () => {
             },
             { key: 'status', header: 'Status', render: (r) => <Badge variant={r.status === 'ACTIVE' ? 'success' : 'neutral'}>{r.status}</Badge> },
             { key: 'lastLoginAt', header: 'Last Login', render: (r) => <span>{r.lastLoginAt}</span> },
-            { key: 'createdAt', header: 'Created Date', render: (r) => <span>{r.createdAt}</span> },
+            { key: 'createdAt', header: 'Created Date', render: (r) => <span>{r?.createdAt || '—'}</span> },
           ]}
           data={users}
         />
