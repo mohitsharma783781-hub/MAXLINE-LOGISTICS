@@ -284,19 +284,6 @@ export const TrackingService = {
       };
     }
 
-    // 3. Fallback to Demo Tracking Database
-    const demoMatch = Array.from(TRACKING_STORE.values()).find(
-      (t) => t.awb.toLowerCase() === qLower || t.shipmentId.toLowerCase() === qLower || t.orderId.toLowerCase() === qLower
-    );
-    if (demoMatch) {
-      return {
-        success: true,
-        data: demoMatch,
-        source: 'DEMO',
-        message: 'Loaded demo tracking preview record.',
-      };
-    }
-
     return {
       success: false,
       data: null,

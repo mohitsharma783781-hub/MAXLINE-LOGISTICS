@@ -90,19 +90,19 @@ module.exports = async (req, res) => {
     const statusType = String(packageData.Status && packageData.Status.StatusType || '').toLowerCase();
     const rawStatus = String(packageData.Status && packageData.Status.Status || '').toLowerCase();
 
-    let mappedStatus = 'IN_TRANSIT';
-    if (statusType.includes('dl') || rawStatus.includes('delivered')) {
+    let mappedStatus = 'BOOKED';
+    if (rawStatus.includes('manifest') || rawStatus.includes('booked') || rawStatus.includes('open') || rawStatus.includes('registered')) {
+      mappedStatus = 'BOOKED';
+    } else if (statusType.includes('dl') || rawStatus.includes('delivered')) {
       mappedStatus = 'DELIVERED';
     } else if (rawStatus.includes('out for delivery') || rawStatus.includes('ofd')) {
       mappedStatus = 'OUT_FOR_DELIVERY';
     } else if (rawStatus.includes('rto') || statusType.includes('rt')) {
       mappedStatus = 'RTO';
-    } else if (rawStatus.includes('ndr') || rawStatus.includes('undelivered') || statusType.includes('ud')) {
-      mappedStatus = 'NDR';
-    } else if (rawStatus.includes('picked up') || rawStatus.includes('in transit') || statusType.includes('in')) {
+    } else if (rawStatus.includes('picked up') || rawStatus.includes('in transit') || rawStatus.includes('dispatched') || rawStatus.includes('arrived') || statusType.includes('in')) {
       mappedStatus = 'IN_TRANSIT';
-    } else if (rawStatus.includes('manifest') || rawStatus.includes('booked')) {
-      mappedStatus = 'BOOKED';
+    } else if (rawStatus.includes('undelivered') || rawStatus.includes('ndr') || rawStatus.includes('attempted') || rawStatus.includes('failed')) {
+      mappedStatus = 'NDR';
     }
 
     // Map scans array

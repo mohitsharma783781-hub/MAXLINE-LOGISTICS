@@ -23,8 +23,9 @@ import {
   Input,
   Alert,
 } from '../../components/ui';
-import { CustomerShipmentService } from '../../services/customerShipmentService';
+import { CustomerShipmentService, type CustomerShipmentDetail } from '../../services/customerShipmentService';
 import { TrackingService } from '../../services/trackingService';
+import { useTenant } from '../../context/TenantContext';
 
 export interface TrackingTimelineEvent {
   id: string;
@@ -107,274 +108,100 @@ export interface TrackingShipmentRecord {
   };
 }
 
-export const DEMO_TRACKING_DATABASE: TrackingShipmentRecord[] = [
-  {
-    id: 'shp-101',
-    awbNumber: 'DEL98401928',
-    orderId: 'ORD-2026-98401',
-    customerName: 'Rahul Sharma',
-    customerPhone: '+91 98765 43210',
-    customerEmail: 'rahul.sharma@example.com',
-    deliveryAddress: 'Flat 402, Sunshine Heights, Koramangala',
-    deliveryCity: 'Bengaluru',
-    deliveryState: 'Karnataka',
-    deliveryPincode: '560038',
+export const DEMO_TRACKING_DATABASE: TrackingShipmentRecord[] = [];
 
-    courierName: 'Delhivery Surface',
-    courierLogoBg: '#0f172a',
-    serviceType: 'Surface',
-    mode: 'B2C',
-    zoneRoute: 'N1 → S2',
-    transitSlaDays: '24-48 Hours',
+function mapShipmentToTrackingRecord(realShipment: CustomerShipmentDetail): TrackingShipmentRecord {
+  const stepIdx =
+    realShipment.bookingStatus === 'DELIVERED'
+      ? 6
+      : realShipment.bookingStatus === 'OUT_FOR_DELIVERY'
+      ? 5
+      : realShipment.bookingStatus === 'IN_TRANSIT'
+      ? 3
+      : realShipment.bookingStatus === 'PICKED_UP'
+      ? 2
+      : realShipment.bookingStatus === 'PICKUP_REQUESTED'
+      ? 1
+      : 0;
 
-    deadWeightKg: 2.5,
-    volumetricWeightKg: 1.8,
-    chargeableWeightKg: 2.5,
-    dimensionsCm: '30 × 20 × 15 CM',
-    packageCount: 1,
-    contentsDescription: 'Apparel & Fashion Items',
-
-    baseFreight: 180.0,
-    fuelSurcharge: 21.6,
-    docketCharges: 15.0,
-    codCharges: 40.0,
-    rovCharges: 0.0,
-    insuranceCharges: 0.0,
-    gstAmount: 46.18,
-    finalAmount: 302.78,
-    walletReferenceId: 'TXN-WAL-9840192',
-
-    status: 'Delivered',
-    stepIndex: 6,
-    etaDate: '28 Aug 2026',
-    transitDaysCount: '2 Days',
-    lastUpdatedTime: '28 Aug 2026, 02:20 PM',
-
-    timelineEvents: [
-      { id: 't7', date: '28 Aug 2026', time: '02:20 PM', location: 'Bengaluru Koramangala Hub', statusTitle: 'Shipment Delivered', remarks: 'Handed over to recipient with OTP verification', source: 'Carrier Webhook' },
-      { id: 't6', date: '28 Aug 2026', time: '09:15 AM', location: 'Bengaluru Delivery Center', statusTitle: 'Out For Delivery (OFD)', remarks: 'Delivery executive Agent Ramesh (982910291) out for delivery', source: 'Carrier Webhook' },
-      { id: 't5', date: '28 Aug 2026', time: '06:45 AM', location: 'Bengaluru Gateway Hub', statusTitle: 'Reached Hub', remarks: 'Arrived at Koramangala Delivery Hub & sorted for route', source: 'API Auto-Sync' },
-      { id: 't4', date: '27 Aug 2026', time: '08:30 PM', location: 'Delhi Gateway Airport Hub', statusTitle: 'In Transit', remarks: 'Departed Delhi Airport hub via Air Surface feeder line', source: 'Carrier Webhook' },
-      { id: 't3', date: '27 Aug 2026', time: '02:00 PM', location: 'Delhi Primary Warehouse', statusTitle: 'Shipment Picked Up', remarks: 'Scanned & loaded into Delhivery pickup vehicle', source: 'Carrier Webhook' },
-      { id: 't2', date: '27 Aug 2026', time: '11:15 AM', location: 'Delhi Primary Warehouse', statusTitle: 'Pickup Scheduled', remarks: 'Pickup agent assigned for evening collection', source: 'API Auto-Sync' },
-      { id: 't1', date: '27 Aug 2026', time: '10:30 AM', location: 'Merchant Dashboard', statusTitle: 'Order Created', remarks: 'Shipping label generated and AWB allocated', source: 'Manual Override' },
-    ],
-
-    activityLogs: [
-      { id: 'l1', timestamp: '27 Aug 2026, 10:30 AM', action: 'AWB DEL98401928 generated via Delhivery API', user: 'System Merchant' },
-      { id: 'l2', timestamp: '27 Aug 2026, 02:00 PM', action: 'First Mile Pickup Scan recorded', user: 'Delhivery Scanner' },
-      { id: 'l3', timestamp: '28 Aug 2026, 02:20 PM', action: 'Proof of Delivery (POD) uploaded with OTP signature', user: 'Delhivery Driver App' },
-    ],
-
-    adminLogs: {
-      courierApiPayload: '{"courier":"Delhivery","awb":"DEL98401928","statusCode":200,"status":"DELIVERED","podSignature":"OTP-984012"}',
-      webhookLog: 'HTTP 200 POST /api/webhooks/delhivery -> Event: SHIPMENT_DELIVERED',
-      syncHistory: 'Last synced 2 mins ago via Cron Poller (Latency: 142ms)',
-      errorLogs: 'No error logs recorded for this AWB.',
+  const events: TrackingTimelineEvent[] = realShipment.trackingTimeline?.map((t, idx) => ({
+    id: `real-evt-${idx}`,
+    date: t.timestamp ? String(t.timestamp).split(',')[0] : new Date().toLocaleDateString(),
+    time: t.timestamp ? String(t.timestamp).split(',')[1] || '' : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    location: t.location || realShipment.pickupCity || 'Origin Hub',
+    statusTitle: t.statusTitle || 'Status Update',
+    remarks: t.description || 'Shipment scanned and updated',
+    source: 'API Auto-Sync' as const,
+  })) || [
+    {
+      id: 'real-evt-1',
+      date: realShipment.bookingDate ? realShipment.bookingDate.split(',')[0] : new Date().toLocaleDateString(),
+      time: realShipment.bookingDate ? realShipment.bookingDate.split(',')[1] || '' : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      location: realShipment.pickupCity || 'Origin Hub',
+      statusTitle: 'Shipment Booked & Confirmed',
+      remarks: 'Order dispatched with courier partner',
+      source: 'API Auto-Sync' as const,
     },
-  },
-  {
-    id: 'shp-102',
-    awbNumber: 'BD49102847',
-    orderId: 'ORD-2026-98402',
-    customerName: 'Ananya Roy',
-    customerPhone: '+91 98123 45678',
-    customerEmail: 'ananya.roy@example.com',
-    deliveryAddress: '12th Floor, World Trade Center, Cuffe Parade',
-    deliveryCity: 'Mumbai',
-    deliveryState: 'Maharashtra',
-    deliveryPincode: '400005',
+  ];
 
-    courierName: 'Blue Dart Air',
-    courierLogoBg: '#dc2626',
-    serviceType: 'Air',
-    mode: 'B2C',
-    zoneRoute: 'N1 → W1',
-    transitSlaDays: '24 Hours Express',
-
-    deadWeightKg: 1.0,
-    volumetricWeightKg: 1.2,
-    chargeableWeightKg: 1.2,
-    dimensionsCm: '25 × 20 × 10 CM',
-    packageCount: 1,
-    contentsDescription: 'Electronics & Accessories',
-
-    baseFreight: 220.0,
-    fuelSurcharge: 33.0,
-    docketCharges: 25.0,
-    codCharges: 0.0,
-    rovCharges: 0.0,
-    insuranceCharges: 0.0,
-    gstAmount: 50.04,
-    finalAmount: 328.04,
-    walletReferenceId: 'TXN-WAL-9840193',
-
-    status: 'In Transit',
-    stepIndex: 3,
-    etaDate: '29 Aug 2026',
+  return {
+    id: realShipment.id,
+    awbNumber: realShipment.awbNumber || realShipment.shipmentId,
+    orderId: realShipment.orderId,
+    customerName: realShipment.deliveryContact || 'Customer',
+    customerPhone: realShipment.deliveryPhone || '',
+    customerEmail: (realShipment as any).deliveryEmail || 'customer@example.com',
+    deliveryAddress: realShipment.deliveryAddress || '',
+    deliveryCity: realShipment.deliveryCity || '',
+    deliveryState: (realShipment as any).deliveryState || '',
+    deliveryPincode: realShipment.deliveryPincode || '',
+    courierName: realShipment.courierName || 'Delhivery Surface Express',
+    courierLogoBg: realShipment.courierName?.toLowerCase().includes('blue') ? '#0284c7' : '#059669',
+    serviceType: (realShipment.serviceName?.includes('Air') ? 'Air' : realShipment.serviceName?.includes('Cargo') ? 'Cargo' : 'Express') as any,
+    mode: (realShipment.mode || 'B2C') as any,
+    zoneRoute: `${realShipment.pickupPincode || 'Origin'} → ${realShipment.deliveryPincode || 'Destination'}`,
+    transitSlaDays: '2-4 Days',
+    deadWeightKg: realShipment.actualWeightKg || 0.5,
+    volumetricWeightKg: realShipment.chargeableWeightKg || 0.5,
+    chargeableWeightKg: realShipment.chargeableWeightKg || 0.5,
+    dimensionsCm: realShipment.dimensionsCm || '20 × 15 × 10 CM',
+    packageCount: realShipment.packages?.length || 1,
+    contentsDescription: 'E-Commerce Package',
+    baseFreight: realShipment.baseFreightINR || 0,
+    fuelSurcharge: realShipment.fuelSurchargeINR || 0,
+    docketCharges: 15,
+    codCharges: realShipment.codFeeINR || 0,
+    rovCharges: 0,
+    insuranceCharges: 0,
+    gstAmount: Math.round((realShipment.totalCustomerChargeINR || 0) * 0.18 * 100) / 100,
+    finalAmount: realShipment.totalCustomerChargeINR || 0,
+    walletReferenceId: realShipment.transactionId || `TXN-${realShipment.shipmentId}`,
+    status: (realShipment.bookingStatus === 'DELIVERED'
+      ? 'Delivered'
+      : realShipment.bookingStatus === 'NDR'
+      ? 'NDR'
+      : realShipment.bookingStatus.startsWith('RTO')
+      ? 'RTO'
+      : realShipment.bookingStatus === 'CANCELLED'
+      ? 'Cancelled'
+      : realShipment.bookingStatus === 'IN_TRANSIT'
+      ? 'In Transit'
+      : 'Booked') as any,
+    stepIndex: stepIdx,
+    etaDate: '2-3 Business Days',
     transitDaysCount: '1 Day',
-    lastUpdatedTime: '28 Aug 2026, 03:00 PM',
-
-    timelineEvents: [
-      { id: 'tb4', date: '28 Aug 2026', time: '03:00 PM', location: 'IGI Airport Air Cargo Hub', statusTitle: 'In Transit via Flight BD-602', remarks: 'Loaded on flight en route to Mumbai CSIA Airport', source: 'Carrier Webhook' },
-      { id: 'tb3', date: '28 Aug 2026', time: '12:30 PM', location: 'Delhi Airport Facility', statusTitle: 'Picked Up & Scanned', remarks: 'Scanned at Air Express sorting facility', source: 'Carrier Webhook' },
-      { id: 'tb2', date: '28 Aug 2026', time: '10:00 AM', location: 'Delhi Primary Warehouse', statusTitle: 'Pickup Scheduled', remarks: 'Blue Dart Air pickup scheduled', source: 'API Auto-Sync' },
-      { id: 'tb1', date: '28 Aug 2026', time: '09:15 AM', location: 'Merchant Dashboard', statusTitle: 'Order Created', remarks: 'AWB BD49102847 created', source: 'Manual Override' },
-    ],
-
+    lastUpdatedTime: realShipment.bookingDate || new Date().toLocaleString(),
+    timelineEvents: events,
     activityLogs: [
-      { id: 'lb1', timestamp: '28 Aug 2026, 09:15 AM', action: 'Blue Dart Air AWB Generated', user: 'System Merchant' },
-      { id: 'lb2', timestamp: '28 Aug 2026, 03:00 PM', action: 'Flight Manifest Sync Recorded', user: 'Blue Dart API' },
+      {
+        id: 'act-1',
+        timestamp: realShipment.bookingDate || new Date().toLocaleString(),
+        action: `Order ${realShipment.orderId} booked with AWB ${realShipment.awbNumber}`,
+        user: 'Seller Portal',
+      },
     ],
-
-    adminLogs: {
-      courierApiPayload: '{"courier":"BlueDart","awb":"BD49102847","flightNo":"BD602","status":"IN_TRANSIT"}',
-      webhookLog: 'HTTP 200 POST /api/webhooks/bluedart -> Event: FLIGHT_DEPARTURE',
-      syncHistory: 'Synced 5 mins ago via Direct Webhook',
-      errorLogs: 'No errors.',
-    },
-  },
-  {
-    id: 'shp-103',
-    awbNumber: 'GAT10284910',
-    orderId: 'ORD-2026-98403',
-    customerName: 'Vikram Mehta',
-    customerPhone: '+91 97654 32109',
-    customerEmail: 'vikram.m@example.com',
-    deliveryAddress: 'Plot 88, GIDC Industrial Estate',
-    deliveryCity: 'Ahmedabad',
-    deliveryState: 'Gujarat',
-    deliveryPincode: '380015',
-
-    courierName: 'Gati Cargo',
-    courierLogoBg: '#1e3a8a',
-    serviceType: 'Cargo',
-    mode: 'B2B',
-    zoneRoute: 'N2 → W2',
-    transitSlaDays: '48-72 Hours Heavy Cargo',
-
-    deadWeightKg: 45.0,
-    volumetricWeightKg: 38.0,
-    chargeableWeightKg: 45.0,
-    dimensionsCm: '80 × 50 × 40 CM',
-    packageCount: 3,
-    contentsDescription: 'Industrial Machine Parts',
-
-    baseFreight: 350.0,
-    fuelSurcharge: 42.0,
-    docketCharges: 30.0,
-    codCharges: 0.0,
-    rovCharges: 25.0,
-    insuranceCharges: 25.0,
-    gstAmount: 84.96,
-    finalAmount: 556.96,
-    walletReferenceId: 'TXN-WAL-9840194',
-
-    status: 'NDR',
-    stepIndex: 5,
-    etaDate: '29 Aug 2026 (Re-attempt)',
-    transitDaysCount: '3 Days',
-    lastUpdatedTime: '28 Aug 2026, 02:30 PM',
-
-    ndrDetails: {
-      reason: 'Consignee business premises closed on holiday',
-      attemptCount: 1,
-      actionRequired: 'Re-attempt requested for next business working day',
-      customerResponse: 'Customer requested delivery on 29 Aug morning',
-      resolutionStatus: 'Re-attempt Scheduled for 29 Aug',
-    },
-
-    timelineEvents: [
-      { id: 'tg6', date: '28 Aug 2026', time: '02:30 PM', location: 'Ahmedabad GIDC Hub', statusTitle: 'NDR Exception Occurred', remarks: 'Delivery Attempt 1 Failed: Premises Closed', source: 'Carrier Webhook' },
-      { id: 'tg5', date: '28 Aug 2026', time: '11:00 AM', location: 'Ahmedabad GIDC Hub', statusTitle: 'Out For Delivery (OFD)', remarks: 'Gati Heavy LTL Vehicle out for delivery', source: 'Carrier Webhook' },
-      { id: 'tg4', date: '27 Aug 2026', time: '08:00 PM', location: 'NH-48 Transit Checkpoint', statusTitle: 'In Transit', remarks: 'Traversing NH-48 interstate corridor', source: 'API Auto-Sync' },
-      { id: 'tg3', date: '27 Aug 2026', time: '10:00 AM', location: 'Solan Industrial Hub', statusTitle: 'Picked Up', remarks: 'Lifted from factory warehouse', source: 'Carrier Webhook' },
-      { id: 'tg2', date: '26 Aug 2026', time: '04:00 PM', location: 'Solan Warehouse', statusTitle: 'Pickup Scheduled', remarks: 'LTL Truck assigned', source: 'API Auto-Sync' },
-      { id: 'tg1', date: '26 Aug 2026', time: '02:45 PM', location: 'Merchant Portal', statusTitle: 'Order Created', remarks: 'B2B Heavy Cargo Order created', source: 'Manual Override' },
-    ],
-
-    activityLogs: [
-      { id: 'lg1', timestamp: '26 Aug 2026, 02:45 PM', action: 'B2B Cargo Order Registered', user: 'System Merchant' },
-      { id: 'lg2', timestamp: '28 Aug 2026, 02:35 PM', action: 'NDR Action Raised: Customer re-attempt requested', user: 'Merchant Support' },
-    ],
-
-    adminLogs: {
-      courierApiPayload: '{"courier":"Gati","awb":"GAT10284910","ndrCode":"NDR_PREMISES_CLOSED","attempt":1}',
-      webhookLog: 'HTTP 200 POST /api/webhooks/gati -> Event: DELIVERY_FAILED_NDR',
-      syncHistory: 'Synced 10 mins ago',
-      errorLogs: 'NDR Exception logged: PREMISES_CLOSED.',
-    },
-  },
-  {
-    id: 'shp-104',
-    awbNumber: 'TCI74829102',
-    orderId: 'ORD-2026-98405',
-    customerName: 'Suresh Kumar',
-    customerPhone: '+91 91234 56789',
-    customerEmail: 'suresh.k@example.com',
-    deliveryAddress: '34 Park Street, Park Circus',
-    deliveryCity: 'Kolkata',
-    deliveryState: 'West Bengal',
-    deliveryPincode: '700016',
-
-    courierName: 'TCI Express',
-    courierLogoBg: '#047857',
-    serviceType: 'Cargo',
-    mode: 'B2B',
-    zoneRoute: 'N1 → E1',
-    transitSlaDays: '72 Hours Cargo',
-
-    deadWeightKg: 30.0,
-    volumetricWeightKg: 25.0,
-    chargeableWeightKg: 30.0,
-    dimensionsCm: '60 × 40 × 35 CM',
-    packageCount: 2,
-    contentsDescription: 'Textile Fabric Rolls',
-
-    baseFreight: 350.0,
-    fuelSurcharge: 35.0,
-    docketCharges: 30.0,
-    codCharges: 0.0,
-    rovCharges: 0.0,
-    insuranceCharges: 0.0,
-    gstAmount: 74.7,
-    finalAmount: 489.7,
-    walletReferenceId: 'TXN-WAL-9840195',
-
-    status: 'RTO',
-    stepIndex: 5,
-    etaDate: '30 Aug 2026 (Return to Origin)',
-    transitDaysCount: '4 Days',
-    lastUpdatedTime: '27 Aug 2026, 10:00 AM',
-
-    rtoDetails: {
-      rtoDate: '27 Aug 2026',
-      rtoReason: 'Consignee refused delivery due to incorrect PO number',
-      currentRtoStatus: 'In Transit back to Delhi Warehouse',
-      expectedReturnDate: '30 Aug 2026',
-    },
-
-    timelineEvents: [
-      { id: 'tr5', date: '27 Aug 2026', time: '10:00 AM', location: 'Kolkata Hub', statusTitle: 'RTO Initiated', remarks: 'Return shipment dispatched back to origin warehouse', source: 'Carrier Webhook' },
-      { id: 'tr4', date: '26 Aug 2026', time: '03:00 PM', location: 'Kolkata Delivery Office', statusTitle: 'NDR Refusal', remarks: 'Consignee rejected delivery due to PO discrepancy', source: 'Carrier Webhook' },
-      { id: 'tr3', date: '25 Aug 2026', time: '09:00 AM', location: 'Kolkata Hub', statusTitle: 'In Transit', remarks: 'Arrived at Kolkata regional distribution center', source: 'API Auto-Sync' },
-      { id: 'tr2', date: '24 Aug 2026', time: '04:00 PM', location: 'Delhi Hub', statusTitle: 'Picked Up', remarks: 'Dispatched from Delhi origin hub', source: 'Carrier Webhook' },
-      { id: 'tr1', date: '24 Aug 2026', time: '11:00 AM', location: 'Merchant Dashboard', statusTitle: 'Order Created', remarks: 'Shipment created', source: 'Manual Override' },
-    ],
-
-    activityLogs: [
-      { id: 'lr1', timestamp: '24 Aug 2026, 11:00 AM', action: 'TCI Express AWB Created', user: 'System Merchant' },
-      { id: 'lr2', timestamp: '27 Aug 2026, 10:05 AM', action: 'RTO Flagged by Courier Partner', user: 'TCI Webhook' },
-    ],
-
-    adminLogs: {
-      courierApiPayload: '{"courier":"TCI","awb":"TCI74829102","status":"RTO_INITIATED"}',
-      webhookLog: 'HTTP 200 POST /api/webhooks/tci -> Event: RTO_INITIATED',
-      syncHistory: 'Synced 1 day ago',
-      errorLogs: 'RTO Initiated by Consignee Refusal.',
-    },
-  },
-];
+  };
+}
 
 export const JOURNEY_STEPS = [
   'Order Created',
@@ -389,9 +216,10 @@ export const JOURNEY_STEPS = [
 export const TrackingPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { activeTenantId } = useTenant();
 
-  const initialQuery = searchParams.get('query') || 'DEL98401928';
-  const [searchInput, setSearchInput] = useState(initialQuery);
+  const queryParam = searchParams.get('query') || searchParams.get('awb') || searchParams.get('orderId') || '';
+  const [searchInput, setSearchInput] = useState(queryParam);
   const [copiedAwb, setCopiedAwb] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'timeline' | 'details' | 'financials' | 'activity' | 'admin'>('timeline');
 
@@ -399,11 +227,39 @@ export const TrackingPage: React.FC = () => {
   const [liveRecordOverride, setLiveRecordOverride] = useState<TrackingShipmentRecord | null>(null);
   const [isSyncingLive, setIsSyncingLive] = useState(false);
   const [syncStatusMsg, setSyncStatusMsg] = useState<{ type: 'success' | 'info' | 'error'; message: string } | null>(null);
+  const [recentShipments, setRecentShipments] = useState<CustomerShipmentDetail[]>([]);
+
+  // 1. Initial Load & Cloud Sync
+  useEffect(() => {
+    if (!activeTenantId) return;
+    CustomerShipmentService.syncFromSupabase(activeTenantId)
+      .then((shipments) => {
+        if (Array.isArray(shipments) && shipments.length > 0) {
+          setRecentShipments(shipments);
+          const currentParam = searchParams.get('query') || searchParams.get('awb') || searchParams.get('orderId');
+          if (!currentParam && !searchInput) {
+            const latest = shipments[0];
+            const defaultTarget = latest.awbNumber || latest.shipmentId || latest.orderId;
+            if (defaultTarget) {
+              setSearchInput(defaultTarget);
+              setSearchParams({ query: defaultTarget }, { replace: true });
+              syncLiveTracking(defaultTarget);
+            }
+          }
+        }
+      })
+      .catch((err) => console.warn('[TrackingPage] Sync warning:', err));
+  }, [activeTenantId]);
 
   // Search Logic with Real CustomerShipmentService & Carrier Tracking
   const activeRecord = useMemo<TrackingShipmentRecord | null>(() => {
-    if (!searchInput.trim()) return DEMO_TRACKING_DATABASE[0];
     const q = searchInput.trim();
+    if (!q) {
+      if (recentShipments.length > 0) {
+        return mapShipmentToTrackingRecord(recentShipments[0]);
+      }
+      return null;
+    }
     const qLower = q.toLowerCase();
 
     // 0. Check Live Carrier Synced Record
@@ -416,111 +272,23 @@ export const TrackingPage: React.FC = () => {
       return liveRecordOverride;
     }
 
-    // 1. Check Real Booked Shipments from CustomerShipmentService
-    const realShipment = CustomerShipmentService.getShipmentById(q);
+    // 1. Check Real Booked Shipments from CustomerShipmentService & recentShipments
+    const realShipment =
+      CustomerShipmentService.getShipmentById(q, activeTenantId) ||
+      recentShipments.find(
+        (s) =>
+          s.awbNumber?.toLowerCase() === qLower ||
+          s.orderId?.toLowerCase() === qLower ||
+          s.shipmentId?.toLowerCase() === qLower ||
+          s.id?.toLowerCase() === qLower
+      );
+
     if (realShipment) {
-      const stepIdx =
-        realShipment.bookingStatus === 'DELIVERED'
-          ? 6
-          : realShipment.bookingStatus === 'OUT_FOR_DELIVERY'
-          ? 5
-          : realShipment.bookingStatus === 'IN_TRANSIT'
-          ? 3
-          : realShipment.bookingStatus === 'PICKED_UP'
-          ? 2
-          : realShipment.bookingStatus === 'PICKUP_REQUESTED'
-          ? 1
-          : 0;
-
-      const events: TrackingTimelineEvent[] = realShipment.trackingTimeline?.map((t, idx) => ({
-        id: `real-evt-${idx}`,
-        date: t.timestamp ? String(t.timestamp).split(',')[0] : new Date().toLocaleDateString(),
-        time: t.timestamp ? String(t.timestamp).split(',')[1] || '' : new Date().toLocaleTimeString(),
-        location: t.location || 'Sorting Facility',
-        statusTitle: t.statusTitle || 'Status Update',
-        remarks: t.description || 'Shipment scanned and updated',
-        source: 'API Auto-Sync' as const,
-      })) || [
-        {
-          id: 'real-evt-1',
-          date: new Date().toLocaleDateString(),
-          time: new Date().toLocaleTimeString(),
-          location: realShipment.pickupCity || 'Origin Hub',
-          statusTitle: 'Shipment Booked & Confirmed',
-          remarks: 'Order dispatched with courier partner',
-          source: 'API Auto-Sync' as const,
-        },
-      ];
-
-      return {
-        id: realShipment.id,
-        awbNumber: realShipment.awbNumber || realShipment.shipmentId,
-        orderId: realShipment.orderId,
-        customerName: realShipment.deliveryContact || 'Customer',
-        customerPhone: realShipment.deliveryPhone || '',
-        customerEmail: (realShipment as any).deliveryEmail || 'customer@example.com',
-        deliveryAddress: realShipment.deliveryAddress || '',
-        deliveryCity: realShipment.deliveryCity || '',
-        deliveryState: (realShipment as any).deliveryState || '',
-        deliveryPincode: realShipment.deliveryPincode || '',
-        courierName: realShipment.courierName || 'Logistics Network',
-        courierLogoBg: realShipment.courierName.toLowerCase().includes('blue') ? '#0284c7' : '#059669',
-        serviceType: (realShipment.serviceName?.includes('Air') ? 'Air' : realShipment.serviceName?.includes('Cargo') ? 'Cargo' : 'Express') as any,
-        mode: (realShipment.mode || 'B2C') as any,
-        zoneRoute: `${realShipment.pickupPincode} → ${realShipment.deliveryPincode}`,
-        transitSlaDays: '2-4 Days',
-        deadWeightKg: realShipment.actualWeightKg || 0.5,
-        volumetricWeightKg: realShipment.chargeableWeightKg || 0.5,
-        chargeableWeightKg: realShipment.chargeableWeightKg || 0.5,
-        dimensionsCm: realShipment.dimensionsCm || '20 × 15 × 10 CM',
-        packageCount: realShipment.packages?.length || 1,
-        contentsDescription: 'E-Commerce Package',
-        baseFreight: realShipment.baseFreightINR || 0,
-        fuelSurcharge: realShipment.fuelSurchargeINR || 0,
-        docketCharges: 15,
-        codCharges: realShipment.codFeeINR || 0,
-        rovCharges: 0,
-        insuranceCharges: 0,
-        gstAmount: Math.round((realShipment.totalCustomerChargeINR || 0) * 0.18 * 100) / 100,
-        finalAmount: realShipment.totalCustomerChargeINR || 0,
-        walletReferenceId: realShipment.transactionId || `TXN-${realShipment.shipmentId}`,
-        status: (realShipment.bookingStatus === 'DELIVERED'
-          ? 'Delivered'
-          : realShipment.bookingStatus === 'NDR'
-          ? 'NDR'
-          : realShipment.bookingStatus.startsWith('RTO')
-          ? 'RTO'
-          : realShipment.bookingStatus === 'CANCELLED'
-          ? 'Cancelled'
-          : realShipment.bookingStatus === 'IN_TRANSIT'
-          ? 'In Transit'
-          : 'Booked') as any,
-        stepIndex: stepIdx,
-        etaDate: '2-3 Business Days',
-        transitDaysCount: '1 Day',
-        lastUpdatedTime: realShipment.bookingDate || new Date().toLocaleString(),
-        timelineEvents: events,
-        activityLogs: [
-          {
-            id: 'act-1',
-            timestamp: realShipment.bookingDate || new Date().toLocaleString(),
-            action: `Order ${realShipment.orderId} booked with AWB ${realShipment.awbNumber}`,
-            user: 'Seller Portal',
-          },
-        ],
-      };
+      return mapShipmentToTrackingRecord(realShipment);
     }
 
-    const match = DEMO_TRACKING_DATABASE.find(
-      (r) =>
-        r.awbNumber.toLowerCase().includes(qLower) ||
-        r.orderId.toLowerCase().includes(qLower) ||
-        r.customerPhone.includes(qLower)
-    );
-    if (match) return match;
-
     return null;
-  }, [searchInput, liveRecordOverride]);
+  }, [searchInput, liveRecordOverride, recentShipments, activeTenantId]);
 
   const syncLiveTracking = async (targetQuery: string) => {
     const q = targetQuery.trim();
@@ -770,25 +538,17 @@ export const TrackingPage: React.FC = () => {
   };
 
   useEffect(() => {
-    const q = searchParams.get('query');
-    if (q) {
-      setSearchInput(q);
-      const qLower = q.toLowerCase();
-      const isDemo = DEMO_TRACKING_DATABASE.some((d) => d.awbNumber.toLowerCase() === qLower);
-      if (!isDemo) {
-        syncLiveTracking(q);
-      }
+    const q = searchParams.get('query') || searchParams.get('awb') || searchParams.get('orderId');
+    if (q && q.trim()) {
+      setSearchInput(q.trim());
+      syncLiveTracking(q.trim());
     }
   }, [searchParams]);
 
   const handleSearchSubmit = () => {
     if (searchInput.trim()) {
       setSearchParams({ query: searchInput.trim() });
-      const qLower = searchInput.trim().toLowerCase();
-      const isDemo = DEMO_TRACKING_DATABASE.some((d) => d.awbNumber.toLowerCase() === qLower);
-      if (!isDemo) {
-        syncLiveTracking(searchInput.trim());
-      }
+      syncLiveTracking(searchInput.trim());
     }
   };
 
@@ -858,23 +618,37 @@ export const TrackingPage: React.FC = () => {
             Track Shipment
           </Button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto' }}>
-            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>Demo AWB:</span>
-            {DEMO_TRACKING_DATABASE.map((d) => (
-              <Button
-                key={d.id}
-                variant={activeRecord?.awbNumber === d.awbNumber ? 'primary' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setSearchInput(d.awbNumber);
-                  setSearchParams({ query: d.awbNumber });
-                }}
-                style={{ fontSize: '11px', padding: '4px 8px', backgroundColor: activeRecord?.awbNumber === d.awbNumber ? '#0284c7' : 'transparent' }}
-              >
-                {d.awbNumber} ({d.status})
-              </Button>
-            ))}
-          </div>
+          {recentShipments.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>Recent Shipments:</span>
+              {recentShipments.slice(0, 5).map((s) => {
+                const target = s.awbNumber || s.shipmentId || s.orderId;
+                const isSelected =
+                  activeRecord?.awbNumber?.toUpperCase() === s.awbNumber?.toUpperCase() ||
+                  activeRecord?.orderId?.toUpperCase() === s.orderId?.toUpperCase();
+                return (
+                  <Button
+                    key={s.id}
+                    variant={isSelected ? 'primary' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setSearchInput(target);
+                      setSearchParams({ query: target });
+                      syncLiveTracking(target);
+                    }}
+                    style={{
+                      fontSize: '11px',
+                      padding: '4px 8px',
+                      backgroundColor: isSelected ? '#0284c7' : 'transparent',
+                      color: isSelected ? '#ffffff' : '#334155',
+                    }}
+                  >
+                    {s.awbNumber || s.orderId} ({s.customerFacingStatus || s.bookingStatus})
+                  </Button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </Card>
 
@@ -891,13 +665,27 @@ export const TrackingPage: React.FC = () => {
       {/* 3. TRACKING RESULT CONTENT */}
       {!activeRecord ? (
         <Card style={{ padding: '48px 20px', textAlign: 'center', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-          <AlertCircle size={40} style={{ color: '#ef4444', margin: '0 auto 12px' }} />
-          <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
-            No Shipment Found
-          </h3>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
-            No shipment matches "{searchInput}". Please check the AWB Number or Order ID and try again.
-          </p>
+          {searchInput.trim() ? (
+            <>
+              <AlertCircle size={40} style={{ color: '#ef4444', margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                No Shipment Found
+              </h3>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+                No shipment matches "{searchInput}". Please check the AWB Number or Order ID and try again.
+              </p>
+            </>
+          ) : (
+            <>
+              <Search size={40} style={{ color: '#0284c7', margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                Live Tracking Search
+              </h3>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+                Enter your Delhivery AWB number or Order ID in the search box above to track live transit milestones.
+              </p>
+            </>
+          )}
         </Card>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

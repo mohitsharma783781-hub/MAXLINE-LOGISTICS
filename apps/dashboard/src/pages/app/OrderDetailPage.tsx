@@ -74,7 +74,7 @@ export const OrderDetailPage: React.FC = () => {
     variant: 'info' as const,
   };
 
-  const awbNumber = 'DEL98401928';
+  const awbNumber = order.awbNumber || (order as any).trackingNumber || (order as any).waybill || '';
   const lrnNumber = `LRN-2026-${order.orderNumber.replace(/\D/g, '') || '98401'}`;
 
   // Quick Action Handlers
@@ -200,7 +200,7 @@ export const OrderDetailPage: React.FC = () => {
             variant="primary"
             size="sm"
             leftIcon={<Search size={14} />}
-            onClick={() => navigate(`/app/tracking?query=${order.orderNumber}`)}
+            onClick={() => navigate(`/app/tracking?query=${encodeURIComponent(awbNumber || order.orderNumber)}`)}
             style={{ backgroundColor: '#0284c7', borderColor: '#0284c7' }}
           >
             Track Shipment

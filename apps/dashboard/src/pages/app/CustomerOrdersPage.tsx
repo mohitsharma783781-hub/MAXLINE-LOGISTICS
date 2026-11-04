@@ -847,7 +847,10 @@ export const CustomerOrdersPage: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         title="Track Shipment"
-                        onClick={() => navigate('/app/tracking')}
+                        onClick={() => {
+                          const trackTarget = r.awbNumber && r.awbNumber !== 'PENDING' ? r.awbNumber : (r.orderId || r.id);
+                          navigate(`/app/tracking?query=${encodeURIComponent(trackTarget)}`);
+                        }}
                         style={{ padding: '4px 6px', color: '#0284c7' }}
                       >
                         <Truck size={14} />
@@ -1100,7 +1103,10 @@ export const CustomerOrdersPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    navigate('/app/tracking');
+                    const trackTarget = selectedOrder.awbNumber && selectedOrder.awbNumber !== 'PENDING'
+                      ? selectedOrder.awbNumber
+                      : (selectedOrder.orderId || selectedOrder.id);
+                    navigate(`/app/tracking?query=${encodeURIComponent(trackTarget)}`);
                   }}
                   style={{ color: '#0f172a' }}
                 >

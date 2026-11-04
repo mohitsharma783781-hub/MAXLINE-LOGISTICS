@@ -257,7 +257,7 @@ export const ShipmentControlCenterPage: React.FC = () => {
               variant="outline"
               size="sm"
               leftIcon={<Search size={14} />}
-              onClick={() => navigate('/app/tracking')}
+              onClick={() => navigate(`/app/tracking?query=${encodeURIComponent(shipment.awbNumber || shipment.shipmentId || shipment.orderId)}`)}
             >
               Track Shipment
             </Button>
