@@ -125,8 +125,7 @@ export const WalletPage: React.FC = () => {
           purpose: 'WALLET_RECHARGE',
         },
         onSuccess: async (data) => {
-          // Credit the wallet with the verified payment
-          WalletService.recharge(amt, `Razorpay (${data.payment_id})`, tenantId);
+          // Authoritative credit was already performed server-side by /api/verify-payment
           const synced = await WalletService.syncFromSupabase(tenantId).catch(() => WalletService.getWallet(tenantId));
           setWallet(synced);
           setIsRechargeModalOpen(false);

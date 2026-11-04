@@ -222,18 +222,6 @@ export const WalletService = {
     txs.unshift(newTx);
     saveTxsToStorage(tid, txs);
 
-    // Asynchronously synchronize credit with Supabase Cloud DB
-    SupabaseWalletService.creditWalletRPC({
-      tenantId: tid,
-      amountMinor,
-      type: 'RECHARGE',
-      referenceType: 'RECHARGE',
-      referenceId: newTx.referenceId,
-      description: newTx.description,
-      idempotencyKey: newTx.idempotencyKey,
-      actorType: 'MERCHANT',
-    }).catch(() => {});
-
     return newTx;
   },
 
