@@ -25,13 +25,13 @@ export const AdminShipmentsPage: React.FC = () => {
   const [targetStatus, setTargetStatus] = useState<InternalShipmentStatus>('IN_TRANSIT');
   const [updateReason, setUpdateReason] = useState('Operational hub scan verification');
 
-  const refreshShipments = () => {
-    setShipments(CustomerShipmentService.getShipments('all', searchQuery, statusFilter));
+  const refreshShipments = (q = searchQuery, status = statusFilter) => {
+    setShipments(CustomerShipmentService.getShipments('all', q, status));
   };
 
   useEffect(() => {
     CustomerShipmentService.syncFromSupabase('all').then(() => {
-      refreshShipments();
+      refreshShipments(searchQuery, statusFilter);
     });
   }, []);
 
@@ -72,13 +72,19 @@ export const AdminShipmentsPage: React.FC = () => {
             <Input
               placeholder="Search Shipment ID, AWB, Order ID, Customer Tenant, Courier..."
               value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); refreshShipments(); }}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                refreshShipments(e.target.value, statusFilter);
+              }}
             />
           </div>
 
           <Select
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); refreshShipments(); }}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              refreshShipments(searchQuery, e.target.value);
+            }}
             options={[
               { value: 'all', label: 'All Statuses' },
               { value: 'BOOKING_CONFIRMED', label: 'Booking Confirmed' },
@@ -100,7 +106,7 @@ export const AdminShipmentsPage: React.FC = () => {
       {/* 3. Global Admin Shipments Table */}
       <Card style={{ padding: 'var(--space-4)' }}>
         <Table<CustomerShipmentDetail>
-          keyExtractor={(r) => r.id}
+          keyExtractor={(r) => r.id || r.shipmentId || r.awbNumber || Math.random().toString()}
           columns={[
             {
               key: 'shipmentId',

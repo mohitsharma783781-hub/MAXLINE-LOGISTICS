@@ -109,13 +109,49 @@ export const INITIAL_CUSTOMER_SHIPMENTS: CustomerShipmentDetail[] = [];
 
 const SHIPMENT_KEY = 'COURRIER3_SHIPMENT_STORE';
 
+export function deduplicateShipments(list: CustomerShipmentDetail[]): CustomerShipmentDetail[] {
+  const seen = new Set<string>();
+  const result: CustomerShipmentDetail[] = [];
+  for (const s of list) {
+    if (!s) continue;
+    const keyAwb = s.awbNumber && s.awbNumber !== 'PENDING' ? s.awbNumber.toLowerCase().trim() : null;
+    const keyShipmentId = s.shipmentId ? s.shipmentId.toLowerCase().trim() : null;
+    const keyId = s.id ? s.id.toLowerCase().trim() : null;
+    const keyOrder = s.orderId ? `${s.tenantId || ''}:${s.orderId.toLowerCase().trim()}` : null;
+
+    const isDup =
+      (keyAwb && seen.has(`awb:${keyAwb}`)) ||
+      (keyShipmentId && seen.has(`shp:${keyShipmentId}`)) ||
+      (keyId && seen.has(`id:${keyId}`)) ||
+      (keyOrder && seen.has(`ord:${keyOrder}`));
+
+    if (isDup) {
+      continue;
+    }
+
+    if (keyAwb) seen.add(`awb:${keyAwb}`);
+    if (keyShipmentId) seen.add(`shp:${keyShipmentId}`);
+    if (keyId) seen.add(`id:${keyId}`);
+    if (keyOrder) seen.add(`ord:${keyOrder}`);
+
+    result.push(s);
+  }
+  return result;
+}
+
 function loadShipmentsFromStorage(): CustomerShipmentDetail[] {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       const raw = localStorage.getItem(SHIPMENT_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          const dedupled = deduplicateShipments(parsed);
+          if (dedupled.length !== parsed.length) {
+            saveShipmentsToStorage(dedupled);
+          }
+          return dedupled;
+        }
       }
     }
   } catch {
@@ -127,7 +163,8 @@ function loadShipmentsFromStorage(): CustomerShipmentDetail[] {
 function saveShipmentsToStorage(store: CustomerShipmentDetail[]) {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem(SHIPMENT_KEY, JSON.stringify(store));
+      const dedupled = deduplicateShipments(store);
+      localStorage.setItem(SHIPMENT_KEY, JSON.stringify(dedupled));
     }
   } catch {
     // Ignore storage errors
@@ -234,7 +271,7 @@ export const CustomerShipmentService = {
       courierFilter = 'all',
     } = params;
 
-    return SHIPMENT_STORE.filter((s) => {
+    const filtered = SHIPMENT_STORE.filter((s) => {
       if (tenantId && tenantId.toLowerCase() !== 'all' && s.tenantId !== tenantId) return false;
 
       // Status Filter
@@ -272,12 +309,15 @@ export const CustomerShipmentService = {
 
       return true;
     });
+
+    return deduplicateShipments(filtered);
   },
 
   getShipmentSummaryStats: (tenantId = 'tenant-demo-01') => {
-    const list = (!tenantId || tenantId.toLowerCase() === 'all')
+    const rawList = (!tenantId || tenantId.toLowerCase() === 'all')
       ? SHIPMENT_STORE
       : SHIPMENT_STORE.filter((s) => s.tenantId === tenantId);
+    const list = deduplicateShipments(rawList);
     let booked = 0;
     let inTransit = 0;
     let delivered = 0;
@@ -445,13 +485,14 @@ export const CustomerShipmentService = {
 
   // Save new shipment record dynamically to store and sync with Supabase Cloud DB
   addShipmentRecord: (shipment: CustomerShipmentDetail): CustomerShipmentDetail => {
-    SHIPMENT_STORE.unshift(shipment);
+    SHIPMENT_STORE = deduplicateShipments([shipment, ...SHIPMENT_STORE]);
     saveShipmentsToStorage(SHIPMENT_STORE);
 
     // Asynchronously synchronize new shipment with Supabase Cloud DB
     SupabaseShipmentService.insertShipment(shipment).then((res) => {
       if (res.success && res.recordId) {
         shipment.id = res.recordId;
+        SHIPMENT_STORE = deduplicateShipments(SHIPMENT_STORE);
         saveShipmentsToStorage(SHIPMENT_STORE);
       }
     }).catch((err) => {
@@ -470,7 +511,7 @@ export const CustomerShipmentService = {
     } catch (err: any) {
       console.warn('[CustomerShipmentService] Supabase insert exception:', err?.message);
     }
-    SHIPMENT_STORE.unshift(shipment);
+    SHIPMENT_STORE = deduplicateShipments([shipment, ...SHIPMENT_STORE]);
     saveShipmentsToStorage(SHIPMENT_STORE);
     return { success: true, shipment };
   },
@@ -480,12 +521,29 @@ export const CustomerShipmentService = {
     if (!tenantId) return CustomerShipmentService.getShipments(tenantId);
     try {
       const cloudShipments = await SupabaseShipmentService.fetchShipments(tenantId);
-      if (Array.isArray(cloudShipments) && cloudShipments.length > 0) {
-        // Retain other tenants' records if any
-        const otherTenants = SHIPMENT_STORE.filter((s) => s.tenantId !== tenantId);
-        SHIPMENT_STORE = [...cloudShipments, ...otherTenants];
+      if (Array.isArray(cloudShipments)) {
+        if (tenantId.toLowerCase() === 'all') {
+          // In global Super Admin view, database is the single authoritative source of truth
+          SHIPMENT_STORE = deduplicateShipments(cloudShipments);
+        } else {
+          // Replace records for this tenant with fresh database records
+          const seenCloudKeys = new Set(
+            cloudShipments.flatMap((s) => [
+              s.id?.toLowerCase(),
+              s.shipmentId?.toLowerCase(),
+              s.awbNumber?.toLowerCase(),
+            ]).filter(Boolean)
+          );
+          const otherTenants = SHIPMENT_STORE.filter(
+            (s) =>
+              s.tenantId !== tenantId &&
+              !seenCloudKeys.has(s.id?.toLowerCase()) &&
+              !seenCloudKeys.has(s.shipmentId?.toLowerCase())
+          );
+          SHIPMENT_STORE = deduplicateShipments([...cloudShipments, ...otherTenants]);
+        }
         saveShipmentsToStorage(SHIPMENT_STORE);
-        return cloudShipments;
+        return CustomerShipmentService.getShipments(tenantId);
       }
     } catch (err: any) {
       console.warn('[CustomerShipmentService] Supabase sync warning:', err?.message);
