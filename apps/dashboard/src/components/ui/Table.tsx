@@ -11,8 +11,9 @@ export interface Column<T> {
 export interface TableProps<T> {
   columns: Column<T>[];
   data: T[];
-  keyExtractor: (row: T) => string | number;
+  keyExtractor?: (row: T, index?: number) => string | number;
   emptyText?: string;
+  emptyMessage?: string;
   isLoading?: boolean;
   footer?: React.ReactNode;
 }
@@ -22,9 +23,20 @@ export function Table<T extends Record<string, unknown>>({
   data,
   keyExtractor,
   emptyText = 'No records found',
+  emptyMessage,
   isLoading = false,
   footer,
 }: TableProps<T>) {
+  const resolvedEmptyText = emptyMessage || emptyText;
+  const getKey = (row: T, idx: number): string | number => {
+    if (typeof keyExtractor === 'function') {
+      try {
+        const k = keyExtractor(row, idx);
+        if (k !== undefined && k !== null) return k;
+      } catch {}
+    }
+    return (row as any)?.id || (row as any)?.key || (row as any)?._id || (row as any)?.shipmentId || (row as any)?.referenceId || `row-${idx}`;
+  };
   return (
     <div
       style={{
@@ -96,13 +108,13 @@ export function Table<T extends Record<string, unknown>>({
                   fontSize: 'var(--font-size-body)',
                 }}
               >
-                {emptyText}
+                {resolvedEmptyText}
               </td>
             </tr>
           ) : (
-            data.map((row) => (
+            data.map((row, index) => (
               <tr
-                key={keyExtractor(row)}
+                key={getKey(row, index)}
                 style={{
                   borderBottom: '1px solid var(--color-border)',
                   backgroundColor: 'var(--color-surface)',

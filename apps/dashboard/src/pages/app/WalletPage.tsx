@@ -858,6 +858,7 @@ export const WalletPage: React.FC = () => {
                 },
               ]}
               data={paginatedTransactions as unknown as Record<string, unknown>[]}
+              keyExtractor={(row) => ((row as any)?.id || (row as any)?.referenceId || Math.random())}
               emptyMessage={
                 isLoading
                   ? 'Synchronizing wallet ledger...'
@@ -1112,6 +1113,7 @@ export const WalletPage: React.FC = () => {
                 },
               ]}
               data={paginatedShipments as unknown as Record<string, unknown>[]}
+              keyExtractor={(row) => ((row as any)?.id || (row as any)?.shipmentId || (row as any)?.awbNumber || Math.random())}
               emptyMessage={
                 isLoading
                   ? 'Loading shipment billing records...'
