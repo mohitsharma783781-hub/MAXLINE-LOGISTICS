@@ -635,12 +635,31 @@ export const CustomerOrdersPage: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Button variant="outline" size="sm" style={{ backgroundColor: '#ffffff', color: '#0284c7', borderColor: '#ffffff', fontSize: '11px', fontWeight: '700' }} onClick={() => alert(`Bulk Printing Shipping Labels for ${selectedIds.length} orders...`)}>
-              <Printer size={13} style={{ marginRight: '4px' }} /> Bulk Print Labels
+            <Button
+              variant="outline"
+              size="sm"
+              style={{ backgroundColor: '#ffffff', color: '#0284c7', borderColor: '#ffffff', fontSize: '11px', fontWeight: '700' }}
+              onClick={() => navigate('/app/pickups/create', { state: { selectedShipmentIds: selectedIds } })}
+            >
+              <Truck size={13} style={{ marginRight: '4px' }} /> Schedule Pickup
             </Button>
 
-            <Button variant="outline" size="sm" style={{ backgroundColor: '#ffffff', color: '#0284c7', borderColor: '#ffffff', fontSize: '11px', fontWeight: '700' }} onClick={() => alert(`Creating Bulk Manifest for ${selectedIds.length} orders...`)}>
+            <Button
+              variant="outline"
+              size="sm"
+              style={{ backgroundColor: '#ffffff', color: '#0284c7', borderColor: '#ffffff', fontSize: '11px', fontWeight: '700' }}
+              onClick={() => navigate('/app/manifests/create', { state: { selectedShipmentIds: selectedIds } })}
+            >
               <FileText size={13} style={{ marginRight: '4px' }} /> Bulk Manifest
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              style={{ backgroundColor: '#ffffff', color: '#0284c7', borderColor: '#ffffff', fontSize: '11px', fontWeight: '700' }}
+              onClick={() => alert(`Bulk Printing Shipping Labels for ${selectedIds.length} orders...`)}
+            >
+              <Printer size={13} style={{ marginRight: '4px' }} /> Bulk Labels
             </Button>
 
             <Button variant="outline" size="sm" style={{ backgroundColor: '#ffffff', color: '#0284c7', borderColor: '#ffffff', fontSize: '11px', fontWeight: '700' }} onClick={() => alert(`Exporting ${selectedIds.length} selected orders to CSV...`)}>
@@ -1087,16 +1106,27 @@ export const CustomerOrdersPage: React.FC = () => {
                 Open Full Control Center Page →
               </Button>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
                     navigate(`/app/shipments/${selectedDrawerOrder.id}/label`);
                   }}
-                  style={{ color: '#0284c7', borderColor: '#bae6fd', backgroundColor: '#f0f9ff' }}
+                  style={{ color: '#0284c7', borderColor: '#bae6fd', backgroundColor: '#f0f9ff', padding: '6px 4px', fontSize: '11px' }}
                 >
-                  <Printer size={13} style={{ marginRight: '4px' }} /> Print Label
+                  <Printer size={13} style={{ marginRight: '3px' }} /> Label
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigate('/app/pickups/create', { state: { selectedShipmentIds: [selectedDrawerOrder.id] } });
+                  }}
+                  style={{ color: '#16a34a', borderColor: '#bbf7d0', backgroundColor: '#f0fdf4', padding: '6px 4px', fontSize: '11px' }}
+                >
+                  <Calendar size={13} style={{ marginRight: '3px' }} /> Pickup
                 </Button>
 
                 <Button
@@ -1108,9 +1138,9 @@ export const CustomerOrdersPage: React.FC = () => {
                       : (selectedOrder.orderId || selectedOrder.id);
                     navigate(`/app/tracking?query=${encodeURIComponent(trackTarget)}`);
                   }}
-                  style={{ color: '#0f172a' }}
+                  style={{ color: '#0f172a', padding: '6px 4px', fontSize: '11px' }}
                 >
-                  <Truck size={13} style={{ marginRight: '4px' }} /> Track Live
+                  <Truck size={13} style={{ marginRight: '3px' }} /> Track
                 </Button>
               </div>
             </div>

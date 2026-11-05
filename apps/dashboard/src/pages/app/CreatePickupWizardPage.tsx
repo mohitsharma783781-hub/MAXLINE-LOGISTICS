@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -61,15 +61,21 @@ export const CreatePickupWizardPage: React.FC = () => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-  const [formData, setFormData] = useState<CreatePickupForm>({
-    warehouseId: defaultWh?.id || '',
-    selectedShipmentIds: [],
-    courierId: 'delhivery',
-    pickupDate: todayStr,
-    timeSlot: '02:00 PM – 06:00 PM',
-    contactPerson: defaultWh.contactPerson || 'Mohit Sharma',
-    contactPhone: defaultWh.contactPhone || '+91 70091 74879',
-    specialInstructions: 'Courier van dispatch to main loading dock. Contact warehouse manager before arrival.',
+  const location = useLocation();
+  const preselected = (location.state as any)?.selectedShipmentIds || [];
+
+  const [formData, setFormData] = useState<CreatePickupForm>(() => {
+    const preList = Array.isArray(preselected) ? preselected : [];
+    return {
+      warehouseId: defaultWh?.id || '',
+      selectedShipmentIds: preList,
+      courierId: 'delhivery',
+      pickupDate: todayStr,
+      timeSlot: '02:00 PM – 06:00 PM',
+      contactPerson: defaultWh?.contactPerson || 'Mohit Sharma',
+      contactPhone: defaultWh?.contactPhone || '+91 70091 74879',
+      specialInstructions: 'Commercial cargo vehicle dispatch to loading dock. Contact warehouse manager before arrival.',
+    };
   });
 
   // Keep contact info updated if warehouse selection changes

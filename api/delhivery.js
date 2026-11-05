@@ -18,6 +18,7 @@ const handlers = {
   'b2b-login': require('./_delhivery/b2b-login.js'),
   'b2b-manifest': require('./_delhivery/b2b-manifest.js'),
   'b2b-track': require('./_delhivery/b2b-track.js'),
+  'b2b-pickup': require('./_delhivery/b2b-pickup.js'),
 };
 
 module.exports = async (req, res) => {

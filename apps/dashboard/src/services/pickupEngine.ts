@@ -7,6 +7,7 @@ import type {
 import { CustomerWarehouseService } from './customerWarehouseService';
 import { CustomerShipmentService } from './customerShipmentService';
 import { DelhiveryService } from './delhiveryService';
+import { DelhiveryB2bService } from './delhiveryB2bService';
 
 const PICKUPS_STORAGE_KEY = 'maxline_pickups_store';
 
@@ -81,11 +82,46 @@ export const PickupEngine = {
     };
 
     const warehouseAddress = `${wh.addressLine1}, ${wh.city}, ${wh.state || 'Haryana'} - ${wh.pincode}`;
+    
+    // Detect B2B shipments
+    const targetShipments = input.shipmentIds
+      .map((id) => CustomerShipmentService.getShipmentById(id, tenantId) || CustomerShipmentService.getShipmentById(id))
+      .filter(Boolean);
+    const hasB2b = targetShipments.some((s) => s?.mode === 'B2B' || s?.courierName?.toLowerCase().includes('b2b'));
+    const isDelhiveryB2b = hasB2b || (input.courierId || '').toLowerCase().includes('b2b');
     const isDelhivery = (input.courierId || 'delhivery').toLowerCase().includes('delhivery');
-    let pickupRef = `PRQ-DEL-${Math.floor(100000 + Math.random() * 900000)}`;
+    
+    let pickupRef = isDelhiveryB2b
+      ? `PRQ-B2B-${Math.floor(100000 + Math.random() * 900000)}`
+      : `PRQ-DEL-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // 2. Dispatch Live Request to Delhivery First Mile (FM) API
-    if (isDelhivery) {
+    let computedTotalWeight = targetShipments.reduce((sum, s) => sum + (Number(s?.chargeableWeightKg) || 1), 0);
+    if (isDelhiveryB2b && computedTotalWeight < 20) computedTotalWeight = 20;
+
+    const consignments = targetShipments.map((s) => s?.awbNumber).filter(Boolean) as string[];
+
+    // 2. Dispatch Live Request to Delhivery B2B Freight vs B2C Express API
+    if (isDelhiveryB2b) {
+      try {
+        const b2bRes = await DelhiveryB2bService.requestPickup({
+          pickupWarehouse: wh.warehouseName || 'AJAYKUMAR10RP B2BRC',
+          pickupDate: input.pickupDate,
+          pickupTime: input.pickupSlot,
+          expectedPackageCount: input.shipmentIds.length,
+          totalWeightKg: computedTotalWeight,
+          consignments,
+          contactPerson: input.contactPerson || wh.contactPerson,
+          contactPhone: input.contactPhone || wh.contactPhone,
+          vehicleType: 'Commercial Cargo Van / Tata Ace',
+          specialInstructions: input.specialInstructions,
+        });
+        if (b2bRes.success && b2bRes.pickupId) {
+          pickupRef = String(b2bRes.pickupId);
+        }
+      } catch (b2bErr) {
+        console.warn('[PickupEngine] Delhivery B2B Pickup error fallback:', b2bErr);
+      }
+    } else if (isDelhivery) {
       try {
         const delRes = await DelhiveryService.requestPickup({
           pickupDate: input.pickupDate,
@@ -102,6 +138,12 @@ export const PickupEngine = {
     }
 
     const pickupId = `pkp-${Date.now()}`;
+    const courierNameDisplay = isDelhiveryB2b
+      ? 'Delhivery Surface B2B'
+      : isDelhivery
+      ? 'Delhivery Surface Express'
+      : input.courierId;
+
     const requestObj: PickupRequest = {
       id: pickupId,
       pickupNumber: pickupRef,
@@ -109,11 +151,11 @@ export const PickupEngine = {
       warehouseId: input.warehouseId || 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
       warehouseName: wh.warehouseName,
       warehouseAddress,
-      courierId: input.courierId || 'delhivery',
-      courierName: isDelhivery ? 'Delhivery Surface Express' : input.courierId,
+      courierId: input.courierId || (isDelhiveryB2b ? 'delhivery-b2b' : 'delhivery'),
+      courierName: courierNameDisplay,
       shipmentIds: input.shipmentIds,
       shipmentCount: input.shipmentIds.length,
-      totalWeightKg: input.shipmentIds.length * 1.0,
+      totalWeightKg: computedTotalWeight,
       pickupDate: input.pickupDate,
       timeSlot: input.pickupSlot,
       contactPerson: input.contactPerson || wh.contactPerson,
