@@ -117,9 +117,25 @@ export const PickupEngine = {
         });
         if (b2bRes.success && b2bRes.pickupId) {
           pickupRef = String(b2bRes.pickupId);
+        } else {
+          return {
+            success: false,
+            pickupReference: '',
+            status: 'FAILED',
+            pickupDate: input.pickupDate,
+            pickupSlot: input.pickupSlot,
+            failureReason: b2bRes.message || 'Delhivery B2B Freight pickup scheduling was rejected by carrier gateway.',
+          };
         }
-      } catch (b2bErr) {
-        console.warn('[PickupEngine] Delhivery B2B Pickup error fallback:', b2bErr);
+      } catch (b2bErr: any) {
+        return {
+          success: false,
+          pickupReference: '',
+          status: 'FAILED',
+          pickupDate: input.pickupDate,
+          pickupSlot: input.pickupSlot,
+          failureReason: `Delhivery B2B Pickup Exception: ${b2bErr?.message || 'Network error'}`,
+        };
       }
     } else if (isDelhivery) {
       try {

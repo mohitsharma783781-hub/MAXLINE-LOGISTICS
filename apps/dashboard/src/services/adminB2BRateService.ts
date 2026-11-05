@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 import { DEMO_B2B_RATE_CARDS } from '../mocks/b2bPricing.mock';
+import { computeB2B10CftConsignment } from '../utils/b2bDimensions';
 
 export interface B2BRateCardAuditLog extends Record<string, unknown> {
   id: string;
@@ -433,18 +434,20 @@ export class AdminB2BRateService {
       }
     } catch (_fetchErr) {}
 
-    // Resilient Commercial Aggregator B2B Pricing Engine (Pan-India Corridors)
+    // Authoritative Shared B2B 10 CFT Dimensional Density & 20 KG Minimum Slab Calculation
+    const normalizedBoxes = (input.boxes || []).map((b) => ({
+      lengthCm: Number(b.lengthCm) || 10,
+      widthCm: Number(b.widthCm) || 10,
+      heightCm: Number(b.heightCm) || 10,
+      actualWeightKg: Math.max(0.1, Number(input.deadWeightKg || 1) / Math.max(1, (input.boxes || []).length)),
+      quantity: Number(b.quantity) || 1,
+    }));
+
+    const cftSummary = computeB2B10CftConsignment(normalizedBoxes);
     const deadWeightKg = Math.max(1, Number(input.deadWeightKg) || 1);
-    let totalVolumetricKg = 0;
-    (input.boxes || []).forEach((b) => {
-      const l = Number(b.lengthCm) || 10;
-      const w = Number(b.widthCm) || 10;
-      const h = Number(b.heightCm) || 10;
-      const q = Number(b.quantity) || 1;
-      totalVolumetricKg += ((l * w * h) / 5000) * q;
-    });
-    totalVolumetricKg = Math.round(totalVolumetricKg * 10) / 10;
-    const chargeableWeightKg = Math.max(deadWeightKg, totalVolumetricKg);
+    const totalVolumetricKg = cftSummary.totalVolumetricWeightKg;
+    // Chargeable weight: highest of dead weight vs 10 CFT volumetric weight, with 20 KG slab rule
+    const chargeableWeightKg = Math.max(20, Math.max(deadWeightKg, totalVolumetricKg));
 
     const origPin = (input.originPincode || '').replace(/\D/g, '').trim();
     const destPin = (input.destinationPincode || '').replace(/\D/g, '').trim();

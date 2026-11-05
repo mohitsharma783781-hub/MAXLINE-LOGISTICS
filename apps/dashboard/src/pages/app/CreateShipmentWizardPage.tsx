@@ -363,6 +363,8 @@ export const CreateShipmentWizardPage: React.FC = () => {
     navState.mode === 'B2B' ? 'b2b_freight' : 'parcel'
   );
   const [ewayBillNumber, setEwayBillNumber] = useState<string>('');
+  const [isEwbExempt, setIsEwbExempt] = useState<boolean>(false);
+  const [ewbExemptionReason, setEwbExemptionReason] = useState<string>('');
 
   // Single-box sync fields (preserved for backwards-compatibility & quick edit)
   const [deadWeight, setDeadWeight] = useState<string>(() =>
@@ -1136,6 +1138,20 @@ export const CreateShipmentWizardPage: React.FC = () => {
       }
     }
 
+    // TASK 3 & 6: Statutory E-Way Bill Validation for B2B Consignments (CGST Rule 138 with Exemptions)
+    if (shipmentCategory === 'b2b_freight') {
+      const cleanEwb = ewayBillNumber.trim().replace(/\D/g, '');
+      if (cleanEwb) {
+        if (cleanEwb.length !== 12) {
+          setFormError('E-Way Bill Number must be exactly 12 numeric digits.');
+          return false;
+        }
+      } else if (val > 50000 && !isEwbExempt) {
+        setFormError(`E-Way Bill Number is legally mandatory for commercial B2B freight with invoice value exceeding ₹50,000 (Current Invoice: ₹${val.toLocaleString('en-IN')}) unless marked legally exempt under GST Rule 138(14).`);
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -1255,16 +1271,20 @@ export const CreateShipmentWizardPage: React.FC = () => {
         deliveryCity: deliveryCity.trim(),
         deliveryState: deliveryState.trim(),
         deliveryPincode: deliveryPincode.trim().replace(/\D/g, ''),
+        deliveryGstin: receiverGstin.trim(),
         invoiceNumber: `INV-${Date.now().toString().slice(-4)}`,
         invoiceDate: new Date().toISOString().split('T')[0],
         invoiceValueINR: Number(invoiceValue),
+        ewayBillNumber: ewayBillNumber.trim(),
+        isEwbExempt,
+        ewbExemptionReason: isEwbExempt ? 'Exempt under GST Rule 138(14)' : undefined,
         paymentMode,
         codAmount: paymentMode === 'cod' ? Number(codAmount) : 0,
         insuranceEnabled,
         insuredValueINR: insuranceEnabled ? Number(insuredValue) : 0,
         packageType: shipmentCategory === 'document' ? 'Flyer' : 'Box',
         packages: packages.map((p) => {
-          const safeDiv = 5000;
+          const safeDiv = shipmentCategory === 'b2b_freight' ? 2700 : 5000;
           const volPerUnit = Math.round(((p.lengthCm * p.widthCm * p.heightCm) / safeDiv) * 10) / 10;
           return {
             id: p.id,
@@ -2103,15 +2123,34 @@ export const CreateShipmentWizardPage: React.FC = () => {
                   <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
                     <div style={{ maxWidth: '360px' }}>
                       <Input
-                        label="E-Way Bill Number (Optional)"
+                        label={`E-Way Bill Number ${shipmentCategory === 'b2b_freight' && Number(invoiceValue) > 50000 && !isEwbExempt ? '(Required for B2B > ₹50,000) *' : '(Optional)'}`}
                         placeholder="12-digit E-Way Bill Number"
                         value={ewayBillNumber}
                         onChange={(e) => setEwayBillNumber(e.target.value.replace(/\D/g, '').slice(0, 12))}
                         maxLength={12}
+                        disabled={isEwbExempt}
                       />
-                      <span style={{ fontSize: '11px', color: '#64748b', marginTop: '3px', display: 'block' }}>
-                        Recommended in India for consignments with invoice value exceeding ₹50,000
+                      <span style={{ fontSize: '11px', color: Number(invoiceValue) > 50000 && shipmentCategory === 'b2b_freight' && !isEwbExempt ? '#dc2626' : '#64748b', marginTop: '3px', display: 'block', fontWeight: Number(invoiceValue) > 50000 && shipmentCategory === 'b2b_freight' && !isEwbExempt ? '600' : 'normal' }}>
+                        {Number(invoiceValue) > 50000 && shipmentCategory === 'b2b_freight'
+                          ? isEwbExempt
+                            ? '✓ Marked exempt under GST Rule 138(14).'
+                            : '⚠️ Legally mandatory under Indian GST (CGST Rule 138) for consignment value exceeding ₹50,000.'
+                          : 'Mandatory in India for consignments with invoice value exceeding ₹50,000.'}
                       </span>
+
+                      {shipmentCategory === 'b2b_freight' && Number(invoiceValue) > 50000 && (
+                        <div style={{ marginTop: '8px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#475569', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={isEwbExempt}
+                              onChange={(e) => setIsEwbExempt(e.target.checked)}
+                              style={{ width: '14px', height: '14px', cursor: 'pointer' }}
+                            />
+                            <span>Consignment is legally exempt from E-Way Bill under GST Rule 138(14) (e.g. intra-state enhanced threshold, agricultural or non-taxable goods)</span>
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

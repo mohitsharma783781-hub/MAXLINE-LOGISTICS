@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
 
   try {
     const isProd = process.env.DELHIVERY_B2B_ENV === 'production';
-    const baseUrl = isProd ? B2B_PROD_BASE : B2B_STAGING_BASE;
+    const baseUrl = isProd && process.env.DELHIVERY_B2B_ALLOW_LIVE === 'true' ? B2B_PROD_BASE : B2B_STAGING_BASE;
 
     const lrNumber = req.query?.lrNumber || req.query?.waybill || req.query?.lrnum;
     let token = req.query?.token || req.headers?.authorization?.replace('Bearer ', '');
@@ -34,13 +34,23 @@ module.exports = async (req, res) => {
     }
 
     if (!token) {
+      const b2bUser = process.env.DELHIVERY_B2B_USERNAME;
+      const b2bPass = process.env.DELHIVERY_B2B_PASSWORD;
+
+      if (!b2bUser || !b2bPass) {
+        return res.status(500).json({
+          success: false,
+          message: 'Delhivery B2B credentials are not configured in server environment.',
+        });
+      }
+
       try {
         const loginRes = await fetch(`${baseUrl}/ums/login/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            username: process.env.DELHIVERY_B2B_USERNAME || 'AJAYKUMAR10RPB2BRC-B2B',
-            password: process.env.DELHIVERY_B2B_PASSWORD || 'Ajaykumar@123',
+            username: b2bUser.trim(),
+            password: b2bPass.trim(),
           }),
         });
         if (loginRes.ok) {

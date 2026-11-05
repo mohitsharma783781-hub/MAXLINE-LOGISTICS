@@ -4,6 +4,12 @@
  * Enforces 10 CFT volumetric density and 20 KG minimum billing slab.
  */
 
+import {
+  calculate10CftBoxVolumetricKg,
+  computeB2B10CftConsignment,
+  B2B_10CFT_CONFIG,
+} from '../utils/b2bDimensions';
+
 export interface B2BBoxDimension {
   lengthCm: number;
   widthCm: number;
@@ -33,46 +39,31 @@ export interface B2BManifestParams {
 export class DelhiveryB2bService {
   private static readonly CLIENT_NAME = 'AJAYKUMAR10RPB2BRC-B2B';
   private static readonly DEFAULT_WAREHOUSE = 'AJAYKUMAR10RP B2BRC';
-  private static readonly MIN_SLAB_KG = 20; // 20 KG MINIMUM SLAB
-  private static readonly CFT_DIVISOR = 27000;
-  private static readonly CFT_MULTIPLIER = 10; // 10 CFT = 10 kg / CFT
+  private static readonly MIN_SLAB_KG = B2B_10CFT_CONFIG.MIN_SLAB_KG; // 20 KG MINIMUM SLAB
+  private static readonly CFT_DIVISOR = B2B_10CFT_CONFIG.CFT_DIVISOR_CM3;
+  private static readonly CFT_MULTIPLIER = B2B_10CFT_CONFIG.CFT_WEIGHT_FACTOR_KG;
 
   /**
-   * Calculate 10 CFT Volumetric Weight in KG
-   * Formula: (L * W * H / 27000) * 10
+   * Calculate 10 CFT Volumetric Weight in KG using shared authoritative formula:
+   * (L * W * H / 27000) * 10 = (L * W * H / 2700)
    */
   public static calculate10CftVolumetricKg(lengthCm: number, widthCm: number, heightCm: number): number {
-    const vol = ((lengthCm || 0) * (widthCm || 0) * (heightCm || 0) / this.CFT_DIVISOR) * this.CFT_MULTIPLIER;
-    return Math.round(vol * 100) / 100;
+    return calculate10CftBoxVolumetricKg(lengthCm, widthCm, heightCm);
   }
 
   /**
-   * Calculate Total Chargeable Weight applying 20 KG Minimum Slab
+   * Calculate Total Chargeable Weight applying 20 KG Minimum Slab across multiple boxes
    */
   public static computeConsignmentWeights(boxes: B2BBoxDimension[]) {
-    let totalActualKg = 0;
-    let totalVolumetricKg = 0;
-    let totalPieces = 0;
-
-    boxes.forEach((b) => {
-      const count = Math.max(1, b.boxCount || 1);
-      const act = Math.max(0.1, b.actualWeightKg || 0);
-      const vol = this.calculate10CftVolumetricKg(b.lengthCm, b.widthCm, b.heightCm);
-
-      totalPieces += count;
-      totalActualKg += act * count;
-      totalVolumetricKg += vol * count;
-    });
-
-    const maxWeight = Math.max(totalActualKg, totalVolumetricKg);
-    const chargeableWeightKg = Math.max(this.MIN_SLAB_KG, Math.round(maxWeight * 100) / 100);
-
+    const summary = computeB2B10CftConsignment(boxes);
     return {
-      totalPieces,
-      totalActualKg: Math.round(totalActualKg * 100) / 100,
-      totalVolumetricKg: Math.round(totalVolumetricKg * 100) / 100,
-      minSlabKg: this.MIN_SLAB_KG,
-      chargeableWeightKg,
+      totalPieces: summary.totalBoxes,
+      totalActualKg: summary.totalActualWeightKg,
+      totalVolumetricKg: summary.totalVolumetricWeightKg,
+      minSlabKg: summary.minSlabKg,
+      chargeableWeightKg: summary.chargeableWeightKg,
+      rawChargeableWeightKg: summary.rawChargeableWeightKg,
+      isMinSlabApplied: summary.isMinSlabApplied,
     };
   }
 
@@ -171,12 +162,20 @@ export class DelhiveryB2bService {
       });
 
       const data = await res.json().catch(() => null);
-      return data || { success: true, pickupId: `PRQ-B2B-${Date.now().toString().slice(-6)}` };
+      if (!res.ok || !data?.success || !data?.pickupId) {
+        return {
+          success: false,
+          status: 'FAILED',
+          message: data?.message || `Delhivery B2B pickup scheduling rejected (HTTP ${res.status}).`,
+          details: data,
+        };
+      }
+      return data;
     } catch (err: any) {
       return {
-        success: true,
-        pickupId: `PRQ-B2B-${Date.now().toString().slice(-6)}`,
-        message: err.message || 'B2B Pickup scheduled via gateway.',
+        success: false,
+        status: 'FAILED',
+        message: err.message || 'Network exception while scheduling Delhivery B2B pickup.',
       };
     }
   }

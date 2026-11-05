@@ -28,9 +28,13 @@ export interface CustomerBookingInput {
   deliveryCity: string;
   deliveryState: string;
   deliveryPincode: string;
+  deliveryGstin?: string;
   invoiceNumber?: string;
   invoiceDate?: string;
   invoiceValueINR: number;
+  ewayBillNumber?: string;
+  isEwbExempt?: boolean;
+  ewbExemptionReason?: string;
   paymentMode: 'prepaid' | 'cod';
   codAmount?: number;
   insuranceEnabled?: boolean;
@@ -132,6 +136,28 @@ export const CustomerBookingService = {
       return { success: false, reason: 'VALIDATION_FAILED', message: 'COD Amount must be specified for COD orders.' };
     }
 
+    // TASK 3 & 6: Statutory E-Way Bill Validation under CGST Rule 138 with Exemptions
+    if (input.shipmentType === 'b2b') {
+      const ewb = (input.ewayBillNumber || '').trim().replace(/\D/g, '');
+      const isOver50k = input.invoiceValueINR > 50000;
+
+      if (ewb) {
+        if (ewb.length !== 12) {
+          return {
+            success: false,
+            reason: 'VALIDATION_FAILED',
+            message: 'E-Way Bill Number must be exactly 12 numeric digits.',
+          };
+        }
+      } else if (isOver50k && !input.isEwbExempt) {
+        return {
+          success: false,
+          reason: 'VALIDATION_FAILED',
+          message: `E-Way Bill Number is legally mandatory for B2B consignments with invoice value exceeding ₹50,000 (Current: ₹${input.invoiceValueINR.toLocaleString('en-IN')}) unless marked exempt under GST Rule 138(14).`,
+        };
+      }
+    }
+
     // 1b. REQUIREMENT 7: Transactional Quote Revalidation & Consumption for B2B Shipments
     // Prevents booking with expired, tampered, or already-used quotes directly inside the transaction
     if (input.shipmentType === 'b2b') {
@@ -219,7 +245,7 @@ export const CustomerBookingService = {
         chargeableWeight: input.chargeableWeightKg,
         sellingPriceINR: input.invoiceValueINR || totalChargeINR,
         estimatedDays: '2–4 Days',
-        pickupLocation: input.pickupWarehouseName || 'MAXLINE_PRIMARY',
+        pickupLocation: input.pickupWarehouseName || 'MAXLINE LOGI - 156',
         pickupContactName: input.pickupContactName,
         pickupPhone: input.pickupPhone,
         pickupAddress: input.pickupAddressLine1,
@@ -232,36 +258,54 @@ export const CustomerBookingService = {
         length: firstPkg?.lengthCm || 10,
         width: firstPkg?.widthCm || 10,
         height: firstPkg?.heightCm || 10,
+        boxes: input.packages,
+        packages: input.packages,
+        consigneeGstin: input.deliveryGstin,
+        invoiceNumber: input.invoiceNumber,
+        invoiceDate: input.invoiceDate,
+        ewayBillNumber: input.ewayBillNumber,
+        invoiceValueINR: input.invoiceValueINR,
       });
 
-      if (!bookingRes.success) {
+      if (!bookingRes.success || !bookingRes.awbNumber) {
         return {
           success: false,
           reason: 'BOOKING_FAILED',
-          message: bookingRes.message || 'Courier booking failed. Wallet balance was not debited.',
+          message: bookingRes.message || 'Courier booking failed. No verified LR was issued by the carrier. Wallet was not debited.',
         };
       }
-      awb = bookingRes.awbNumber || `AWB-${Math.floor(10000000 + Math.random() * 90000000)}`;
+      awb = bookingRes.awbNumber;
       bookingRef = bookingRes.bookingReference;
     }
 
     const shipmentId = `SHP-${input.orderId}`;
 
-    // 4. Wallet Debit & Ledger Transaction Logging (Authoritative Atomic Gateway Call)
-    const debitRes = await WalletService.debitAsync(
-      shipmentId,
-      input.orderId,
-      input.courierId,
-      input.courierName,
-      totalChargeINR,
-      {
-        baseFreightMinor: Math.round(input.baseFreightINR * 100),
-        fuelSurchargeMinor: Math.round(input.fuelSurchargeINR * 100),
-        codFeeMinor: Math.round(input.codFeeINR * 100),
-        totalMinor: Math.round(totalChargeINR * 100),
-      },
-      tenantId
-    );
+    // TASK 5: Authoritative Financial Safety & B2B Testing Mode Isolation
+    // For B2B shipments in TESTING MODE, unauthoritative localStorage balance mutations are strictly blocked.
+    // Real wallet debit for B2B remains disabled until verified server-side atomic debit is ready.
+    // Existing B2C flow is fully preserved.
+    let debitRes: { success: boolean; message: string; transaction?: WalletTransaction | null } = {
+      success: true,
+      message: 'B2B Testing Mode: wallet debit bypassed (financial protection active).',
+      transaction: null,
+    };
+
+    if (input.shipmentType !== 'b2b') {
+      debitRes = await WalletService.debitAsync(
+        shipmentId,
+        input.orderId,
+        input.courierId,
+        input.courierName,
+        totalChargeINR,
+        {
+          baseFreightMinor: Math.round(input.baseFreightINR * 100),
+          fuelSurchargeMinor: Math.round(input.fuelSurchargeINR * 100),
+          codFeeMinor: Math.round(input.codFeeINR * 100),
+          totalMinor: Math.round(totalChargeINR * 100),
+        },
+        tenantId
+      );
+    }
 
     // 4b. Recoverable Failure Handling: If carrier booking succeeded but wallet debit failed,
     // persist a recoverable pending-payment shipment so the carrier charge is never lost and no duplicate AWB is generated.

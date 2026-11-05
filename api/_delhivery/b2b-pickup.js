@@ -24,12 +24,20 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // SERVER-SIDE B2B TESTING MODE GUARD:
+    // Live commercial cargo pickups are strictly blocked unless DELHIVERY_B2B_ALLOW_LIVE === 'true'
     const isProd = process.env.DELHIVERY_B2B_ENV === 'production';
-    const baseUrl = isProd ? B2B_PROD_BASE : B2B_STAGING_BASE;
+    if (isProd && process.env.DELHIVERY_B2B_ALLOW_LIVE !== 'true') {
+      return res.status(403).json({
+        success: false,
+        message: 'Delhivery B2B live commercial cargo pickups are disabled during testing phase. Set DELHIVERY_B2B_ALLOW_LIVE=true once approved.',
+      });
+    }
+    const baseUrl = isProd && process.env.DELHIVERY_B2B_ALLOW_LIVE === 'true' ? B2B_PROD_BASE : B2B_STAGING_BASE;
 
     const {
       token,
-      pickupWarehouse = 'AJAYKUMAR10RP B2BRC',
+      pickupWarehouse,
       pickupDate,
       pickupTime = '14:00:00',
       expectedPackageCount = 1,
@@ -62,9 +70,18 @@ module.exports = async (req, res) => {
       }
     }
 
+    const clientName = process.env.DELHIVERY_B2B_CLIENT_NAME || process.env.DELHIVERY_B2B_USERNAME;
+    if (!clientName) {
+      return res.status(500).json({
+        success: false,
+        message: 'DELHIVERY_B2B_CLIENT_NAME or DELHIVERY_B2B_USERNAME is not configured in server environment.',
+      });
+    }
+    const warehouseLocation = pickupWarehouse || process.env.DELHIVERY_B2B_DEFAULT_WAREHOUSE || 'MAXLINE LOGI - 156';
+
     const payload = {
-      client_name: 'AJAYKUMAR10RPB2BRC-B2B',
-      pickup_location: pickupWarehouse || 'AJAYKUMAR10RP B2BRC',
+      client_name: clientName,
+      pickup_location: warehouseLocation,
       pickup_date: targetDate,
       pickup_time: targetTime,
       expected_package_count: Number(expectedPackageCount) || 1,
@@ -79,73 +96,93 @@ module.exports = async (req, res) => {
     // Auto-acquire auth token if not provided
     let authToken = token;
     if (!authToken) {
+      const b2bUser = process.env.DELHIVERY_B2B_USERNAME;
+      const b2bPass = process.env.DELHIVERY_B2B_PASSWORD;
+
+      if (!b2bUser || !b2bPass) {
+        return res.status(500).json({
+          success: false,
+          message: 'Delhivery B2B credentials (DELHIVERY_B2B_USERNAME, DELHIVERY_B2B_PASSWORD) are not configured in server environment.',
+        });
+      }
+
       try {
         const loginRes = await fetch(`${baseUrl}/ums/login/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            username: process.env.DELHIVERY_B2B_USERNAME || 'AJAYKUMAR10RPB2BRC-B2B',
-            password: process.env.DELHIVERY_B2B_PASSWORD || 'Ajaykumar@123',
+            username: b2bUser.trim(),
+            password: b2bPass.trim(),
           }),
         });
         if (loginRes.ok) {
           const lData = await loginRes.json();
           authToken = lData.jwt || lData.token;
+        } else {
+          return res.status(401).json({
+            success: false,
+            message: 'Failed to authenticate with Delhivery B2B UMS gateway.',
+          });
         }
       } catch (loginErr) {
-        console.warn('[Delhivery B2B Pickup Auto-Login Notice]:', loginErr);
-      }
-    }
-
-    // Attempt live carrier dispatch if token available
-    if (authToken) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
-
-        const pickupRes = await fetch(`${baseUrl}/fm/request/pickup/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${authToken.trim()}`,
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
+        return res.status(502).json({
+          success: false,
+          message: `Network error connecting to Delhivery B2B login service: ${loginErr.message}`,
         });
-        clearTimeout(timeoutId);
-
-        if (pickupRes.ok) {
-          const pData = await pickupRes.json().catch(() => null);
-          const prqId = pData?.pickup_id || pData?.prq_id || pData?.id || pData?.reference_id;
-          if (prqId) {
-            return res.status(200).json({
-              success: true,
-              pickupId: String(prqId),
-              pickupDate: targetDate,
-              pickupTime: targetTime,
-              status: 'SCHEDULED',
-              message: `Delhivery B2B Cargo Pickup scheduled successfully. PRQ: ${prqId}`,
-              carrierResponse: pData,
-            });
-          }
-        }
-      } catch (liveErr) {
-        console.warn('[Delhivery B2B Pickup Live Call Fallback]:', liveErr?.message);
       }
     }
 
-    // High-fidelity instant PRQ fallback for seamless operations
-    const prqId = `PRQ-B2B-${Date.now().toString().slice(-6)}`;
-    return res.status(200).json({
-      success: true,
-      pickupId: prqId,
-      pickupDate: targetDate,
-      pickupTime: targetTime,
-      status: 'SCHEDULED',
-      message: `B2B Commercial Cargo pickup scheduled with Delhivery Freight. Token: ${prqId}`,
-      payload,
+    if (!authToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'No valid authentication token available for B2B pickup request.',
+      });
+    }
+
+    // Attempt live carrier dispatch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const pickupRes = await fetch(`${baseUrl}/fm/request/pickup/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken.trim()}`,
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
     });
-  } catch (err) {
+    clearTimeout(timeoutId);
+
+    const pData = await pickupRes.json().catch(() => null);
+
+    if (pickupRes.ok && pData) {
+      const prqId = pData.pickup_id || pData.prq_id || pData.id || pData.reference_id;
+      if (prqId) {
+        return res.status(200).json({
+          success: true,
+          pickupId: String(prqId),
+          pickupDate: targetDate,
+          pickupTime: targetTime,
+          status: 'SCHEDULED',
+          message: `Delhivery B2B Cargo Pickup scheduled successfully. PRQ: ${prqId}`,
+          carrierResponse: pData,
+        });
+      }
+    }
+
+    return res.status(pickupRes.status || 502).json({
+      success: false,
+      message: pData?.message || pData?.error || 'Delhivery B2B pickup request was rejected by carrier gateway.',
+      details: pData,
+    });
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      return res.status(504).json({
+        success: false,
+        message: 'Delhivery B2B pickup request timed out (8000ms). Pickup status is UNKNOWN.',
+      });
+    }
     console.error('[Delhivery B2B Pickup Error]:', err);
     return res.status(500).json({
       success: false,

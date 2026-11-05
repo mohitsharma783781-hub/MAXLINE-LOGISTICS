@@ -25,23 +25,15 @@ module.exports = async (req, res) => {
 
   try {
     const isProd = process.env.DELHIVERY_B2B_ENV === 'production';
-    const baseUrl = isProd ? B2B_PROD_BASE : B2B_STAGING_BASE;
+    const baseUrl = isProd && process.env.DELHIVERY_B2B_ALLOW_LIVE === 'true' ? B2B_PROD_BASE : B2B_STAGING_BASE;
 
-    const username =
-      req.body?.username ||
-      process.env.DELHIVERY_B2B_USERNAME ||
-      'AJAYKUMAR10RPB2BRC-B2B';
+    const username = req.body?.username || process.env.DELHIVERY_B2B_USERNAME;
+    const password = req.body?.password || process.env.DELHIVERY_B2B_PASSWORD;
 
-    const password =
-      req.body?.password ||
-      process.env.DELHIVERY_B2B_PASSWORD ||
-      'Ajaykumar@123';
-
-    if (!password) {
-      return res.status(400).json({
+    if (!username || !password) {
+      return res.status(500).json({
         success: false,
-        message: 'Delhivery B2B password is required to generate authentication token.',
-        username,
+        message: 'Delhivery B2B credentials (DELHIVERY_B2B_USERNAME, DELHIVERY_B2B_PASSWORD) are not configured in server environment.',
         environment: isProd ? 'production' : 'staging',
       });
     }

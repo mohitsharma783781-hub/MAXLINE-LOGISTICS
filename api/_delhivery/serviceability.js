@@ -3,8 +3,8 @@
  * Queries Delhivery Production network for pincode delivery, COD, and routing details.
  */
 
-const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN || '745fcc8cddf49e2c15e9e018a20d78b7ede7656e';
-const DELHIVERY_HOST = 'track.delhivery.com';
+const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN;
+const DELHIVERY_HOST = process.env.DELHIVERY_HOST || 'track.delhivery.com';
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -17,6 +17,13 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  if (!DELHIVERY_API_TOKEN) {
+    return res.status(500).json({
+      success: false,
+      message: 'DELHIVERY_API_TOKEN is not configured in server environment.',
+    });
   }
 
   const pincode = req.query.pincode || (req.body && req.body.pincode);

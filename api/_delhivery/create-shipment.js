@@ -3,8 +3,8 @@
  * Dispatches orders to Delhivery Express CMU, allocating real live AWBs.
  */
 
-const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN || '745fcc8cddf49e2c15e9e018a20d78b7ede7656e';
-const DELHIVERY_HOST = 'track.delhivery.com';
+const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN;
+const DELHIVERY_HOST = process.env.DELHIVERY_HOST || 'track.delhivery.com';
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -21,6 +21,13 @@ module.exports = async (req, res) => {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+  }
+
+  if (!DELHIVERY_API_TOKEN) {
+    return res.status(500).json({
+      success: false,
+      message: 'DELHIVERY_API_TOKEN is not configured in server environment.',
+    });
   }
 
   try {

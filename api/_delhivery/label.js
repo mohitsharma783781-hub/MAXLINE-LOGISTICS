@@ -4,8 +4,8 @@
  * an authentic high-resolution 4x6 thermal printable barcode label.
  */
 
-const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN || '745fcc8cddf49e2c15e9e018a20d78b7ede7656e';
-const DELHIVERY_HOST = 'track.delhivery.com';
+const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN;
+const DELHIVERY_HOST = process.env.DELHIVERY_HOST || 'track.delhivery.com';
 
 // Code 128-B SVG generator
 function generateBarcodeSvg(text, height = 55, barWidth = 2) {
