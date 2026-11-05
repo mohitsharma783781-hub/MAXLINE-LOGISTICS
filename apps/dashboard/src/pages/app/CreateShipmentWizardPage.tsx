@@ -56,6 +56,7 @@ import { OnboardingService } from '../../services/onboardingService';
 import { useRbac } from '../../context/RbacContext';
 import { useTenant } from '../../context/TenantContext';
 import { formatCurrency } from '../../utils/formatters';
+import { PincodeService } from '../../services/pincodeService';
 
 interface MultiPackageFormItem {
   id: string;
@@ -558,14 +559,27 @@ export const CreateShipmentWizardPage: React.FC = () => {
   }, [warehouses, selectedWarehouseId]);
 
   // Pincode Auto-Fill for Receiver with Exact Mapping & Circle State Fallback
-  const handlePincodeChange = (pin: string) => {
+  const handlePincodeChange = async (pin: string) => {
     const cleanPin = pin.replace(/\D/g, '').slice(0, 6);
     setDeliveryPincode(cleanPin);
     if (cleanPin.length === 6) {
       if (PINCODE_MAP[cleanPin]) {
         setDeliveryCity(PINCODE_MAP[cleanPin].city);
         setDeliveryState(PINCODE_MAP[cleanPin].state);
-      } else {
+        return;
+      }
+      try {
+        const res = await PincodeService.lookup(cleanPin);
+        if (res.success) {
+          if (res.city) setDeliveryCity(res.city);
+          if (res.state) setDeliveryState(res.state);
+        } else {
+          const fallbackState = resolvePostalCircleState(cleanPin);
+          if (fallbackState && !deliveryState) {
+            setDeliveryState(fallbackState);
+          }
+        }
+      } catch {
         const fallbackState = resolvePostalCircleState(cleanPin);
         if (fallbackState && !deliveryState) {
           setDeliveryState(fallbackState);

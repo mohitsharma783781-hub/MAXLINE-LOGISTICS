@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Truck,
@@ -10,12 +10,14 @@ import {
   ChevronUp,
   Info,
   Sliders,
+  MapPin,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Button, Card, Input, Badge, Drawer } from '../../components/ui';
 import { B2BPricingEngine } from '../../services/b2bPricingEngine';
 import { B2CPricingEngine } from '../../services/b2cPricingEngine';
 import { useTenant } from '../../context/TenantContext';
+import { PincodeService } from '../../services/pincodeService';
 
 export interface CourierRateItem {
   id: string;
@@ -74,7 +76,40 @@ export const RateCalculatorPage: React.FC = () => {
   // Form Fields State
   const [fromPincode, setFromPincode] = useState<string>('173205');
   const [toPincode, setToPincode] = useState<string>('302020');
+  const [fromLocationLabel, setFromLocationLabel] = useState<string>('');
+  const [toLocationLabel, setToLocationLabel] = useState<string>('');
   const [deadWeight, setDeadWeight] = useState<string>('1.5');
+
+  // Auto-detect City and State using India Post Pincode Directory
+  useEffect(() => {
+    const clean = fromPincode.replace(/\D/g, '').slice(0, 6);
+    if (clean.length === 6) {
+      PincodeService.lookup(clean).then((res) => {
+        if (res.success && (res.city || res.state)) {
+          setFromLocationLabel([res.city, res.state].filter(Boolean).join(', '));
+        } else {
+          setFromLocationLabel('');
+        }
+      }).catch(() => setFromLocationLabel(''));
+    } else {
+      setFromLocationLabel('');
+    }
+  }, [fromPincode]);
+
+  useEffect(() => {
+    const clean = toPincode.replace(/\D/g, '').slice(0, 6);
+    if (clean.length === 6) {
+      PincodeService.lookup(clean).then((res) => {
+        if (res.success && (res.city || res.state)) {
+          setToLocationLabel([res.city, res.state].filter(Boolean).join(', '));
+        } else {
+          setToLocationLabel('');
+        }
+      }).catch(() => setToLocationLabel(''));
+    } else {
+      setToLocationLabel('');
+    }
+  }, [toPincode]);
   const [showDimensions, setShowDimensions] = useState<boolean>(false);
   const [lengthCm, setLengthCm] = useState<string>('30');
   const [widthCm, setWidthCm] = useState<string>('20');
@@ -462,6 +497,11 @@ export const RateCalculatorPage: React.FC = () => {
               maxLength={6}
               placeholder="173205"
             />
+            {fromLocationLabel && (
+              <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: '600', marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <MapPin size={11} /> {fromLocationLabel}
+              </span>
+            )}
           </div>
 
           {/* Delivery Pincode */}
@@ -475,6 +515,11 @@ export const RateCalculatorPage: React.FC = () => {
               maxLength={6}
               placeholder="302020"
             />
+            {toLocationLabel && (
+              <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: '600', marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <MapPin size={11} /> {toLocationLabel}
+              </span>
+            )}
           </div>
 
           {/* Dead Weight */}

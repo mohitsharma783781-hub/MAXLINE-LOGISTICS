@@ -26,6 +26,7 @@ import {
   lookupPincodeDetails,
   type CustomerWarehouse,
 } from '../../services/customerWarehouseService';
+import { PincodeService } from '../../services/pincodeService';
 import { useTenant } from '../../context/TenantContext';
 
 export const WarehousesPage: React.FC = () => {
@@ -139,16 +140,29 @@ export const WarehousesPage: React.FC = () => {
   };
 
   // Pincode Auto-population
-  const handlePincodeChange = (val: string) => {
-    setFormPincode(val);
-    if (val.trim().length === 6) {
-      const lookup = lookupPincodeDetails(val);
-      setFormCity(lookup.city);
-      setFormState(lookup.state);
+  const handlePincodeChange = async (val: string) => {
+    const clean = val.replace(/\D/g, '').slice(0, 6);
+    setFormPincode(clean);
+    if (clean.length === 6) {
+      try {
+        const lookup = await PincodeService.lookup(clean);
+        if (lookup.success) {
+          if (lookup.city) setFormCity(lookup.city);
+          if (lookup.state) setFormState(lookup.state);
+        } else {
+          const fallback = lookupPincodeDetails(clean);
+          if (fallback.city) setFormCity(fallback.city);
+          if (fallback.state) setFormState(fallback.state);
+        }
+      } catch {
+        const fallback = lookupPincodeDetails(clean);
+        if (fallback.city) setFormCity(fallback.city);
+        if (fallback.state) setFormState(fallback.state);
+      }
 
       // Check duplicate
-      if (!editingWarehouse && CustomerWarehouseService.checkDuplicateWarehouse(tenantId, val, formAddress1)) {
-        setDuplicateWarning(`Notice: An active warehouse facility already exists at pincode ${val}.`);
+      if (!editingWarehouse && CustomerWarehouseService.checkDuplicateWarehouse(tenantId, clean, formAddress1)) {
+        setDuplicateWarning(`Notice: An active warehouse facility already exists at pincode ${clean}.`);
       } else {
         setDuplicateWarning(null);
       }
