@@ -34,7 +34,8 @@ module.exports = async (req, res) => {
 
     const password =
       req.body?.password ||
-      process.env.DELHIVERY_B2B_PASSWORD;
+      process.env.DELHIVERY_B2B_PASSWORD ||
+      'Ajaykumar@123';
 
     if (!password) {
       return res.status(400).json({

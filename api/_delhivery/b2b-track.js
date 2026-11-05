@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
     const baseUrl = isProd ? B2B_PROD_BASE : B2B_STAGING_BASE;
 
     const lrNumber = req.query?.lrNumber || req.query?.waybill || req.query?.lrnum;
-    const token = req.query?.token || req.headers?.authorization?.replace('Bearer ', '');
+    let token = req.query?.token || req.headers?.authorization?.replace('Bearer ', '');
 
     if (!lrNumber) {
       return res.status(400).json({
@@ -34,9 +34,28 @@ module.exports = async (req, res) => {
     }
 
     if (!token) {
+      try {
+        const loginRes = await fetch(`${baseUrl}/ums/login/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: process.env.DELHIVERY_B2B_USERNAME || 'AJAYKUMAR10RPB2BRC-B2B',
+            password: process.env.DELHIVERY_B2B_PASSWORD || 'Ajaykumar@123',
+          }),
+        });
+        if (loginRes.ok) {
+          const lData = await loginRes.json();
+          token = lData.jwt || lData.token;
+        }
+      } catch (loginErr) {
+        console.warn('[Delhivery B2B Auto-Login Fallback]:', loginErr);
+      }
+    }
+
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Bearer authentication token is required for Delhivery B2B tracking.',
+        message: 'Unable to authenticate with Delhivery B2B gateway.',
       });
     }
 
