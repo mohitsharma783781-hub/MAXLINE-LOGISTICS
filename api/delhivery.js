@@ -14,6 +14,10 @@ const handlers = {
   'track': require('./_delhivery/track.js'),
   'waybill': require('./_delhivery/waybill.js'),
   'webhook': require('./_delhivery/webhook.js'),
+  // Delhivery B2B (10CFT & 20KG Slab) Endpoints
+  'b2b-login': require('./_delhivery/b2b-login.js'),
+  'b2b-manifest': require('./_delhivery/b2b-manifest.js'),
+  'b2b-track': require('./_delhivery/b2b-track.js'),
 };
 
 module.exports = async (req, res) => {

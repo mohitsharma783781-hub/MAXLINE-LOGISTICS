@@ -135,7 +135,10 @@ export const B2BPricingEngine = {
     );
 
     const chargeableGrams = Math.max(input.actualWeightGrams, volumetricGrams);
-    const chargeableKg = chargeableGrams / 1000;
+    // 20 KG Minimum Slab Rule for B2B Freight
+    const minBillableGrams = rateCard.minBillableWeightGrams || 20000;
+    const finalBillableGrams = Math.max(chargeableGrams, minBillableGrams);
+    const chargeableKg = finalBillableGrams / 1000;
 
     // 4. Lookup Matrix Map (Origin Zone × Destination Zone) Rate Per KG
     let ratePerKgPaise = 530; // default ₹5.30/KG
