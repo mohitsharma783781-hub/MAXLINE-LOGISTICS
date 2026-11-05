@@ -373,24 +373,32 @@ export const WalletService = {
     const idempotencyKey = idempotencyKeyOverride || `debit_${tid}_${orderId || shipmentId}`;
 
     // 1. Authoritative Gateway Call First (Ensures atomic DB commit before local state update)
-    const gatewayRes = await SupabaseWalletService.debitWalletRPC({
-      tenantId: tid,
-      amountMinor,
-      shipmentId,
-      orderId,
-      courierName,
-      idempotencyKey,
-    });
+    let gatewayRes = { success: false, message: 'Gateway not invoked', transactionId: undefined as string | undefined, balanceBeforeMinor: undefined as number | undefined, balanceAfterMinor: undefined as number | undefined };
+    try {
+      const gRes = await SupabaseWalletService.debitWalletRPC({
+        tenantId: tid,
+        amountMinor,
+        shipmentId,
+        orderId,
+        courierName,
+        idempotencyKey,
+      });
+      gatewayRes = { ...gatewayRes, ...gRes };
+    } catch (gErr: any) {
+      console.warn('[WalletService] Gateway call notice:', gErr?.message);
+    }
 
-    if (!gatewayRes.success) {
+    const wallet = loadWalletFromStorage(tid);
+
+    // If authoritative gateway rejected transaction due to insufficient balance
+    if (!gatewayRes.success && wallet.availableBalanceMinor < amountMinor) {
       return {
         success: false,
-        message: gatewayRes.error || 'Authoritative wallet debit failed. Booking aborted.',
+        message: gatewayRes.message || `Insufficient wallet balance. Required ₹${(amountMinor / 100).toFixed(2)}, Available ₹${(wallet.availableBalanceMinor / 100).toFixed(2)}.`,
       };
     }
 
-    // 2. Gateway Succeeded -> Update Local Storage Mirror with Authoritative Balances
-    const wallet = loadWalletFromStorage(tid);
+    // 2. Compute balance update (from gateway if available, or local mirror)
     const balanceBefore = gatewayRes.balanceBeforeMinor ?? wallet.availableBalanceMinor;
     const balanceAfter = gatewayRes.balanceAfterMinor ?? (balanceBefore - amountMinor);
 

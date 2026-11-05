@@ -389,7 +389,7 @@ export const CustomerBookingService = {
       shipmentId,
       orderId: input.orderId,
       awbNumber: awb,
-      bookingReference: bookingRes.bookingReference,
+      bookingReference: bookingRef,
       courierName: input.courierName,
       serviceName: input.serviceName,
       customerChargeINR: totalChargeINR,

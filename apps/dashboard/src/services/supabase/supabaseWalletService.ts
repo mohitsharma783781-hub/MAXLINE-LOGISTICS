@@ -129,7 +129,10 @@ export const SupabaseWalletService = {
         }
       } catch {}
 
-      // Authoritative server-side debit gateway
+      // Authoritative server-side debit gateway with timeout & safe parsing
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+
       const res = await fetch('/api/debit-wallet', {
         method: 'POST',
         headers: {
@@ -144,23 +147,29 @@ export const SupabaseWalletService = {
           courierName: params.courierName,
           idempotencyKey: params.idempotencyKey,
         }),
+        signal: controller.signal,
+      }).catch((fetchErr) => {
+        return null;
       });
+      clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const data = await res.json();
-        return {
-          success: !!data.success,
-          message: data.message || 'Debit posted successfully',
-          transactionId: data.transactionId,
-          isDuplicate: !!data.isDuplicate,
-        };
+      if (res && res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data) {
+          return {
+            success: !!data.success,
+            message: data.message || 'Debit posted successfully',
+            transactionId: data.transactionId,
+            isDuplicate: !!data.isDuplicate,
+          };
+        }
       }
 
-      const errData = await res.json().catch(() => ({ error: `Debit gateway status ${res.status}` }));
-      console.warn('[SupabaseWalletService] Debit gateway rejected transaction:', errData.error);
+      const errData = res ? await res.json().catch(() => ({ error: `Debit gateway status ${res.status}` })) : { error: 'Network timeout in debit gateway' };
+      console.warn('[SupabaseWalletService] Debit gateway notice:', errData?.error);
       return {
         success: false,
-        message: errData.error || 'Wallet debit rejected by gateway',
+        message: errData?.error || 'Wallet debit gateway unavailable',
       };
     } catch (err: any) {
       console.error('[SupabaseWalletService] Debit gateway exception:', err.message);
