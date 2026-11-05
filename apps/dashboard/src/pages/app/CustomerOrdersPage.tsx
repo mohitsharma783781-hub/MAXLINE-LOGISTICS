@@ -25,6 +25,7 @@ import {
   Eye,
   Building2,
   ExternalLink,
+  Calendar,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import {
@@ -213,9 +214,16 @@ export const CustomerOrdersPage: React.FC = () => {
 
   // Side Drawer State for Order Details
   const [selectedDrawerOrder, setSelectedDrawerOrder] = useState<OrderRecord | null>(null);
+  const [openPrintDropdownId, setOpenPrintDropdownId] = useState<string | null>(null);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
   const [isCloudSynced, setIsCloudSynced] = useState<boolean>(false);
   const [syncVersion, setSyncVersion] = useState<number>(0);
+
+  useEffect(() => {
+    const handleOutsideClick = () => setOpenPrintDropdownId(null);
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
 
   // Automatically synchronize with Supabase Cloud DB on mount or when activeTenantId changes
   useEffect(() => {
@@ -734,17 +742,40 @@ export const CustomerOrdersPage: React.FC = () => {
                 },
                 {
                   key: 'awbNumber',
-                  header: 'AWB Number',
+                  header: 'AWB / LR Number',
                   render: (r) => (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ fontFamily: 'monospace', fontWeight: '700', color: '#0f172a', fontSize: '12px' }}>{r.awbNumber}</span>
-                      <button
-                        onClick={(e) => handleCopyAwb(r.awbNumber, e)}
-                        title="Copy AWB Number"
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: copiedAwb === r.awbNumber ? '#16a34a' : '#94a3b8' }}
-                      >
-                        {copiedAwb === r.awbNumber ? <Check size={12} /> : <Copy size={12} />}
-                      </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontFamily: 'monospace', fontWeight: '700', color: '#0f172a', fontSize: '12px' }}>{r.awbNumber}</span>
+                        <button
+                          onClick={(e) => handleCopyAwb(r.awbNumber, e)}
+                          title="Copy AWB Number"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: copiedAwb === r.awbNumber ? '#16a34a' : '#94a3b8' }}
+                        >
+                          {copiedAwb === r.awbNumber ? <Check size={12} /> : <Copy size={12} />}
+                        </button>
+                      </div>
+                      {r.awbNumber && r.awbNumber !== 'PENDING' && (
+                        <a
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/app/shipments/${r.id}/label?format=waybill_lr&autoPrint=1`);
+                          }}
+                          style={{
+                            fontSize: '10px',
+                            color: '#0284c7',
+                            fontWeight: '600',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                          }}
+                          title="Download / Print Official B2B Lorry Receipt (LR Copy)"
+                        >
+                          <Download size={10} /> Download waybill copy 📥
+                        </a>
+                      )}
                     </div>
                   ),
                 },
@@ -842,17 +873,118 @@ export const CustomerOrdersPage: React.FC = () => {
                         }}
                       >
                         <Eye size={12} />
-                        View Details
+                        View
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Print 4x6 Thermal Label"
-                        onClick={() => navigate(`/app/shipments/${r.id}/label?autoPrint=1`)}
-                        style={{ padding: '4px 6px', color: '#0284c7' }}
-                      >
-                        <Printer size={14} />
-                      </Button>
+
+                      {/* MULTI-FORMAT PRINT DROPDOWN */}
+                      <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => setOpenPrintDropdownId(openPrintDropdownId === r.id ? null : r.id)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 8px',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            backgroundColor: '#ffffff',
+                            color: '#0284c7',
+                            border: '1px solid #bae6fd',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                          }}
+                          title="Print Shipping Label & Commercial Waybill"
+                        >
+                          <Printer size={12} />
+                          <span>Print</span>
+                          <ChevronDown size={11} />
+                        </button>
+
+                        {openPrintDropdownId === r.id && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              right: 0,
+                              top: '100%',
+                              marginTop: '4px',
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '8px',
+                              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
+                              width: '210px',
+                              zIndex: 60,
+                              overflow: 'hidden',
+                              fontSize: '11px',
+                              textAlign: 'left',
+                            }}
+                          >
+                            <div style={{ padding: '6px 10px', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontWeight: '800', color: '#64748b', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              Select Label Format
+                            </div>
+                            <div
+                              onClick={() => {
+                                setOpenPrintDropdownId(null);
+                                navigate(`/app/shipments/${r.id}/label?format=thermal_4x6&autoPrint=1`);
+                              }}
+                              style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #f1f5f9', color: '#1e293b' }}
+                            >
+                              <span>🏷️</span>
+                              <span><strong>4" × 6"</strong> Thermal Label</span>
+                            </div>
+                            <div
+                              onClick={() => {
+                                setOpenPrintDropdownId(null);
+                                navigate(`/app/shipments/${r.id}/label?format=a4_sheet&autoPrint=1`);
+                              }}
+                              style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #f1f5f9', color: '#1e293b' }}
+                            >
+                              <span>📄</span>
+                              <span><strong>A4 Size</strong> Shipping Label</span>
+                            </div>
+                            <div
+                              onClick={() => {
+                                setOpenPrintDropdownId(null);
+                                navigate(`/app/shipments/${r.id}/label?format=carton_4x2&autoPrint=1`);
+                              }}
+                              style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #f1f5f9', color: '#1e293b' }}
+                            >
+                              <span>📦</span>
+                              <span><strong>4" × 2"</strong> Shipping Label</span>
+                            </div>
+                            <div
+                              onClick={() => {
+                                setOpenPrintDropdownId(null);
+                                navigate(`/app/shipments/${r.id}/label?format=carton_4x2_5&autoPrint=1`);
+                              }}
+                              style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #f1f5f9', color: '#1e293b' }}
+                            >
+                              <span>📦</span>
+                              <span><strong>4" × 2.5"</strong> Shipping Label</span>
+                            </div>
+                            <div
+                              onClick={() => {
+                                setOpenPrintDropdownId(null);
+                                navigate(`/app/shipments/${r.id}/label?format=compact_3x2&autoPrint=1`);
+                              }}
+                              style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #f1f5f9', color: '#1e293b' }}
+                            >
+                              <span>🏷️</span>
+                              <span><strong>3" × 2"</strong> Shipping Label</span>
+                            </div>
+                            <div
+                              onClick={() => {
+                                setOpenPrintDropdownId(null);
+                                navigate(`/app/shipments/${r.id}/label?format=waybill_lr&autoPrint=1`);
+                              }}
+                              style={{ padding: '9px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f0fdf4', color: '#166534', fontWeight: '700' }}
+                            >
+                              <span>📑</span>
+                              <span><strong>Waybill / LR Copy</strong> (POD)</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1104,6 +1236,30 @@ export const CustomerOrdersPage: React.FC = () => {
                 style={{ backgroundColor: '#0284c7', borderColor: '#0284c7', width: '100%', fontWeight: '700' }}
               >
                 Open Full Control Center Page →
+              </Button>
+
+              {/* Official Waybill / LR Copy 1-Click Action */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigate(`/app/shipments/${selectedDrawerOrder.id}/label?format=waybill_lr&autoPrint=1`);
+                }}
+                style={{
+                  color: '#166534',
+                  borderColor: '#86efac',
+                  backgroundColor: '#f0fdf4',
+                  width: '100%',
+                  fontWeight: '700',
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '8px',
+                }}
+              >
+                <FileText size={14} /> Download Official B2B Waybill / LR Copy 📥
               </Button>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
