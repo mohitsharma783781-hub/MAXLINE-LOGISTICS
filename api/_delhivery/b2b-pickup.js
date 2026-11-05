@@ -176,7 +176,7 @@ module.exports = async (req, res) => {
       message: pData?.message || pData?.error || 'Delhivery B2B pickup request was rejected by carrier gateway.',
       details: pData,
     });
-  } catch (err: any) {
+  } catch (err) {
     if (err?.name === 'AbortError') {
       return res.status(504).json({
         success: false,
