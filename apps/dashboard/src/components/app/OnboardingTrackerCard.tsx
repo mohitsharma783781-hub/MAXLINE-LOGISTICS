@@ -1,263 +1,259 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Rocket, AlertCircle, ChevronRight, ChevronDown, Check, ArrowRight, X } from 'lucide-react';
-import { Button, Card, Badge } from '../ui';
-import {
-  OnboardingService,
-  ONBOARDING_STAGES_CONFIG,
-} from '../../services/onboardingService';
-import type { CustomerOnboardingRecord } from '../../services/onboardingService';
+import { Check, ArrowRight, ShieldCheck, MapPin, Wallet, UserCheck, X } from 'lucide-react';
+import { CustomerWarehouseService } from '../../services/customerWarehouseService';
+import { WalletService } from '../../mocks/wallet.mock';
+import { supabase } from '../../lib/supabaseClient';
+import { toValidTenantUUID } from '../../utils/uuidHelper';
 
 interface OnboardingTrackerCardProps {
   customerId?: string;
-  onGoLiveSuccess?: () => void;
   autoHideIfComplete?: boolean;
 }
 
 export const OnboardingTrackerCard: React.FC<OnboardingTrackerCardProps> = ({
-  customerId = 'CUST-1001',
+  customerId = '',
   autoHideIfComplete = true,
 }) => {
   const navigate = useNavigate();
-  const [record, setRecord] = useState<CustomerOnboardingRecord>(() =>
-    OnboardingService.getCustomerOnboarding(customerId)
-  );
-  const [isExpanded, setIsExpanded] = useState(true);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  const goLiveCheck = OnboardingService.validateGoLiveRules(customerId);
+  // Status checks
+  const [isKycDone, setIsKycDone] = useState(false);
+  const [isKycReview, setIsKycReview] = useState(false);
+  const [hasWarehouse, setHasWarehouse] = useState(false);
+  const [hasWalletFunds, setHasWalletFunds] = useState(false);
 
-  const handleSimulateStep = (stageNum: number) => {
-    const updated = OnboardingService.markStageComplete(customerId, stageNum);
-    setRecord(updated);
-  };
+  useEffect(() => {
+    if (!customerId) return;
 
-  // Auto-hide onboarding banner when 100% complete or dismissed to keep dashboard clean & uncluttered
-  if (isDismissed || (autoHideIfComplete && (record.isGoLive || record.completionPercentage >= 100))) {
+    // 1. Check KYC
+    const savedKyc = localStorage.getItem(`MAXLINE_SELLER_KYC_${customerId}`);
+    if (savedKyc) {
+      try {
+        const parsed = JSON.parse(savedKyc);
+        if (parsed.kycStatus === 'Approved') setIsKycDone(true);
+        else if (parsed.kycStatus === 'Under Review') setIsKycReview(true);
+      } catch {}
+    }
+
+    // Check Cloud DB for merchant active status
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('merchants')
+          .select('status')
+          .eq('id', toValidTenantUUID(customerId))
+          .maybeSingle();
+
+        if (data?.status === 'ACTIVE') {
+          setIsKycDone(true);
+        }
+      } catch {}
+    })();
+
+    // 2. Check Warehouse count
+    const whs = CustomerWarehouseService.getWarehouses(customerId);
+    if (whs && whs.length > 0) {
+      setHasWarehouse(true);
+    }
+
+    // 3. Check Wallet
+    const wallet = WalletService.getWallet(customerId);
+    if (wallet && wallet.balanceINR > 0) {
+      setHasWalletFunds(true);
+    }
+  }, [customerId]);
+
+  // Calculate completion percentage
+  let completedSteps = 1; // Step 1 Account Created is always done
+  if (isKycDone || isKycReview) completedSteps += 1;
+  if (hasWarehouse) completedSteps += 1;
+  if (hasWalletFunds) completedSteps += 1;
+
+  const percentage = Math.round((completedSteps / 4) * 100);
+
+  // If 100% complete and autoHideIfComplete is true, dismiss
+  if (isDismissed || (autoHideIfComplete && percentage === 100)) {
     return null;
   }
 
+  const steps = [
+    {
+      id: 'step-account',
+      title: 'Account Created',
+      description: 'Registration verified',
+      isComplete: true,
+      icon: UserCheck,
+      path: null,
+    },
+    {
+      id: 'step-kyc',
+      title: 'Business KYC',
+      description: isKycDone ? 'Verified' : isKycReview ? 'Under Review' : 'PAN & Bank Details',
+      isComplete: isKycDone || isKycReview,
+      icon: ShieldCheck,
+      path: '/app/kyc',
+      actionLabel: isKycReview ? 'View Status' : 'Complete KYC (2 Mins)',
+    },
+    {
+      id: 'step-warehouse',
+      title: 'Pickup Location',
+      description: hasWarehouse ? 'Hub Configured' : 'Origin address for couriers',
+      isComplete: hasWarehouse,
+      icon: MapPin,
+      path: '/app/warehouses',
+      actionLabel: 'Add Warehouse',
+    },
+    {
+      id: 'step-wallet',
+      title: 'Recharge Wallet',
+      description: hasWalletFunds ? 'Funds Ready' : 'Top up to book shipments',
+      isComplete: hasWalletFunds,
+      icon: Wallet,
+      path: '/app/wallet',
+      actionLabel: 'Add Balance',
+    },
+  ];
+
   return (
-    <Card
+    <div
       style={{
-        padding: 'var(--space-6)',
         backgroundColor: '#ffffff',
-        border: record.isGoLive ? '1px solid var(--color-success-main, #22c55e)' : '1px solid #3b82f6',
-        borderRadius: 'var(--radius-lg, 16px)',
-        boxShadow: '0 4px 20px rgba(59, 130, 246, 0.08)',
+        border: '1px solid #e2e8f0',
+        borderRadius: '14px',
+        padding: '16px 20px',
+        boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 'var(--space-4)',
-        width: '100%',
+        gap: '14px',
       }}
     >
-      {/* Header Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+      {/* Top Strip */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '12px',
-              backgroundColor: record.isGoLive ? '#dcfce7' : '#eff6ff',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              backgroundColor: '#eff6ff',
+              color: '#2563eb',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: record.isGoLive ? '#16a34a' : '#2563eb',
             }}
           >
-            {record.isGoLive ? <Rocket size={24} /> : <Clock size={24} />}
+            <ShieldCheck size={18} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, color: 'var(--color-text-primary)' }}>
-                Account Onboarding Progress
-              </h3>
-              <Badge variant={record.isGoLive ? 'success' : record.completionPercentage >= 85 ? 'warning' : 'brand'}>
-                {record.isGoLive ? 'LIVE ACCOUNT' : `${record.completionPercentage}% COMPLETE`}
-              </Badge>
+              <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>
+                Quick Setup Checklist
+              </span>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: percentage === 100 ? '#16a34a' : '#2563eb',
+                  backgroundColor: percentage === 100 ? '#f0fdf4' : '#eff6ff',
+                  padding: '1px 8px',
+                  borderRadius: '10px',
+                }}
+              >
+                {percentage}% Completed ({completedSteps}/4)
+              </span>
             </div>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: 0, marginTop: '2px' }}>
-              {record.isGoLive
-                ? 'Your account is 100% verified and active for live shipping dispatches.'
-                : `Current Stage: ${record.currentStageTitle} (${record.stages.filter((s) => s.isComplete).length} of 9 steps verified)`}
+            <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0 0' }}>
+              Complete the remaining steps to enable automated courier pickups.
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            rightIcon={isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          >
-            {isExpanded ? 'Hide Steps' : 'View All 9 Stages'}
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsDismissed(true)}
-            style={{ color: '#64748b', borderColor: '#cbd5e1' }}
-            title="Dismiss Onboarding Banner"
-          >
-            <X size={14} style={{ marginRight: '4px' }} /> Dismiss
-          </Button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsDismissed(true)}
+          style={{
+            border: 'none',
+            background: 'none',
+            color: '#94a3b8',
+            cursor: 'pointer',
+            padding: '4px',
+            borderRadius: '4px',
+          }}
+          title="Dismiss Checklist"
+          aria-label="Dismiss Checklist"
+        >
+          <X size={16} />
+        </button>
       </div>
 
-      {/* Progress Bar */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>
-          <span style={{ color: 'var(--color-text-secondary)' }}>Onboarding Journey</span>
-          <span style={{ color: record.isGoLive ? '#16a34a' : '#2563eb' }}>{record.completionPercentage}%</span>
-        </div>
-        <div style={{ width: '100%', height: '10px', backgroundColor: '#e2e8f0', borderRadius: '5px', overflow: 'hidden' }}>
-          <div
-            style={{
-              width: `${record.completionPercentage}%`,
-              height: '100%',
-              backgroundColor: record.isGoLive ? '#22c55e' : '#2563eb',
-              transition: 'width 0.5s ease-in-out',
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Missing Requirements Warning Banner if not live */}
-      {!record.isGoLive && goLiveCheck.missingRequirements.length > 0 && (
-        <div
-          style={{
-            backgroundColor: '#fffbeb',
-            border: '1px solid #fde68a',
-            borderRadius: 'var(--radius-md)',
-            padding: 'var(--space-3) var(--space-4)',
-            fontSize: '12px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 'var(--space-3)',
-            color: '#92400e',
-          }}
-        >
-          <AlertCircle size={18} style={{ color: '#d97706', flexShrink: 0, marginTop: '2px' }} />
-          <div>
-            <strong>Go-Live Readiness Check:</strong> Complete the remaining items before live order booking:
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
-              {goLiveCheck.missingRequirements.map((req) => (
-                <Badge key={req} variant="warning" style={{ fontSize: '11px' }}>
-                  ⏳ {req}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Timeline View (Stages 1 to 9) */}
-      {isExpanded && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: 'var(--space-3)',
-            marginTop: 'var(--space-2)',
-            paddingTop: 'var(--space-3)',
-            borderTop: '1px solid var(--color-border)',
-          }}
-        >
-          {ONBOARDING_STAGES_CONFIG.map((cfg) => {
-            const st = record.stages.find((s) => s.stageNumber === cfg.stageNumber);
-            const isDone = Boolean(st?.isComplete);
-            const isCurrent = record.currentStageNumber === cfg.stageNumber;
-
-            return (
-              <div
-                key={cfg.id}
-                style={{
-                  padding: 'var(--space-3) var(--space-4)',
-                  borderRadius: 'var(--radius-md)',
-                  border: isDone
-                    ? '1px solid #bbf7d0'
-                    : isCurrent
-                    ? '2px solid #3b82f6'
-                    : '1px solid #e2e8f0',
-                  backgroundColor: isDone ? '#f0fdf4' : isCurrent ? '#eff6ff' : '#f8fafc',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 'var(--space-3)',
-                }}
-              >
-                <div
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    backgroundColor: isDone ? '#22c55e' : isCurrent ? '#2563eb' : '#cbd5e1',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    flexShrink: 0,
-                    marginTop: '2px',
-                  }}
-                >
-                  {isDone ? <Check size={14} /> : cfg.stageNumber}
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
-                      Stage {cfg.stageNumber}: {cfg.title}
-                    </span>
-                    {isDone ? (
-                      <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: 'bold' }}>✓ Done</span>
-                    ) : isCurrent ? (
-                      <span style={{ fontSize: '11px', color: '#2563eb', fontWeight: 'bold' }}>⏳ Current</span>
-                    ) : null}
+      {/* 4 Interactive Progress Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '10px' }}>
+        {steps.map((st, idx) => {
+          const IconComponent = st.icon;
+          return (
+            <div
+              key={st.id}
+              onClick={() => st.path && navigate(st.path)}
+              style={{
+                border: `1px solid ${st.isComplete ? '#bbf7d0' : '#e2e8f0'}`,
+                backgroundColor: st.isComplete ? '#f0fdf4' : '#ffffff',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                cursor: st.path ? 'pointer' : 'default',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div
+                    style={{
+                      width: '22px',
+                      height: '22px',
+                      borderRadius: '50%',
+                      backgroundColor: st.isComplete ? '#16a34a' : '#f1f5f9',
+                      color: st.isComplete ? '#ffffff' : '#64748b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                    }}
+                  >
+                    {st.isComplete ? <Check size={12} /> : idx + 1}
                   </div>
-
-                  <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)', margin: '2px 0 0 0' }}>
-                    {cfg.description}
-                  </p>
-
-                  {/* CTA button for pending/current step */}
-                  {!isDone && cfg.actionUrl && (
-                    <div style={{ marginTop: '8px', display: 'flex', gap: '6px' }}>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        rightIcon={<ArrowRight size={12} />}
-                        onClick={() => navigate(cfg.actionUrl!)}
-                        style={{ fontSize: '11px', padding: '2px 8px' }}
-                      >
-                        {cfg.actionLabel || 'Complete Step'}
-                      </Button>
-
-                      {/* Simulation Trigger for Testing */}
-                      <button
-                        onClick={() => handleSimulateStep(cfg.stageNumber)}
-                        style={{
-                          fontSize: '10px',
-                          color: '#64748b',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                        }}
-                      >
-                        (Mark Complete)
-                      </button>
-                    </div>
-                  )}
+                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>{st.title}</span>
                 </div>
+                {st.isComplete && (
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#16a34a' }}>✓ Ready</span>
+                )}
               </div>
-            );
-          })}
-        </div>
-      )}
-    </Card>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>{st.description}</span>
+                {!st.isComplete && st.path && (
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      color: '#2563eb',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '2px',
+                    }}
+                  >
+                    {st.actionLabel} <ArrowRight size={11} />
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 };

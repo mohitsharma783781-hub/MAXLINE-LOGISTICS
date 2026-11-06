@@ -404,7 +404,7 @@ export const appRoutes: RouteObject = {
     },
     {
       path: 'onboarding',
-      element: <SellerOnboardingWizardPage />,
+      element: <SellerKycVerificationPage />,
     },
     {
       path: 'team',

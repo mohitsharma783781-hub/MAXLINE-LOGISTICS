@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, User, Building, Mail, Phone, Lock, ArrowRight, FileText, Tag } from 'lucide-react';
+import { Eye, EyeOff, User, Building, Mail, Phone, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { Alert } from '../../components/ui/Alert';
-import { PasswordRequirements } from '../../components/auth/PasswordRequirements';
 import { authService } from '../../services/auth.service';
 
 export const SignupPage: React.FC = () => {
@@ -14,160 +12,132 @@ export const SignupPage: React.FC = () => {
   const [businessName, setBusinessName] = useState('');
   const [workEmail, setWorkEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [gstNumber, setGstNumber] = useState('');
-  const [referralCode, setReferralCode] = useState('');
-  const [businessType, setBusinessType] = useState('d2c');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const navigate = useNavigate();
-
-  const businessTypeOptions = [
-    { value: 'd2c', label: 'D2C / eCommerce Brand' },
-    { value: 'b2b', label: 'B2B Distributor / Wholesaler' },
-    { value: 'enterprise', label: 'Enterprise Logistics Fleet' },
-    { value: 'reseller', label: 'Courier Aggregator Reseller' },
-    { value: 'other', label: 'Other Business Type' },
-  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
-    setSuccessMessage(null);
 
-    if (!businessName.trim()) {
-      setErrorMessage('Please enter your company or business name.');
+    const cleanName = fullName.trim();
+    const cleanCompany = businessName.trim();
+    const cleanEmail = workEmail.trim().toLowerCase();
+    const cleanPhone = phoneNumber.trim().replace(/\D/g, '');
+
+    if (!cleanCompany) {
+      setErrorMessage('Please enter your business or company name.');
       return;
     }
-    if (!fullName.trim()) {
-      setErrorMessage('Please enter the primary contact person name.');
+    if (!cleanName) {
+      setErrorMessage('Please enter your full name.');
       return;
     }
-    if (!workEmail.trim() || !workEmail.includes('@')) {
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       setErrorMessage('Please enter a valid work email address.');
       return;
     }
-    if (!phoneNumber.trim()) {
-      setErrorMessage('Please enter your mobile phone number.');
+    if (cleanPhone.length < 10) {
+      setErrorMessage('Please enter a valid 10-digit mobile phone number.');
       return;
     }
-    if (password.length < 8) {
-      setErrorMessage('Password must be at least 8 characters long.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match. Please re-enter your password.');
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
       return;
     }
     if (!termsAccepted) {
-      setErrorMessage('You must accept the Terms of Service to create an account.');
+      setErrorMessage('Please accept the Terms of Service to create an account.');
       return;
     }
 
     try {
       setIsLoading(true);
       const res = await authService.signUp({
-        fullName,
-        businessName,
-        workEmail,
-        phoneNumber,
-        businessType,
+        fullName: cleanName,
+        businessName: cleanCompany,
+        workEmail: cleanEmail,
+        phoneNumber: cleanPhone,
+        businessType: 'd2c',
         password,
         termsAccepted,
       });
 
       if (res.user) {
+        // Direct seamless transition to Merchant Dashboard with Onboarding Stepper
         navigate('/app');
       } else {
         const rawMsg = res.message || '';
         if (rawMsg.toLowerCase().includes('rate limit')) {
-          setErrorMessage(
-            'Email rate limit reached for Supabase verification emails (max 3/hour). If you already registered, please proceed to Sign In. Otherwise, please wait a few minutes or disable "Confirm email" in Supabase Auth.'
-          );
+          setErrorMessage('Email request limit reached. If you already have an account, please sign in.');
         } else {
           setErrorMessage(rawMsg || 'Registration failed. Please check your details and try again.');
         }
       }
     } catch (err: any) {
-      const rawMsg = err.message || '';
-      if (rawMsg.toLowerCase().includes('rate limit')) {
-        setErrorMessage(
-          'Email rate limit reached for Supabase verification emails (max 3/hour). If you already registered, please proceed to Sign In. Otherwise, please wait a few minutes or disable "Confirm email" in Supabase Auth.'
-        );
-      } else {
-        setErrorMessage(rawMsg || 'Registration failed. Please check your details and try again.');
-      }
+      setErrorMessage(err.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div style={{ backgroundColor: '#ffffff', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.08)', overflow: 'hidden', width: '100%', margin: '20px 0' }}>
-      
-      {/* Top Brand Gradient Line */}
-      <div style={{ height: '5px', background: 'linear-gradient(90deg, #2563eb 0%, #0284c7 50%, #16a34a 100%)' }} />
-
+    <div
+      style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '16px',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04)',
+        overflow: 'hidden',
+        width: '100%',
+        maxWidth: '520px',
+        margin: '24px auto',
+      }}
+    >
       <div style={{ padding: '32px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        
-        {/* Header Title */}
+        {/* Header */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <span style={{ fontSize: '11px', fontWeight: '800', color: '#2563eb', backgroundColor: '#eff6ff', padding: '3px 10px', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              🚀 Seller Onboarding Portal
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: '700',
+                color: '#2563eb',
+                backgroundColor: '#eff6ff',
+                padding: '3px 10px',
+                borderRadius: '6px',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Merchant Registration
             </span>
           </div>
-          <h2 style={{ fontSize: '26px', fontWeight: '900', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
-            Create Your Seller Account
-          </h2>
-          <p style={{ fontSize: '14px', color: '#64748b', marginTop: '4px', margin: 0 }}>
-            Join India's premier multi-tenant enterprise courier aggregator platform.
+          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+            Create Seller Account
+          </h1>
+          <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px', margin: 0 }}>
+            Start dispatching pan-India shipments with verified carrier integrations.
           </p>
         </div>
 
-        {/* Top Perks Banner */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', backgroundColor: '#f8fafc', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: '700', color: '#334155' }}>
-          <span style={{ color: '#16a34a' }}>🎁 ₹500 Wallet Bonus</span>
-          <span style={{ color: '#94a3b8' }}>•</span>
-          <span style={{ color: '#2563eb' }}>💳 ₹0 Subscription Fee</span>
-          <span style={{ color: '#94a3b8' }}>•</span>
-          <span style={{ color: '#7c3aed' }}>⚡ 1-Minute Signup</span>
-        </div>
-
-        {/* Error Alert Banner */}
+        {/* Error Alert */}
         {errorMessage && (
-          <Alert variant="danger" title="Registration Notice">
+          <Alert variant="danger">
             {errorMessage}
-          </Alert>
-        )}
-
-        {/* Success Alert Banner (for email confirmation flow) */}
-        {successMessage && (
-          <Alert variant="success" title="Check Your Inbox">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span>{successMessage}</span>
-              <div>
-                <Link to="/login" style={{ color: '#15803d', fontWeight: '800', textDecoration: 'underline' }}>
-                  Proceed to Sign In →
-                </Link>
-              </div>
-            </div>
           </Alert>
         )}
 
         {/* Signup Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          
-          {/* Section 1: Business Profile */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+          {/* Company & Name */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>
             <Input
-              label="Company Name *"
-              placeholder="e.g. Acme Logistics Pvt Ltd"
+              label="Company / Brand Name *"
+              placeholder="e.g. Acme Retail Pvt Ltd"
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
               leadingIcon={<Building size={16} />}
@@ -175,7 +145,7 @@ export const SignupPage: React.FC = () => {
             />
 
             <Input
-              label="Contact Person Name *"
+              label="Full Name (Owner) *"
               placeholder="e.g. Rahul Sharma"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
@@ -184,8 +154,8 @@ export const SignupPage: React.FC = () => {
             />
           </div>
 
-          {/* Section 2: Contact Info */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+          {/* Email & Phone */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>
             <Input
               label="Work Email Address *"
               type="email"
@@ -199,7 +169,7 @@ export const SignupPage: React.FC = () => {
             <Input
               label="Mobile Number *"
               type="tel"
-              placeholder="+91 98765 43210"
+              placeholder="10-digit mobile number"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               leadingIcon={<Phone size={16} />}
@@ -207,81 +177,49 @@ export const SignupPage: React.FC = () => {
             />
           </div>
 
-          {/* Section 3: Industry & Optional Fields */}
-          <Select
-            label="Business Industry Segment"
-            options={businessTypeOptions}
-            value={businessType}
-            onChange={(e) => setBusinessType(e.target.value)}
-          />
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+          {/* Password */}
+          <div style={{ position: 'relative' }}>
             <Input
-              label="GST Number (Optional)"
-              placeholder="22AAAAA0000A1Z5"
-              value={gstNumber}
-              onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
-              leadingIcon={<FileText size={16} />}
-            />
-
-            <Input
-              label="Referral Code (Optional)"
-              placeholder="REF-2026-LOGIX"
-              value={referralCode}
-              onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-              leadingIcon={<Tag size={16} />}
-            />
-          </div>
-
-          {/* Section 4: Credentials */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
-            <div style={{ position: 'relative' }}>
-              <Input
-                label="Password *"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Create password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                leadingIcon={<Lock size={16} />}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '34px',
-                  border: 'none',
-                  background: 'none',
-                  color: '#64748b',
-                  cursor: 'pointer',
-                  padding: '2px',
-                }}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-
-            <Input
-              label="Confirm Password *"
+              label="Password *"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Re-enter password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Minimum 6 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               leadingIcon={<Lock size={16} />}
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '32px',
+                border: 'none',
+                background: 'none',
+                color: '#64748b',
+                cursor: 'pointer',
+                padding: '4px',
+              }}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </div>
 
-          <PasswordRequirements password={password} />
-
+          {/* Terms Agreement */}
           <div style={{ marginTop: '2px' }}>
             <Checkbox
               label={
-                <span style={{ fontSize: '13px', color: '#475569' }}>
-                  I agree to the <Link to="/faq" style={{ color: '#2563eb', fontWeight: '700' }}>Terms of Service</Link> and{' '}
-                  <Link to="/faq" style={{ color: '#2563eb', fontWeight: '700' }}>Privacy Policy</Link>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                  I agree to the{' '}
+                  <Link to="/faq" target="_blank" style={{ color: '#2563eb', fontWeight: '600', textDecoration: 'none' }}>
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/faq" target="_blank" style={{ color: '#2563eb', fontWeight: '600', textDecoration: 'none' }}>
+                    Privacy Policy
+                  </Link>
                 </span>
               }
               checked={termsAccepted}
@@ -289,26 +227,38 @@ export const SignupPage: React.FC = () => {
             />
           </div>
 
+          {/* Submit Button */}
           <Button
             type="submit"
             variant="primary"
             fullWidth
             isLoading={isLoading}
-            rightIcon={!isLoading ? <ArrowRight size={18} /> : undefined}
-            style={{ marginTop: '8px', backgroundColor: '#2563eb', borderColor: '#2563eb', fontWeight: '800', height: '48px', fontSize: '15px', boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)' }}
+            rightIcon={!isLoading ? <ArrowRight size={16} /> : undefined}
+            style={{
+              marginTop: '4px',
+              backgroundColor: '#2563eb',
+              borderColor: '#2563eb',
+              fontWeight: '700',
+              height: '44px',
+              fontSize: '14px',
+            }}
           >
-            Create Seller Account →
+            Create Seller Account
           </Button>
         </form>
 
-        {/* Footer Link */}
-        <div style={{ textAlign: 'center', fontSize: '14px', color: '#64748b', marginTop: '4px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
-          Already registered?{' '}
-          <Link to="/login" style={{ color: '#2563eb', fontWeight: '800', textDecoration: 'none' }}>
-            Sign in to Seller Portal →
-          </Link>
+        {/* Security badge & Sign in footer */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', color: '#64748b', marginTop: '-4px' }}>
+          <ShieldCheck size={14} color="#16a34a" />
+          <span>Encrypted 256-bit secure registration</span>
         </div>
 
+        <div style={{ textAlign: 'center', fontSize: '13px', color: '#64748b', borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
+          Already have a seller account?{' '}
+          <Link to="/login" style={{ color: '#2563eb', fontWeight: '700', textDecoration: 'none' }}>
+            Sign in here →
+          </Link>
+        </div>
       </div>
     </div>
   );
