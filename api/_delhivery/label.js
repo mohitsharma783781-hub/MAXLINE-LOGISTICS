@@ -7,43 +7,59 @@
 const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN;
 const DELHIVERY_HOST = process.env.DELHIVERY_HOST || 'track.delhivery.com';
 
-// Code 128-B SVG generator
+// Standard Code 128 (ISO/IEC 15417) Patterns with Modulo 103 Checksum
+const CODE128_PATTERNS = [
+  '212222', '222122', '222221', '121223', '121322', '131222', '122213', '122312', '132212', '221213',
+  '221312', '231212', '112232', '122132', '122231', '113222', '123122', '123221', '223211', '221132',
+  '221231', '213212', '223112', '312131', '311222', '321122', '321221', '312212', '322112', '322211',
+  '212123', '212321', '232121', '111323', '131123', '131321', '112313', '132113', '132311', '211313',
+  '231113', '231311', '112133', '112331', '132131', '113123', '113321', '133121', '313121', '211331',
+  '231131', '213113', '213311', '213131', '311123', '311321', '331121', '312113', '312311', '332111',
+  '314111', '221411', '431111', '111224', '111422', '121124', '121421', '141122', '141221', '112214',
+  '112412', '122114', '122411', '142112', '142211', '241211', '221114', '413111', '241112', '134111',
+  '111242', '121142', '121241', '114212', '124112', '124211', '411212', '421112', '421211', '212141',
+  '214121', '412121', '111143', '111341', '131141', '114113', '114311', '411113', '411311', '113141',
+  '114131', '311141', '411131', '211412', '211214', '211232', '2331112'
+];
+
 function generateBarcodeSvg(text, height = 55, barWidth = 2) {
-  const sanitized = (text || 'AWB-DEL-1001').toUpperCase().replace(/[^A-Z0-9-]/g, '');
-  const patterns = {
-    '0': '212222', '1': '222122', '2': '222221', '3': '121223', '4': '121322',
-    '5': '131222', '6': '122213', '7': '122312', '8': '132212', '9': '221213',
-    'A': '111323', 'B': '131123', 'C': '131321', 'D': '112313', 'E': '132113',
-    'F': '132311', 'G': '211313', 'H': '231113', 'I': '231311', 'J': '112133',
-    'K': '112331', 'L': '132131', 'M': '113123', 'N': '113321', 'O': '133121',
-    'P': '313121', 'Q': '211331', 'R': '231131', 'S': '312131', 'T': '311123',
-    'U': '311321', 'V': '331121', 'W': '312113', 'X': '312311', 'Y': '332111',
-    'Z': '314111', '-': '221411',
-  };
+  const rawText = String(text || 'AWB-DEL-1001').trim();
+  const sanitized = rawText.replace(/[^\x20-\x7E]/g, '') || 'AWB-DEL-1001';
 
-  let fullPattern = '211214'; // Start Code B
+  let checksumTotal = 104; // Start Code B
+  const charValues = [];
   for (let i = 0; i < sanitized.length; i++) {
-    fullPattern += patterns[sanitized[i]] || '111323';
+    const val = sanitized.charCodeAt(i) - 32;
+    charValues.push(val);
+    checksumTotal += val * (i + 1);
   }
-  fullPattern += '2331112'; // Stop pattern
 
-  let currentX = 10;
+  const checksumSymbol = checksumTotal % 103;
+
+  let patternSequence = CODE128_PATTERNS[104];
+  for (const val of charValues) {
+    patternSequence += CODE128_PATTERNS[val] || CODE128_PATTERNS[0];
+  }
+  patternSequence += CODE128_PATTERNS[checksumSymbol];
+  patternSequence += CODE128_PATTERNS[106]; // Stop code
+
+  let currentX = 12;
   let rects = '';
   let isBar = true;
-  for (let i = 0; i < fullPattern.length; i++) {
-    const w = parseInt(fullPattern[i], 10) * barWidth;
+  for (let i = 0; i < patternSequence.length; i++) {
+    const w = parseInt(patternSequence[i], 10) * barWidth;
     if (isBar) {
-      rects += `<rect x="${currentX}" y="0" width="${w}" height="${height}" fill="#000000" />`;
+      rects += '<rect x="' + currentX + '" y="0" width="' + w + '" height="' + height + '" fill="#000000" />';
     }
     currentX += w;
     isBar = !isBar;
   }
-  const totalWidth = currentX + 10;
+  const totalWidth = currentX + 12;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalWidth} ${height + 14}" width="100%" height="${height + 14}">
-    <g>${rects}</g>
-    <text x="${totalWidth / 2}" y="${height + 12}" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#000000">${sanitized}</text>
-  </svg>`;
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + totalWidth + ' ' + (height + 16) + '" width="100%" height="' + (height + 16) + '">' +
+    '<g>' + rects + '</g>' +
+    '<text x="' + (totalWidth / 2) + '" y="' + (height + 13) + '" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle" fill="#000000" letter-spacing="1px">' + sanitized + '</text>' +
+  '</svg>';
 }
 
 function renderHtmlPackingSlip(awb, meta = {}) {

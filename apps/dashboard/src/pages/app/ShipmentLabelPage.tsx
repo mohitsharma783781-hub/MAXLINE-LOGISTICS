@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Printer, Download, RefreshCw, CheckCircle2, ShieldCheck, Box } from 'lucide-react';
+import { ArrowLeft, Printer, Download, FileText, CheckCircle2, Copy } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
-import { Button, Card, Alert, Badge, Select } from '../../components/ui';
+import { Button, Card, Alert, Select } from '../../components/ui';
 import { CustomerShipmentService } from '../../services/customerShipmentService';
 import { BarcodeService } from '../../services/barcodeService';
 import { useTenant } from '../../context/TenantContext';
@@ -15,6 +15,68 @@ export type PrintLabelFormat =
   | 'compact_3x2'
   | 'waybill_lr';
 
+export type LrCopyType = 'SHIPPER' | 'CONSIGNEE' | 'TRANSPORTER' | 'ALL_THREE';
+
+// Helper to determine State from Pincode prefix in India
+const getStateFromPincode = (pincode: string): string => {
+  if (!pincode || pincode.length < 2) return 'Haryana';
+  const prefix = pincode.slice(0, 2);
+  const pNum = parseInt(prefix, 10);
+  if (pNum === 11) return 'Delhi';
+  if (pNum >= 12 && pNum <= 13) return 'Haryana';
+  if (pNum >= 14 && pNum <= 16) return 'Punjab';
+  if (pNum === 17) return 'Himachal Pradesh';
+  if (pNum >= 18 && pNum <= 19) return 'Jammu & Kashmir';
+  if (pNum >= 20 && pNum <= 28) return 'Uttar Pradesh';
+  if (pNum >= 30 && pNum <= 34) return 'Rajasthan';
+  if (pNum >= 36 && pNum <= 39) return 'Gujarat';
+  if (pNum >= 40 && pNum <= 44) return 'Maharashtra';
+  if (pNum >= 45 && pNum <= 49) return 'Madhya Pradesh';
+  if (pNum >= 50 && pNum <= 53) return 'Andhra Pradesh / Telangana';
+  if (pNum >= 56 && pNum <= 59) return 'Karnataka';
+  if (pNum >= 60 && pNum <= 64) return 'Tamil Nadu';
+  if (pNum >= 67 && pNum <= 69) return 'Kerala';
+  if (pNum >= 70 && pNum <= 74) return 'West Bengal';
+  if (pNum >= 75 && pNum <= 77) return 'Odisha';
+  if (pNum >= 80 && pNum <= 85) return 'Bihar / Jharkhand';
+  return 'India';
+};
+
+// Official Delhivery Logo mark with signature red dot
+const DelhiveryLogo: React.FC<{ fontSize?: number }> = ({ fontSize = 24 }) => (
+  <div
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      fontFamily: 'Arial, sans-serif',
+      fontWeight: '900',
+      fontSize: `${fontSize}px`,
+      letterSpacing: '-0.5px',
+      color: '#000000',
+      userSelect: 'none',
+      lineHeight: '1',
+    }}
+  >
+    <span>DELH</span>
+    <span style={{ position: 'relative', display: 'inline-block' }}>
+      I
+      <span
+        style={{
+          position: 'absolute',
+          top: `${Math.round(fontSize * 0.05)}px`,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: `${Math.max(3, Math.round(fontSize * 0.18))}px`,
+          height: `${Math.max(3, Math.round(fontSize * 0.18))}px`,
+          backgroundColor: '#e11d48',
+          borderRadius: '50%',
+        }}
+      />
+    </span>
+    <span>VERY</span>
+  </div>
+);
+
 export const ShipmentLabelPage: React.FC = () => {
   const { shipmentId } = useParams<{ shipmentId: string }>();
   const navigate = useNavigate();
@@ -24,11 +86,16 @@ export const ShipmentLabelPage: React.FC = () => {
 
   const rawFormatParam = searchParams.get('format');
   const [labelFormat, setLabelFormat] = useState<PrintLabelFormat>(() => {
-    if (rawFormatParam && ['thermal_4x6', 'a4_sheet', 'carton_4x2', 'carton_4x2_5', 'compact_3x2', 'waybill_lr'].includes(rawFormatParam)) {
+    if (
+      rawFormatParam &&
+      ['thermal_4x6', 'a4_sheet', 'carton_4x2', 'carton_4x2_5', 'compact_3x2', 'waybill_lr'].includes(rawFormatParam)
+    ) {
       return rawFormatParam as PrintLabelFormat;
     }
     return 'thermal_4x6';
   });
+
+  const [lrCopySelection, setLrCopySelection] = useState<LrCopyType>('SHIPPER');
   const [isDownloading, setIsDownloading] = useState(false);
 
   // Retrieve actual shipment from unified store with high-fidelity defaults
@@ -37,38 +104,56 @@ export const ShipmentLabelPage: React.FC = () => {
     CustomerShipmentService.getShipmentById(shipmentId || '');
 
   const shipment = foundShipment || {
-    id: shipmentId || 'SHP-ORD-1001',
-    shipmentId: shipmentId || 'SHP-ORD-1001',
-    awbNumber: '474740192831',
-    orderId: 'ORD-1001',
-    bookingDate: new Date().toLocaleDateString('en-IN'),
-    courierName: 'Delhivery Surface Express',
-    serviceName: 'Delhivery B2C Surface',
-    pickupContact: 'Merchant Dispatch Manager',
-    pickupAddress: 'Origin Dispatch Warehouse Facility',
-    pickupCity: 'Origin Hub',
-    pickupPincode: '110001',
-    pickupPhone: '+91 99999 99999',
-    deliveryContact: 'Rohan Sharma',
-    deliveryAddress: 'House 412, 5th Cross, 2nd Main, Indiranagar',
-    deliveryCity: 'Bengaluru',
-    deliveryPincode: '560038',
-    deliveryPhone: '+91 98112 34567',
-    chargeableWeightKg: 1.0,
-    actualWeightKg: 0.8,
-    dimensionsCm: '20 × 15 × 10 CM',
-    paymentMode: 'PREPAID',
-    codAmountINR: 0,
-    invoiceValueINR: 1499,
+    id: shipmentId || 'SHP-ORD-12081',
+    shipmentId: shipmentId || 'SHP-ORD-12081',
+    awbNumber: '319845137',
+    orderId: 'WON-12081',
+    bookingDate: '03/11/26',
+    courierName: 'Delhivery Surface B2B',
+    serviceName: 'Delhivery B2B LTL Express Cargo',
+    pickupContact: 'AJAYKUMAR6RP B2BRC',
+    pickupAddress: 'PLOT NO 167 INDUSTRIAL AREA PHASE-2',
+    pickupCity: 'Rajpura',
+    pickupPincode: '133001',
+    pickupPhone: '+91 70093 11318',
+    deliveryContact: 'SUDHANAND DISRIBUTORS, SUDHANAND DISRIBUTORS',
+    deliveryAddress: 'SY NO 59 DEVANOORU RAJEEVNAGAR 2ND STAGE UDAYAGIRI MYSORE',
+    deliveryCity: 'Mysore',
+    deliveryPincode: '570019',
+    deliveryPhone: '+91 98765 43210',
+    chargeableWeightKg: 10.0,
+    actualWeightKg: 10.0,
+    dimensionsCm: '10x10x10',
+    paymentMode: 'COD',
+    codAmountINR: 575070.0,
+    invoiceValueINR: 45000.0,
+    invoiceNumber: '12081',
+    ewayBillNumber: '281903482910',
     bookingStatus: 'BOOKED',
     packageType: 'Box',
-    packages: [{ lengthCm: 20, widthCm: 15, heightCm: 10, actualWeightKg: 0.8, chargeableWeightKg: 1.0 }],
+    packages: [
+      { lengthCm: 10, widthCm: 10, heightCm: 10, actualWeightKg: 10.0, chargeableWeightKg: 10.0, quantity: 13 },
+    ],
   };
 
-  const awb = shipment.awbNumber || '474740192831';
-  const orderId = shipment.orderId || 'ORD-1001';
+  const awb = shipment.awbNumber || '319845137';
+  const orderId = shipment.orderId || 'WON-12081';
   const isCod = String(shipment.paymentMode).toUpperCase() === 'COD';
   const codAmount = Number(shipment.codAmountINR || 0);
+  const invoiceValue = Number(shipment.invoiceValueINR || 45000.0);
+  const totalBoxes =
+    (shipment.packages && shipment.packages.reduce((sum: number, p: any) => sum + (p.quantity || 1), 0)) || 13;
+
+  const originState = getStateFromPincode(shipment.pickupPincode || '133001');
+  const destState = getStateFromPincode(shipment.deliveryPincode || '570019');
+  const printTimestamp = new Date().toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
 
   // Auto-trigger print if requested via query parameter
   useEffect(() => {
@@ -99,12 +184,19 @@ export const ShipmentLabelPage: React.FC = () => {
 
   const getPageSize = (fmt: PrintLabelFormat) => {
     switch (fmt) {
-      case 'thermal_4x6': return '4in 6in';
-      case 'carton_4x2': return '4in 2in';
-      case 'carton_4x2_5': return '4in 2.5in';
-      case 'compact_3x2': return '3in 2in';
-      case 'waybill_lr': return 'A4 portrait';
-      case 'a4_sheet': default: return 'A4 portrait';
+      case 'thermal_4x6':
+        return '4in 6in';
+      case 'carton_4x2':
+        return '4in 2in';
+      case 'carton_4x2_5':
+        return '4in 2.5in';
+      case 'compact_3x2':
+        return '3in 2in';
+      case 'waybill_lr':
+        return 'A4 portrait';
+      case 'a4_sheet':
+      default:
+        return 'A4 portrait';
     }
   };
 
@@ -116,23 +208,595 @@ export const ShipmentLabelPage: React.FC = () => {
 
   const getMaxWidth = (fmt: PrintLabelFormat) => {
     switch (fmt) {
-      case 'thermal_4x6': return '400px';
-      case 'carton_4x2': return '400px';
-      case 'carton_4x2_5': return '400px';
-      case 'compact_3x2': return '320px';
-      case 'waybill_lr': return '840px';
-      case 'a4_sheet': default: return '560px';
+      case 'thermal_4x6':
+        return '400px';
+      case 'carton_4x2':
+        return '400px';
+      case 'carton_4x2_5':
+        return '400px';
+      case 'compact_3x2':
+        return '320px';
+      case 'waybill_lr':
+        return '840px';
+      case 'a4_sheet':
+      default:
+        return '580px';
     }
   };
 
-  const isB2bMode = shipment.mode === 'B2B' || shipment.courierName?.toLowerCase().includes('b2b') || awb.startsWith('LRN-') || awb.startsWith('319');
+  const isB2bMode =
+    shipment.mode === 'B2B' ||
+    shipment.courierName?.toLowerCase().includes('b2b') ||
+    awb.startsWith('LRN-') ||
+    awb.startsWith('319');
 
   const breadcrumbs = [
     { label: 'Customer Portal', path: '/app' },
     { label: 'Orders Center', path: '/app/orders' },
     { label: shipment.awbNumber || shipment.shipmentId, path: `/app/shipment-control-center/${shipment.shipmentId}` },
-    { label: labelFormat === 'waybill_lr' ? 'Waybill / LR Copy' : 'Shipping Label', path: `/app/shipments/${shipment.shipmentId}/label` },
+    {
+      label: labelFormat === 'waybill_lr' ? 'Waybill / LR Copy' : 'Shipping Label',
+      path: `/app/shipments/${shipment.shipmentId}/label`,
+    },
   ];
+
+  /**
+   * REUSABLE COMPONENT: EXACT DELHIVERY ONE WAYBILL / LR COPY
+   * Faithfully matches Delhivery ONE carrier document layout, borders, font weights, and POD fields.
+   */
+  const renderDelhiveryWaybillDocument = (copyName: 'SHIPPER' | 'CONSIGNEE' | 'TRANSPORTER', pageBreak: boolean = false) => {
+    return (
+      <div
+        key={copyName}
+        className={`printable-shipping-label-container ${pageBreak ? 'page-break' : ''}`}
+        style={{
+          width: '100%',
+          maxWidth: '840px',
+          backgroundColor: '#ffffff',
+          border: '2px solid #000000',
+          color: '#000000',
+          fontFamily: 'Arial, Helvetica, sans-serif',
+          boxSizing: 'border-box',
+          fontSize: '11px',
+          lineHeight: '1.25',
+          margin: pageBreak ? '0 0 24px 0' : '0 auto',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+        }}
+      >
+        {/* ROW 1: TOP HEADER (DELHIVERY LOGO & LRN BARCODE) */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '2px solid #000000' }}>
+          {/* Header Left */}
+          <div
+            style={{
+              padding: '8px 12px',
+              borderRight: '2px solid #000000',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              minHeight: '74px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <DelhiveryLogo fontSize={24} />
+              <div style={{ fontSize: '10px', color: '#000000', fontWeight: '500', textAlign: 'right' }}>
+                <div>Created Date: {shipment.bookingDate || '03/11/26'}</div>
+                <div>Pickup Date: ---</div>
+              </div>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '10px',
+                fontWeight: '700',
+                marginTop: '4px',
+              }}
+            >
+              <span>SELF DROP</span>
+              <div style={{ width: '13px', height: '13px', border: '2px solid #000000', boxSizing: 'border-box' }} />
+            </div>
+          </div>
+
+          {/* Header Right */}
+          <div
+            style={{
+              padding: '8px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              minHeight: '74px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: '900', letterSpacing: '0.5px' }}>{awb}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: '700' }}>
+                <span>SELF COLLECT</span>
+                <div style={{ width: '13px', height: '13px', border: '2px solid #000000', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+            {/* Scannable Code 128 Barcode with centered human-readable digits */}
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '2px' }}>
+              <div
+                style={{ width: '220px' }}
+                dangerouslySetInnerHTML={{
+                  __html: BarcodeService.generateBarcodeSvg(awb, 34, 1.6, { showText: false }),
+                }}
+              />
+              <div
+                style={{
+                  width: '220px',
+                  textAlign: 'center',
+                  fontSize: '9px',
+                  fontWeight: '700',
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.5px',
+                  marginTop: '1px',
+                }}
+              >
+                {awb}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 2: SHIPPER VS CONSIGNEE */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '2px solid #000000' }}>
+          {/* SHIPMENT PICKED FROM */}
+          <div style={{ borderRight: '2px solid #000000', display: 'flex', flexDirection: 'column' }}>
+            <div
+              style={{
+                padding: '4px 8px',
+                fontWeight: '900',
+                fontSize: '10px',
+                borderBottom: '1px solid #000000',
+                letterSpacing: '0.2px',
+              }}
+            >
+              SHIPMENT PICKED FROM:
+            </div>
+            <div style={{ padding: '3px 8px', fontSize: '11px', borderBottom: '1px solid #000000' }}>
+              <strong>Shipper's Name:</strong> {shipment.pickupContact || 'AJAYKUMAR6RP B2BRC'}
+            </div>
+            <div style={{ padding: '3px 8px', fontSize: '11px', borderBottom: '1px solid #000000' }}>
+              <strong>Shipper's phone no:</strong> {shipment.pickupPhone || ''}
+            </div>
+            <div style={{ padding: '3px 8px', fontSize: '11px', borderBottom: '1px solid #000000', minHeight: '26px' }}>
+              <strong>Street Name:</strong> {shipment.pickupAddress || 'PLOT NO 167 INDUSTRIAL AREA PHASE-2'}
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1.2fr 1fr 1.2fr',
+                fontSize: '11px',
+                borderBottom: '1px solid #000000',
+              }}
+            >
+              <div style={{ padding: '3px 6px', borderRight: '1px solid #000000' }}>
+                <strong>City:</strong> {shipment.pickupCity || 'Rajpura'}
+              </div>
+              <div style={{ padding: '3px 6px', borderRight: '1px solid #000000' }}>
+                <strong>State:</strong> {originState}
+              </div>
+              <div style={{ padding: '3px 6px' }}>
+                <strong>Postal Code:</strong> {shipment.pickupPincode || '133001'}
+              </div>
+            </div>
+            <div style={{ padding: '3px 8px', fontSize: '11px' }}>
+              <strong>GSTIN:</strong> {shipment.pickupGstin || '06AAPCS9575E1ZR'}
+            </div>
+          </div>
+
+          {/* SHIPMENT DELIVERED TO */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div
+              style={{
+                padding: '4px 8px',
+                fontWeight: '900',
+                fontSize: '10px',
+                borderBottom: '1px solid #000000',
+                letterSpacing: '0.2px',
+              }}
+            >
+              SHIPMENT DELIVERED TO:
+            </div>
+            <div style={{ padding: '3px 8px', fontSize: '11px', borderBottom: '1px solid #000000' }}>
+              <strong>Recipient's Name:</strong> {shipment.deliveryContact || 'SUDHANAND DISRIBUTORS'}
+            </div>
+            <div style={{ padding: '3px 8px', fontSize: '11px', borderBottom: '1px solid #000000' }}>
+              <strong>Recipient's phone no.:</strong> {shipment.deliveryPhone || ''}
+            </div>
+            <div style={{ padding: '3px 8px', fontSize: '11px', borderBottom: '1px solid #000000', minHeight: '26px' }}>
+              <strong>Street Name:</strong> {shipment.deliveryAddress || 'Commercial Freight Destination Facility'}
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1.2fr 1fr 1.2fr',
+                fontSize: '11px',
+                borderBottom: '1px solid #000000',
+              }}
+            >
+              <div style={{ padding: '3px 6px', borderRight: '1px solid #000000' }}>
+                <strong>City:</strong> {shipment.deliveryCity || 'Mysore'}
+              </div>
+              <div style={{ padding: '3px 6px', borderRight: '1px solid #000000' }}>
+                <strong>State:</strong> {destState}
+              </div>
+              <div style={{ padding: '3px 6px' }}>
+                <strong>Pincode:</strong> {shipment.deliveryPincode || '570019'}
+              </div>
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                fontSize: '11px',
+              }}
+            >
+              <div style={{ padding: '3px 8px', borderRight: '1px solid #000000' }}>
+                <strong>GSTIN:</strong> {shipment.deliveryGstin || 'URP'}
+              </div>
+              <div style={{ padding: '3px 8px' }}>
+                <strong>Address/Store Code:</strong> {shipment.deliveryStoreCode || ''}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 3: SHIPMENT INFORMATION VS POD REMARKS */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '2px solid #000000' }}>
+          {/* SHIPMENT INFORMATION LEFT */}
+          <div style={{ borderRight: '2px solid #000000', display: 'flex', flexDirection: 'column' }}>
+            <div
+              style={{
+                padding: '4px 8px',
+                fontWeight: '900',
+                fontSize: '10px',
+                borderBottom: '1px solid #000000',
+                letterSpacing: '0.2px',
+              }}
+            >
+              SHIPMENT INFORMATION
+            </div>
+
+            {/* Shipper Ref & MOT */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1.2fr 0.8fr',
+                fontSize: '10px',
+                borderBottom: '1px solid #000000',
+              }}
+            >
+              <div style={{ padding: '4px 8px', borderRight: '1px solid #000000' }}>
+                <strong>SHIPPER'S REFERENCE NO.:</strong> {orderId}
+              </div>
+              <div style={{ padding: '4px 8px' }}>
+                <div><strong>MOT:</strong> Road</div>
+                <div><strong>ROV:</strong> BY SHIPPER</div>
+              </div>
+            </div>
+
+            {/* Invoice, EWBN & Freight Payment */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 0.8fr 1.2fr',
+                fontSize: '10px',
+                borderBottom: '1px solid #000000',
+              }}
+            >
+              <div style={{ padding: '4px 8px', borderRight: '1px solid #000000' }}>
+                <strong>INVOICE NO.:</strong> {shipment.invoiceNumber || '12081'}
+              </div>
+              <div style={{ padding: '4px 8px', borderRight: '1px solid #000000' }}>
+                <strong>EWBN :</strong> {shipment.ewayBillNumber || ''}
+              </div>
+              <div style={{ padding: '4px 8px' }}>
+                <div><strong>Freight Payment:</strong> {isCod ? 'FoP' : 'Prepaid'}</div>
+                <div>
+                  <strong>Value Payment:</strong> {isCod ? `COD ${codAmount.toFixed(1)}` : 'Prepaid'}
+                </div>
+              </div>
+            </div>
+
+            {/* Total Invoice Value, Master AWB & POD on Invoice */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1.2fr 1fr 1.1fr',
+                fontSize: '10px',
+                borderBottom: '1px solid #000000',
+              }}
+            >
+              <div style={{ padding: '4px 8px', borderRight: '1px solid #000000' }}>
+                <strong>TOTAL INVOICE VALUE:</strong> {invoiceValue.toFixed(1)}
+              </div>
+              <div style={{ padding: '4px 8px', borderRight: '1px solid #000000' }}>
+                <strong>MASTER AWB:</strong>
+                <div>{shipment.masterAwb || awb}</div>
+              </div>
+              <div style={{ padding: '4px 8px' }}>
+                <strong>POD on Invoice:</strong> Not required
+              </div>
+            </div>
+
+            {/* Multi-Box Breakdown Table */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1.4fr 0.9fr 1fr',
+                fontSize: '10px',
+                fontWeight: '900',
+                borderBottom: '1px solid #000000',
+                textAlign: 'left',
+              }}
+            >
+              <div style={{ padding: '4px 8px', borderRight: '1px solid #000000' }}>BOXES x DIMENSION (LxWxH) cm</div>
+              <div style={{ padding: '4px 8px', borderRight: '1px solid #000000' }}>ACTUAL WEIGHT(kg)</div>
+              <div style={{ padding: '4px 8px' }}>SAID TO CONTAIN</div>
+            </div>
+
+            {/* Box Rows */}
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: '110px' }}>
+              {shipment.packages && shipment.packages.length > 0 ? (
+                shipment.packages.map((pkg: any, idx: number) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1.4fr 0.9fr 1fr',
+                      fontSize: '10px',
+                      borderBottom: idx === (shipment.packages?.length || 1) - 1 ? 'none' : '1px solid #e2e8f0',
+                      padding: '4px 0',
+                    }}
+                  >
+                    <div style={{ padding: '2px 8px', borderRight: '1px solid #000000' }}>
+                      {pkg.quantity || totalBoxes} Boxes: {pkg.lengthCm || 10}x{pkg.widthCm || 10}x{pkg.heightCm || 10}
+                    </div>
+                    <div style={{ padding: '2px 8px', borderRight: '1px solid #000000' }}>
+                      {Number(pkg.actualWeightKg || shipment.actualWeightKg || 10.0).toFixed(1)}
+                    </div>
+                    <div style={{ padding: '2px 8px' }}>
+                      {shipment.packageContents || 'MAX MED / Commercial Cargo'}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1.4fr 0.9fr 1fr',
+                    fontSize: '10px',
+                    padding: '4px 0',
+                  }}
+                >
+                  <div style={{ padding: '2px 8px', borderRight: '1px solid #000000' }}>
+                    {totalBoxes} Boxes: {shipment.dimensionsCm || '10x10x10'}
+                  </div>
+                  <div style={{ padding: '2px 8px', borderRight: '1px solid #000000' }}>
+                    {Number(shipment.actualWeightKg || 10.0).toFixed(1)}
+                  </div>
+                  <div style={{ padding: '2px 8px' }}>
+                    {shipment.packageContents || 'MAX MED'}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Total Boxes & Origin Signatures */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1.2fr 1fr',
+                borderTop: '2px solid #000000',
+                fontSize: '10px',
+                minHeight: '60px',
+              }}
+            >
+              <div style={{ padding: '6px 8px', borderRight: '1px solid #000000' }}>
+                <div style={{ fontWeight: '900' }}>TOTAL NUMBER OF BOXES: {totalBoxes}</div>
+                <div style={{ fontSize: '9px', marginTop: '2px' }}>{totalBoxes} boxes handed over by shipper</div>
+              </div>
+              <div style={{ padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <div style={{ fontWeight: '900' }}>REQUIRED SIGNATURE - ORIGIN:</div>
+                <div style={{ marginTop: '2px' }}>DELHIVERY EMP ID: ....................</div>
+                <div>SHIPPER'S SIGN: ....................</div>
+              </div>
+            </div>
+          </div>
+
+          {/* POD REMARKS RIGHT */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div
+              style={{
+                padding: '4px 8px',
+                fontWeight: '900',
+                fontSize: '10px',
+                borderBottom: '1px solid #000000',
+                letterSpacing: '0.2px',
+              }}
+            >
+              POD REMARKS
+            </div>
+
+            {/* POD Top Grid: ALL OKAY | SHORT BOX | RECEIPT SIGN */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                borderBottom: '1px solid #000000',
+                fontSize: '10px',
+                minHeight: '120px',
+              }}
+            >
+              {/* All Okay */}
+              <div
+                style={{
+                  padding: '8px 6px',
+                  borderRight: '1px solid #000000',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <span style={{ fontWeight: '700' }}>ALL OKAY</span>
+                <div style={{ width: '13px', height: '13px', border: '2px solid #000000', flexShrink: 0 }} />
+              </div>
+
+              {/* Short Box? */}
+              <div
+                style={{
+                  padding: '8px 6px',
+                  borderRight: '1px solid #000000',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <span style={{ fontWeight: '700' }}>SHORT BOX?</span>
+                  <div style={{ width: '13px', height: '13px', border: '2px solid #000000', flexShrink: 0 }} />
+                </div>
+                <div style={{ fontSize: '9px', marginTop: '6px' }}>
+                  If yes, number of short boxes:
+                  <div style={{ marginTop: '3px', borderBottom: '1px solid #000', height: '10px' }} />
+                </div>
+              </div>
+
+              {/* Date & Time of Receipt & Receiver Sign */}
+              <div
+                style={{
+                  padding: '8px 6px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div>
+                  <div>Date of receipt:</div>
+                  <div style={{ marginTop: '6px' }}>Time of receipt:</div>
+                </div>
+                <div style={{ fontWeight: '900', fontSize: '9px', marginTop: '14px' }}>
+                  RECEIVER'S SIGN:
+                  <div style={{ height: '24px' }} />
+                </div>
+              </div>
+            </div>
+
+            {/* POD Bottom Grid: DAMAGED CONTENT | ITEMS MISSING | STAMP/SEAL */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                fontSize: '10px',
+                flex: 1,
+                minHeight: '130px',
+              }}
+            >
+              {/* Damaged Content? */}
+              <div
+                style={{
+                  padding: '8px 6px',
+                  borderRight: '1px solid #000000',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <span style={{ fontWeight: '700' }}>DAMAGED CONTENT?</span>
+                  <div style={{ width: '13px', height: '13px', border: '2px solid #000000', flexShrink: 0 }} />
+                </div>
+                <div style={{ fontSize: '9px', marginTop: '6px' }}>
+                  If yes, number of boxes having damaged content:
+                  <div style={{ marginTop: '3px', borderBottom: '1px solid #000', height: '10px' }} />
+                </div>
+              </div>
+
+              {/* Items Missing in Received Boxes? */}
+              <div
+                style={{
+                  padding: '8px 6px',
+                  borderRight: '1px solid #000000',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <span style={{ fontWeight: '700', fontSize: '9px' }}>ITEMS MISSING IN RECEIVED BOXES?</span>
+                  <div style={{ width: '13px', height: '13px', border: '2px solid #000000', flexShrink: 0 }} />
+                </div>
+                <div style={{ fontSize: '8px' }}>
+                  If yes, mention the AWB no(s) of boxes having pilferage:
+                </div>
+                <div style={{ fontSize: '8px', marginTop: '2px' }}>
+                  If yes, number of short items: _____
+                </div>
+                <div style={{ fontSize: '8px', marginTop: '2px' }}>
+                  Please describe the short items:
+                </div>
+              </div>
+
+              {/* Stamp / Seal */}
+              <div
+                style={{
+                  padding: '8px 6px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ fontWeight: '900', fontSize: '9px' }}>STAMP/SEAL:</div>
+                <div style={{ height: '36px' }} />
+                <div style={{ fontSize: '8px', color: '#000000' }}>
+                  OR, phone no in lieu of stamp:
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 4: FOOTER (DELHIVERY REGISTERED OFFICE & COPY STAMP) */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr' }}>
+          {/* Legal Carrier Registered Office */}
+          <div style={{ padding: '6px 8px', borderRight: '1px solid #000000', fontSize: '8px', color: '#000000' }}>
+            <div style={{ fontWeight: '900' }}>DELHIVERY LIMITED</div>
+            <div style={{ fontSize: '7.5px', marginTop: '1px' }}>
+              REGISTERED OFFICE: N24-N34, S24-S34, Air Cargo Logistics Centre-II, Opposite Gate 6 Cargo Terminal, IGI Airport, New Delhi, India (110037)
+            </div>
+            <div style={{ fontSize: '7.5px', marginTop: '1px' }}>
+              <strong>TRANSPORTER ID:</strong> 06AAPCS9575E1ZR &nbsp;|&nbsp; <strong>CIN No:</strong> U63090DL2011PTC221234 &nbsp;|&nbsp; <strong>PAN:</strong> AAPCS9575E
+            </div>
+            <div style={{ fontSize: '7.5px', marginTop: '1px' }}>
+              For terms and conditions visit <u>www.delhivery.com</u>
+            </div>
+          </div>
+
+          {/* Document Type Copy & Timestamp */}
+          <div
+            style={{
+              padding: '6px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              fontSize: '11px',
+            }}
+          >
+            <div style={{ fontWeight: '900', fontSize: '12px', letterSpacing: '0.5px' }}>
+              Document Type: {copyName} COPY
+            </div>
+            <div style={{ fontSize: '10px', marginTop: '2px', color: '#000000' }}>
+              Printed on {printTimestamp}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
@@ -157,14 +821,18 @@ export const ShipmentLabelPage: React.FC = () => {
             visibility: visible;
           }
           .printable-shipping-label-container {
-            position: absolute;
-            left: 0;
-            top: 0;
+            position: relative !important;
+            left: 0 !important;
+            top: 0 !important;
             width: 100% !important;
             max-width: ${getMaxWidth(labelFormat)} !important;
             margin: 0 auto !important;
-            padding: ${labelFormat === 'waybill_lr' ? '0' : '6px'} !important;
+            padding: 0 !important;
             box-shadow: none !important;
+          }
+          .page-break {
+            page-break-after: always !important;
+            break-after: page !important;
           }
           .no-print {
             display: none !important;
@@ -178,13 +846,13 @@ export const ShipmentLabelPage: React.FC = () => {
           title={labelFormat === 'waybill_lr' ? `Official B2B Waybill / LR Copy — LRN ${awb}` : `Shipping Label — AWB ${awb}`}
           description={
             labelFormat === 'waybill_lr'
-              ? 'Transporter Consignment Note (Lorry Receipt) with Proof of Delivery (POD) signature & origin verification.'
-              : 'Multi-format barcode shipping label. Fully compatible with TSC, Zebra, Rollo, laser and desktop printers.'
+              ? 'Exact Delhivery ONE Transporter Consignment Note (Lorry Receipt) with complete Proof of Delivery (POD) signature matrix.'
+              : 'Multi-format barcode shipping label with 100% standard Code 128 Modulo 103 checksum for all industrial scanners.'
           }
           breadcrumbs={breadcrumbs}
           actions={
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ width: '220px' }}>
+              <div style={{ width: '230px' }}>
                 <Select
                   value={labelFormat}
                   onChange={(e) => setLabelFormat(e.target.value as PrintLabelFormat)}
@@ -232,9 +900,94 @@ export const ShipmentLabelPage: React.FC = () => {
         />
 
         {labelFormat === 'waybill_lr' ? (
-          <Alert variant="info" title="Official Commercial Transporter Consignment Note">
-            Document Type: <strong>SHIPPER & TRANSPORTER COPY</strong>. Keep one copy for your records, hand one copy to the vehicle driver with E-Way Bill, and consignee will sign the POD copy upon destination delivery.
-          </Alert>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Alert variant="info" title="Official Commercial Transporter Consignment Note (Delhivery ONE Exact Format)">
+              Consignment note for LRN <strong>{awb}</strong>. In transport operations, 3 copies are customarily used:
+              one kept by Shipper, one for Consignee upon delivery with POD signature, and one for Transporter records.
+            </Alert>
+
+            {/* Quick Copy Selector Tabs */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 14px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                flexWrap: 'wrap',
+              }}
+            >
+              <span style={{ fontSize: '12px', fontWeight: '800', color: '#475569', marginRight: '6px' }}>
+                Select Document Copy:
+              </span>
+              <button
+                type="button"
+                onClick={() => setLrCopySelection('SHIPPER')}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  border: lrCopySelection === 'SHIPPER' ? '2px solid #0284c7' : '1px solid #e2e8f0',
+                  backgroundColor: lrCopySelection === 'SHIPPER' ? '#f0f9ff' : '#ffffff',
+                  color: lrCopySelection === 'SHIPPER' ? '#0284c7' : '#334155',
+                  cursor: 'pointer',
+                }}
+              >
+                🏢 Shipper Copy
+              </button>
+              <button
+                type="button"
+                onClick={() => setLrCopySelection('CONSIGNEE')}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  border: lrCopySelection === 'CONSIGNEE' ? '2px solid #0284c7' : '1px solid #e2e8f0',
+                  backgroundColor: lrCopySelection === 'CONSIGNEE' ? '#f0f9ff' : '#ffffff',
+                  color: lrCopySelection === 'CONSIGNEE' ? '#0284c7' : '#334155',
+                  cursor: 'pointer',
+                }}
+              >
+                📦 Consignee Copy (POD)
+              </button>
+              <button
+                type="button"
+                onClick={() => setLrCopySelection('TRANSPORTER')}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  border: lrCopySelection === 'TRANSPORTER' ? '2px solid #0284c7' : '1px solid #e2e8f0',
+                  backgroundColor: lrCopySelection === 'TRANSPORTER' ? '#f0f9ff' : '#ffffff',
+                  color: lrCopySelection === 'TRANSPORTER' ? '#0284c7' : '#334155',
+                  cursor: 'pointer',
+                }}
+              >
+                🚚 Transporter Copy
+              </button>
+              <button
+                type="button"
+                onClick={() => setLrCopySelection('ALL_THREE')}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '800',
+                  border: lrCopySelection === 'ALL_THREE' ? '2px solid #16a34a' : '1px solid #e2e8f0',
+                  backgroundColor: lrCopySelection === 'ALL_THREE' ? '#f0fdf4' : '#ffffff',
+                  color: lrCopySelection === 'ALL_THREE' ? '#166534' : '#334155',
+                  cursor: 'pointer',
+                }}
+              >
+                📑 Print All 3 Copies (Triplicate A4)
+              </button>
+            </div>
+          </div>
         ) : (
           <Alert variant="success" title="Verified Carrier Label Active">
             AWB <strong>{awb}</strong> is booked on the Delhivery network. Print this barcode label and affix securely to the top surface of your dispatch package.
@@ -247,235 +1000,27 @@ export const ShipmentLabelPage: React.FC = () => {
         style={{
           padding: '24px',
           display: 'flex',
-          justifyContent: 'center',
+          flexDirection: 'column',
+          alignItems: 'center',
           backgroundColor: '#f1f5f9',
           border: '1px solid #cbd5e1',
           borderRadius: '12px',
           overflowX: 'auto',
         }}
       >
-        {/* BRANCH 1: OFFICIAL COMMERCIAL WAYBILL / LR COPY (IMAGE 2 REPLICA) */}
+        {/* BRANCH 1: OFFICIAL COMMERCIAL WAYBILL / LR COPY (EXACT DELHIVERY ONE REPLICA) */}
         {labelFormat === 'waybill_lr' ? (
-          <div
-            className="printable-shipping-label-container"
-            style={{
-              width: '100%',
-              maxWidth: '820px',
-              backgroundColor: '#ffffff',
-              border: '2px solid #000000',
-              color: '#000000',
-              fontFamily: 'Arial, sans-serif',
-              boxSizing: 'border-box',
-              fontSize: '11px',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            {/* 1. DOCUMENT TOP HEADER */}
-            <div style={{ display: 'flex', borderBottom: '2px solid #000000' }}>
-              <div style={{ flex: '1 1 50%', padding: '10px 14px', borderRight: '2px solid #000000', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ fontSize: '24px', fontWeight: '900', letterSpacing: '-0.5px' }}>
-                    DELHIVERY
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#1e293b', fontWeight: '600' }}>
-                    <div>Created Date: {shipment.bookingDate || new Date().toLocaleDateString('en-IN')}</div>
-                    <div>Pickup Date: {new Date().toLocaleDateString('en-IN')}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: '800', marginTop: '6px' }}>
-                  <span>SELF DROP</span>
-                  <div style={{ width: '13px', height: '13px', border: '1.5px solid #000000' }} />
-                </div>
-              </div>
-
-              <div style={{ flex: '1 1 50%', padding: '10px 14px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                  <div style={{ fontSize: '20px', fontWeight: '900', letterSpacing: '1px' }}>
-                    {awb}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: '800' }}>
-                    <span>SELF COLLECT</span>
-                    <div style={{ width: '13px', height: '13px', border: '1.5px solid #000000' }} />
-                  </div>
-                </div>
-                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '4px' }}>
-                  <div dangerouslySetInnerHTML={{ __html: BarcodeService.generateBarcodeSvg(awb, 34, 1.8) }} />
-                  <div style={{ fontSize: '9px', fontWeight: '700', fontFamily: 'monospace', letterSpacing: '1px' }}>{awb}</div>
-                </div>
-              </div>
+          lrCopySelection === 'ALL_THREE' ? (
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {renderDelhiveryWaybillDocument('SHIPPER', true)}
+              {renderDelhiveryWaybillDocument('CONSIGNEE', true)}
+              {renderDelhiveryWaybillDocument('TRANSPORTER', false)}
             </div>
-
-            {/* 2. SHIPPER vs CONSIGNEE DETAILS */}
-            <div style={{ display: 'flex', borderBottom: '2px solid #000000' }}>
-              {/* SHIPMENT PICKED FROM */}
-              <div style={{ flex: '1 1 50%', padding: '8px 12px', borderRight: '2px solid #000000' }}>
-                <div style={{ fontSize: '9px', fontWeight: '900', letterSpacing: '0.5px', color: '#1e293b', marginBottom: '4px' }}>
-                  SHIPMENT PICKED FROM:
-                </div>
-                <div style={{ fontWeight: '800', fontSize: '12px' }}>
-                  Shipper's Name: {shipment.pickupContact || 'MAXLINE LOGI - 156'}
-                </div>
-                <div style={{ fontSize: '11px', marginTop: '2px' }}>
-                  Shipper's phone no: {shipment.pickupPhone || '+91 70093 11318'}
-                </div>
-                <div style={{ fontSize: '11px', marginTop: '2px', borderTop: '1px solid #e2e8f0', paddingTop: '3px' }}>
-                  Street Name: {shipment.pickupAddress || 'PLOT NO 167 INDUSTRIAL AREA PHASE-2'}
-                </div>
-                <div style={{ display: 'flex', gap: '12px', fontSize: '11px', marginTop: '3px' }}>
-                  <div><strong>City:</strong> {shipment.pickupCity || 'Panchkula'}</div>
-                  <div><strong>State:</strong> Haryana</div>
-                  <div><strong>Postal Code:</strong> {shipment.pickupPincode || '134113'}</div>
-                </div>
-                <div style={{ fontSize: '10px', marginTop: '3px' }}>
-                  <strong>GSTIN:</strong> 06AABCM1234F1Z5
-                </div>
-              </div>
-
-              {/* SHIPMENT DELIVERED TO */}
-              <div style={{ flex: '1 1 50%', padding: '8px 12px' }}>
-                <div style={{ fontSize: '9px', fontWeight: '900', letterSpacing: '0.5px', color: '#1e293b', marginBottom: '4px' }}>
-                  SHIPMENT DELIVERED TO:
-                </div>
-                <div style={{ fontWeight: '800', fontSize: '12px' }}>
-                  Recipient's Name: {shipment.deliveryContact || 'Consignee Recipient'}
-                </div>
-                <div style={{ fontSize: '11px', marginTop: '2px' }}>
-                  Recipient's phone no.: {shipment.deliveryPhone || '+91 98765 43210'}
-                </div>
-                <div style={{ fontSize: '11px', marginTop: '2px', borderTop: '1px solid #e2e8f0', paddingTop: '3px' }}>
-                  Street Name: {shipment.deliveryAddress || 'Commercial Freight Destination'}
-                </div>
-                <div style={{ display: 'flex', gap: '12px', fontSize: '11px', marginTop: '3px' }}>
-                  <div><strong>City:</strong> {shipment.deliveryCity || 'Destination'}</div>
-                  <div><strong>State:</strong> Himachal Pradesh</div>
-                  <div><strong>Pincode:</strong> {shipment.deliveryPincode || '173205'}</div>
-                </div>
-                <div style={{ fontSize: '10px', marginTop: '3px' }}>
-                  <strong>GSTIN:</strong> URP (Unregistered Person)
-                </div>
-              </div>
-            </div>
-
-            {/* 3. SHIPMENT INFORMATION & BOXES */}
-            <div style={{ display: 'flex', borderBottom: '2px solid #000000' }}>
-              {/* SHIPMENT INFO LEFT */}
-              <div style={{ flex: '1 1 50%', borderRight: '2px solid #000000' }}>
-                <div style={{ backgroundColor: '#f8fafc', padding: '4px 12px', fontWeight: '900', fontSize: '9px', letterSpacing: '0.5px', borderBottom: '1px solid #000000' }}>
-                  SHIPMENT INFORMATION
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', borderBottom: '1px solid #000000' }}>
-                  <div style={{ padding: '4px 12px', borderRight: '1px solid #000000', fontSize: '10px' }}>
-                    <strong>SHIPPER'S REF NO.:</strong> {orderId}
-                  </div>
-                  <div style={{ padding: '4px 8px', fontSize: '10px' }}>
-                    <strong>MOT:</strong> Road (Surface Cargo)
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #000000', fontSize: '10px' }}>
-                  <div style={{ padding: '4px 12px', borderRight: '1px solid #000000' }}>
-                    <strong>INVOICE NO.:</strong> {shipment.invoiceNumber || `INV-${orderId.slice(-4)}`}
-                  </div>
-                  <div style={{ padding: '4px 8px' }}>
-                    <strong>EWBN:</strong> {shipment.invoiceNumber ? `EWB-${awb.slice(-6)}` : 'N/A'}
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', borderBottom: '1px solid #000000', fontSize: '10px' }}>
-                  <div style={{ padding: '4px 12px', borderRight: '1px solid #000000' }}>
-                    <strong>TOTAL INVOICE VALUE:</strong> ₹{(shipment.invoiceValueINR || 5000).toFixed(1)}
-                  </div>
-                  <div style={{ padding: '4px 8px' }}>
-                    <strong>MASTER AWB:</strong> {awb}
-                  </div>
-                </div>
-                <div style={{ padding: '4px 12px', fontSize: '10px', borderBottom: '1px solid #000000' }}>
-                  <strong>Freight Payment:</strong> {isCod ? `COD (Collect ₹${codAmount})` : 'PREPAID'} | <strong>ROV:</strong> BY SHIPPER
-                </div>
-
-                {/* BOXES BREAKDOWN TABLE */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.2fr', fontSize: '10px', textAlign: 'center', backgroundColor: '#f8fafc', borderBottom: '1px solid #000000', fontWeight: '800' }}>
-                  <div style={{ padding: '4px', borderRight: '1px solid #000000' }}>BOXES × DIMENSION (cm)</div>
-                  <div style={{ padding: '4px', borderRight: '1px solid #000000' }}>ACTUAL WT (kg)</div>
-                  <div style={{ padding: '4px' }}>SAID TO CONTAIN</div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.2fr', fontSize: '10px', textAlign: 'center', minHeight: '36px' }}>
-                  <div style={{ padding: '6px', borderRight: '1px solid #000000', fontWeight: '700' }}>
-                    {shipment.packages?.length || 1} Box: {shipment.dimensionsCm || '30x30x30'}
-                  </div>
-                  <div style={{ padding: '6px', borderRight: '1px solid #000000', fontWeight: '700' }}>
-                    {shipment.chargeableWeightKg || 20.0}
-                  </div>
-                  <div style={{ padding: '6px', fontWeight: '700' }}>
-                    {shipment.packageContents || 'MAX MED / Commercial Cargo'}
-                  </div>
-                </div>
-              </div>
-
-              {/* POD REMARKS & RECEIVER ACKNOWLEDGEMENT RIGHT */}
-              <div style={{ flex: '1 1 50%', padding: '8px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontSize: '9px', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '6px' }}>
-                    POD REMARKS & DELIVERY ACKNOWLEDGEMENT
-                  </div>
-                  <div style={{ display: 'flex', gap: '16px', fontSize: '10px', fontWeight: '700' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <div style={{ width: '13px', height: '13px', border: '1.5px solid #000000' }} />
-                      <span>ALL OKAY</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <div style={{ width: '13px', height: '13px', border: '1.5px solid #000000' }} />
-                      <span>SHORT BOX?</span>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '16px', fontSize: '10px', fontWeight: '700', marginTop: '6px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <div style={{ width: '13px', height: '13px', border: '1.5px solid #000000' }} />
-                      <span>DAMAGED CONTENT?</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <div style={{ width: '13px', height: '13px', border: '1.5px solid #000000' }} />
-                      <span>MISSING ITEMS?</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ borderTop: '1px solid #cbd5e1', paddingTop: '8px', marginTop: '12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '10px' }}>
-                    <div>Date of receipt: ____________</div>
-                    <div>Time of receipt: ____________</div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '10px', marginTop: '16px' }}>
-                    <div>RECEIVER'S SIGN: ____________</div>
-                    <div>STAMP / SEAL: ____________</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. ORIGIN HANDOVER SIGNATURES */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #000000', fontSize: '10px' }}>
-              <div style={{ flex: '1 1 50%', padding: '6px 12px', borderRight: '2px solid #000000' }}>
-                <strong>TOTAL NUMBER OF BOXES:</strong> {shipment.packages?.length || 1}
-                <div style={{ fontSize: '9px', color: '#64748b' }}>Boxes handed over to carrier representative</div>
-              </div>
-              <div style={{ flex: '1 1 50%', padding: '6px 12px', display: 'flex', justifyContent: 'space-between' }}>
-                <div><strong>DELHIVERY EMP ID:</strong> ____________</div>
-                <div><strong>SHIPPER'S SIGN:</strong> ____________</div>
-              </div>
-            </div>
-
-            {/* 5. FOOTER: LEGAL & DOCUMENT TYPE */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 12px', fontSize: '9px', color: '#334155', backgroundColor: '#f8fafc' }}>
-              <div>
-                <strong>DELHIVERY LIMITED / MAXLINE LOGISTICS</strong> • Reg Office: Cargo Terminal, IGI Airport, New Delhi • CIN: U63090DL2011PTC221234
-              </div>
-              <div style={{ textAlign: 'right', fontWeight: '800' }}>
-                <span>Document Type: SHIPPER COPY</span>
-                <div style={{ fontSize: '8px', color: '#64748b' }}>Printed on {new Date().toLocaleString('en-IN')}</div>
-              </div>
-            </div>
-          </div>
+          ) : (
+            renderDelhiveryWaybillDocument(lrCopySelection, false)
+          )
         ) : labelFormat.startsWith('carton_') || labelFormat === 'compact_3x2' ? (
-          /* BRANCH 2: COMPACT CARTER / BOX LABELS (4x2, 4x2.5, 3x2) */
+          /* BRANCH 2: COMPACT CARTON / BOX LABELS (4x2, 4x2.5, 3x2) */
           <div
             className="printable-shipping-label-container"
             style={{
@@ -491,14 +1036,19 @@ export const ShipmentLabelPage: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #000', paddingBottom: '4px' }}>
-              <div style={{ fontSize: '14px', fontWeight: '900' }}>DELHIVERY {isB2bMode ? 'B2B' : 'SURFACE'}</div>
+              <div style={{ fontSize: '14px', fontWeight: '900' }}>
+                <DelhiveryLogo fontSize={14} /> {isB2bMode ? 'B2B' : 'SURFACE'}
+              </div>
               <div style={{ fontSize: '10px', fontWeight: '900', border: '1px solid #000', padding: '1px 5px' }}>
                 {isCod ? `COD ₹${codAmount.toFixed(0)}` : 'PREPAID'}
               </div>
             </div>
 
             <div style={{ textAlign: 'center', padding: '6px 0', borderBottom: '1px solid #000' }}>
-              <div dangerouslySetInnerHTML={{ __html: BarcodeService.generateBarcodeSvg(awb, 34, 1.8) }} style={{ display: 'flex', justifyContent: 'center' }} />
+              <div
+                dangerouslySetInnerHTML={{ __html: BarcodeService.generateBarcodeSvg(awb, 34, 1.8) }}
+                style={{ display: 'flex', justifyContent: 'center' }}
+              />
               <div style={{ fontSize: '13px', fontWeight: '900', fontFamily: 'monospace', letterSpacing: '1px' }}>{awb}</div>
             </div>
 
@@ -511,7 +1061,7 @@ export const ShipmentLabelPage: React.FC = () => {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '8px', color: '#64748b', fontWeight: '800' }}>WEIGHT:</div>
-                <div style={{ fontWeight: '900' }}>{shipment.chargeableWeightKg || 20} KG</div>
+                <div style={{ fontWeight: '900' }}>{shipment.chargeableWeightKg || 10} KG</div>
                 <div style={{ marginTop: '4px', fontSize: '8px', color: '#64748b', fontWeight: '800' }}>ORDER ID:</div>
                 <div style={{ fontWeight: '800' }}>{orderId}</div>
               </div>
@@ -519,16 +1069,16 @@ export const ShipmentLabelPage: React.FC = () => {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px', fontSize: '8px', fontWeight: '700', color: '#475569' }}>
               <span>ORIGIN: {shipment.pickupCity} ({shipment.pickupPincode})</span>
-              <span>BOX 1 OF {shipment.packages?.length || 1}</span>
+              <span>BOX 1 OF {totalBoxes}</span>
             </div>
           </div>
         ) : (
-          /* BRANCH 3: STANDARD 4x6 / A4 SHIPPING LABEL */
+          /* BRANCH 3: STANDARD 4x6 THERMAL / A4 SHIPPING LABEL */
           <div
             className="printable-shipping-label-container"
             style={{
               width: '100%',
-              maxWidth: labelFormat === 'thermal_4x6' ? '400px' : '560px',
+              maxWidth: labelFormat === 'thermal_4x6' ? '400px' : '580px',
               backgroundColor: '#ffffff',
               border: '2.5px solid #000000',
               borderRadius: '2px',
@@ -550,10 +1100,8 @@ export const ShipmentLabelPage: React.FC = () => {
               }}
             >
               <div>
-                <div style={{ fontSize: '22px', fontWeight: '900', letterSpacing: '-0.5px', textTransform: 'uppercase' }}>
-                  DELHIVERY
-                </div>
-                <div style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.5px', color: '#1e293b' }}>
+                <DelhiveryLogo fontSize={22} />
+                <div style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.5px', color: '#1e293b', marginTop: '2px' }}>
                   {shipment.courierName?.toUpperCase() || 'DELHIVERY SURFACE B2B'}
                 </div>
               </div>
@@ -574,7 +1122,7 @@ export const ShipmentLabelPage: React.FC = () => {
                 >
                   {isCod ? `COD: ₹${codAmount.toFixed(0)}` : 'PREPAID'}
                 </div>
-                <div style={{ fontSize: '10px', fontWeight: '700', marginTop: '2px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '800', marginTop: '3px' }}>
                   SORT: {shipment.deliveryPincode ? `DEL/${shipment.deliveryPincode.slice(0, 3)}` : 'DEL/HUB'}
                 </div>
               </div>
@@ -616,8 +1164,8 @@ export const ShipmentLabelPage: React.FC = () => {
                 }}
               >
                 <span>ORDER ID: {orderId}</span>
-                <span>DATE: {shipment.bookingDate || new Date().toLocaleDateString('en-IN')}</span>
-                <span>PKG: 1 OF {shipment.packages?.length || 1}</span>
+                <span>DATE: {shipment.bookingDate || '03/11/26'}</span>
+                <span>PKG: 1 OF {totalBoxes}</span>
               </div>
             </div>
 
@@ -640,7 +1188,7 @@ export const ShipmentLabelPage: React.FC = () => {
                     {shipment.deliveryAddress || 'Delivery Address'}
                   </div>
                   <div style={{ fontSize: '11px', fontWeight: '700', marginTop: '2px' }}>
-                    {shipment.deliveryCity}
+                    {shipment.deliveryCity}, {destState}
                   </div>
                   <div style={{ fontSize: '11px', fontWeight: '800', marginTop: '3px' }}>
                     📞 {shipment.deliveryPhone}
@@ -680,16 +1228,16 @@ export const ShipmentLabelPage: React.FC = () => {
               }}
             >
               <div style={{ borderRight: '1px solid #000000', padding: '0 4px' }}>
-                <div style={{ fontSize: '9px', color: '#475569', fontWeight: '700' }}>WEIGHT</div>
-                <div style={{ fontWeight: '900' }}>{shipment.chargeableWeightKg || 20.0} KG</div>
+                <div style={{ fontSize: '9px', color: '#475569', fontWeight: '700' }}>WEIGHT (10 CFT)</div>
+                <div style={{ fontWeight: '900' }}>{shipment.chargeableWeightKg || 10.0} KG</div>
               </div>
               <div style={{ borderRight: '1px solid #000000', padding: '0 4px' }}>
                 <div style={{ fontSize: '9px', color: '#475569', fontWeight: '700' }}>DIMENSIONS</div>
-                <div style={{ fontWeight: '900', fontSize: '10px' }}>{shipment.dimensionsCm || '30×30×30 CM'}</div>
+                <div style={{ fontWeight: '900', fontSize: '10px' }}>{shipment.dimensionsCm || '10×10×10 CM'}</div>
               </div>
               <div style={{ padding: '0 4px' }}>
                 <div style={{ fontSize: '9px', color: '#475569', fontWeight: '700' }}>INVOICE VAL</div>
-                <div style={{ fontWeight: '900' }}>₹{shipment.invoiceValueINR || 5000}</div>
+                <div style={{ fontWeight: '900' }}>₹{invoiceValue.toFixed(1)}</div>
               </div>
             </div>
 
@@ -744,7 +1292,7 @@ export const ShipmentLabelPage: React.FC = () => {
                 {shipment.pickupContact || 'Registered Shipper Origin'}
               </div>
               <div style={{ fontSize: '10px', color: '#1e293b', marginTop: '2px', lineHeight: '1.3' }}>
-                {shipment.pickupAddress || 'Origin Dispatch Facility'}, {shipment.pickupCity} - <strong>{shipment.pickupPincode || ''}</strong>
+                {shipment.pickupAddress || 'Origin Dispatch Facility'}, {shipment.pickupCity}, {originState} - <strong>{shipment.pickupPincode || ''}</strong>
               </div>
               <div style={{ fontSize: '10px', fontWeight: '800', marginTop: '2px' }}>
                 Origin Phone: {shipment.pickupPhone || '+91 70093 11318'}
@@ -764,7 +1312,7 @@ export const ShipmentLabelPage: React.FC = () => {
               }}
             >
               <div>
-                <span>ROUTING: {shipment.pickupPincode || '134113'} ➔ {shipment.deliveryPincode || '173205'}</span>
+                <span>ROUTING: {shipment.pickupPincode || '133001'} ➔ {shipment.deliveryPincode || '570019'}</span>
                 <div style={{ fontSize: '8px', color: '#64748b' }}>
                   AGGREGATOR: MAXLINE LOGISTICS • AUTH CARRIER: DELHIVERY B2B
                 </div>
