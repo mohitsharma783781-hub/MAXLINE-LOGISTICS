@@ -21,11 +21,11 @@ import {
   Phone,
   Copy,
   Check,
-  ShieldCheck,
   Eye,
   Building2,
   ExternalLink,
   Calendar,
+  ArrowRight,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import {
@@ -58,6 +58,7 @@ export interface OrderRecord extends Record<string, unknown> {
   courierBg: string;
   serviceType: 'Surface' | 'Air' | 'Express' | 'Cargo';
   mode: 'B2C' | 'B2B';
+  boxCount: number;
 
   originCity: string;
   originPincode: string;
@@ -105,7 +106,6 @@ export function mapShipmentToOrderRecord(s: CustomerShipmentDetail): OrderRecord
   const codCharge = Number(s.codFeeINR) || 0;
   const totalAmount = Number(s.totalCustomerChargeINR) || (baseFreight + fuelSurcharge + codCharge);
 
-  // Exact GST amount calculation
   const subtotal = baseFreight + fuelSurcharge + codCharge;
   const gstAmount = Math.max(0, Math.round((totalAmount > subtotal ? totalAmount - subtotal : subtotal * 0.18) * 100) / 100);
 
@@ -122,6 +122,9 @@ export function mapShipmentToOrderRecord(s: CustomerShipmentDetail): OrderRecord
   else if (statusStr === 'OUT_FOR_DELIVERY') status = 'OFD';
   else if (statusStr === 'PICKUP_REQUESTED') status = 'Pickup Scheduled';
   else status = 'Booked';
+
+  const boxCount =
+    (s.packages && s.packages.reduce((sum: number, p: any) => sum + (p.quantity || 1), 0)) || 1;
 
   const timeline = s.trackingTimeline && s.trackingTimeline.length > 0
     ? s.trackingTimeline.map((t) => ({
@@ -161,6 +164,7 @@ export function mapShipmentToOrderRecord(s: CustomerShipmentDetail): OrderRecord
     courierBg: '#0284c7',
     serviceType,
     mode: (s.mode || 'B2C') as any,
+    boxCount,
 
     originCity: s.pickupCity || 'Origin Hub',
     originPincode: s.pickupPincode || '',
@@ -189,21 +193,24 @@ export function mapShipmentToOrderRecord(s: CustomerShipmentDetail): OrderRecord
   };
 }
 
+export type StatusTabKey = 'all' | 'booked' | 'in_transit' | 'delivered' | 'ndr' | 'rto';
+
 export const CustomerOrdersPage: React.FC = () => {
   const navigate = useNavigate();
   const { activeTenantId } = useTenant();
+
+  // Workflow Status Tabs
+  const [activeTab, setActiveTab] = useState<StatusTabKey>('all');
 
   // Filter & Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState('all');
   const [courierFilter, setCourierFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [warehouseFilter, setWarehouseFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
-  const [shipmentTypeFilter, setShipmentTypeFilter] = useState('all');
   const [modeFilter, setModeFilter] = useState('all');
   
-  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
+  const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
   const [copiedAwb, setCopiedAwb] = useState<string | null>(null);
 
   // Table Selection & Pagination State
@@ -216,7 +223,6 @@ export const CustomerOrdersPage: React.FC = () => {
   const [selectedDrawerOrder, setSelectedDrawerOrder] = useState<OrderRecord | null>(null);
   const [openPrintDropdownId, setOpenPrintDropdownId] = useState<string | null>(null);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
-  const [isCloudSynced, setIsCloudSynced] = useState<boolean>(false);
   const [syncVersion, setSyncVersion] = useState<number>(0);
 
   useEffect(() => {
@@ -225,14 +231,13 @@ export const CustomerOrdersPage: React.FC = () => {
     return () => window.removeEventListener('click', handleOutsideClick);
   }, []);
 
-  // Automatically synchronize with Supabase Cloud DB on mount or when activeTenantId changes
+  // Synchronize with backend on mount
   useEffect(() => {
     if (!activeTenantId) return;
 
     setIsLoadingData(true);
     CustomerShipmentService.syncFromSupabase(activeTenantId)
       .then(() => {
-        setIsCloudSynced(true);
         setSyncVersion((v) => v + 1);
       })
       .finally(() => {
@@ -240,14 +245,13 @@ export const CustomerOrdersPage: React.FC = () => {
       });
   }, [activeTenantId]);
 
-  // Trigger data refresh and re-sync from Supabase Cloud DB
+  // Refresh data
   const handleRefreshData = () => {
     if (!activeTenantId) return;
     setIsLoadingData(true);
 
     CustomerShipmentService.syncFromSupabase(activeTenantId)
       .then(() => {
-        setIsCloudSynced(true);
         setSyncVersion((v) => v + 1);
       })
       .finally(() => {
@@ -263,44 +267,83 @@ export const CustomerOrdersPage: React.FC = () => {
     setTimeout(() => setCopiedAwb(null), 2000);
   };
 
-  // Calculate active filter count
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (dateRange !== 'all') count++;
-    if (courierFilter !== 'all') count++;
-    if (statusFilter !== 'all') count++;
-    if (warehouseFilter !== 'all') count++;
-    if (paymentFilter !== 'all') count++;
-    if (shipmentTypeFilter !== 'all') count++;
-    if (modeFilter !== 'all') count++;
-    if (searchQuery.trim()) count++;
-    return count;
-  }, [dateRange, courierFilter, statusFilter, warehouseFilter, paymentFilter, shipmentTypeFilter, modeFilter, searchQuery]);
+  // Raw orders for tab counting
+  const allRawOrders = useMemo(() => {
+    if (!activeTenantId) return [];
+    const dynamicShipments = CustomerShipmentService.getShipments(activeTenantId);
+    return dynamicShipments.map(mapShipmentToOrderRecord);
+  }, [activeTenantId, syncVersion]);
 
-  // Reset All Filters
+  // Status counts for tabs
+  const tabCounts = useMemo(() => {
+    let booked = 0;
+    let transit = 0;
+    let delivered = 0;
+    let ndr = 0;
+    let rto = 0;
+
+    for (const o of allRawOrders) {
+      if (o.status === 'Booked' || o.status === 'Pickup Scheduled' || o.status === 'Pending') {
+        booked++;
+      } else if (o.status === 'In Transit' || o.status === 'Picked Up' || o.status === 'OFD') {
+        transit++;
+      } else if (o.status === 'Delivered') {
+        delivered++;
+      } else if (o.status === 'NDR') {
+        ndr++;
+      } else if (o.status === 'RTO') {
+        rto++;
+      }
+    }
+
+    return {
+      all: allRawOrders.length,
+      booked,
+      in_transit: transit,
+      delivered,
+      ndr,
+      rto,
+    };
+  }, [allRawOrders]);
+
+  // Reset Filters
   const handleResetFilters = () => {
     setSearchQuery('');
     setDateRange('all');
     setCourierFilter('all');
-    setStatusFilter('all');
     setWarehouseFilter('all');
     setPaymentFilter('all');
-    setShipmentTypeFilter('all');
     setModeFilter('all');
+    setActiveTab('all');
     setCurrentPage(1);
   };
 
+  const isAnyFilterActive =
+    searchQuery.trim() !== '' ||
+    dateRange !== 'all' ||
+    courierFilter !== 'all' ||
+    warehouseFilter !== 'all' ||
+    paymentFilter !== 'all' ||
+    modeFilter !== 'all' ||
+    activeTab !== 'all';
+
   // Filtered & Sorted Orders
   const filteredOrders = useMemo(() => {
-    if (!activeTenantId) return [];
-    const dynamicShipments = CustomerShipmentService.getShipments(activeTenantId);
-    const dynamicOrders: OrderRecord[] = dynamicShipments.map(mapShipmentToOrderRecord);
+    let list = allRawOrders.filter((item) => {
+      // 1. Status Tab Filter
+      if (activeTab === 'booked') {
+        if (!(item.status === 'Booked' || item.status === 'Pickup Scheduled' || item.status === 'Pending')) return false;
+      } else if (activeTab === 'in_transit') {
+        if (!(item.status === 'In Transit' || item.status === 'Picked Up' || item.status === 'OFD')) return false;
+      } else if (activeTab === 'delivered') {
+        if (item.status !== 'Delivered') return false;
+      } else if (activeTab === 'ndr') {
+        if (item.status !== 'NDR') return false;
+      } else if (activeTab === 'rto') {
+        if (item.status !== 'RTO') return false;
+      }
 
-    const isPreviewOrDemo = activeTenantId === 'tenant-demo-01' || activeTenantId.toLowerCase() === 'all';
-    const combinedList = isPreviewOrDemo ? [...dynamicOrders, ...DEMO_ORDERS_DATA] : dynamicOrders;
-
-    let list = combinedList.filter((item) => {
-      // Global Search
+      // 2. Global Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const match =
@@ -308,36 +351,28 @@ export const CustomerOrdersPage: React.FC = () => {
           item.awbNumber.toLowerCase().includes(q) ||
           item.customerName.toLowerCase().includes(q) ||
           item.customerPhone.includes(q) ||
-          item.deliveryCity.toLowerCase().includes(q);
+          item.deliveryCity.toLowerCase().includes(q) ||
+          item.deliveryPincode.includes(q) ||
+          item.originCity.toLowerCase().includes(q);
         if (!match) return false;
       }
 
-      // Courier Partner
+      // 3. Courier Filter
       if (courierFilter !== 'all' && !item.courierName.toLowerCase().includes(courierFilter.toLowerCase())) {
         return false;
       }
 
-      // Order Status
-      if (statusFilter !== 'all' && item.status !== statusFilter) {
-        return false;
-      }
-
-      // Warehouse
+      // 4. Warehouse Filter
       if (warehouseFilter !== 'all' && item.warehouseName !== warehouseFilter) {
         return false;
       }
 
-      // Payment Type
+      // 5. Payment Filter
       if (paymentFilter !== 'all' && item.paymentType !== paymentFilter) {
         return false;
       }
 
-      // Shipment Type
-      if (shipmentTypeFilter !== 'all' && item.shipmentType !== shipmentTypeFilter) {
-        return false;
-      }
-
-      // Mode
+      // 6. Mode Filter
       if (modeFilter !== 'all' && item.mode !== modeFilter) {
         return false;
       }
@@ -354,7 +389,7 @@ export const CustomerOrdersPage: React.FC = () => {
     });
 
     return list;
-  }, [searchQuery, dateRange, courierFilter, statusFilter, warehouseFilter, paymentFilter, shipmentTypeFilter, modeFilter, sortBy, syncVersion]);
+  }, [allRawOrders, activeTab, searchQuery, dateRange, courierFilter, warehouseFilter, paymentFilter, modeFilter, sortBy]);
 
   // Paginated Data
   const paginatedOrders = useMemo(() => {
@@ -382,7 +417,7 @@ export const CustomerOrdersPage: React.FC = () => {
     );
   };
 
-  // Helper function for status badges
+  // Status badge styling
   const getStatusBadgeVariant = (status: OrderRecord['status']) => {
     switch (status) {
       case 'Delivered':
@@ -411,27 +446,21 @@ export const CustomerOrdersPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '1400px', margin: '0 auto', paddingBottom: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', maxWidth: '1400px', margin: '0 auto', paddingBottom: '24px' }}>
       
-      {/* 1. TOP ACTION BAR & HEADER */}
+      {/* 1. TOP ACTION BAR (Clean & Professional, Zero Dev Jargon) */}
       <PageHeader
-        title="Orders Management Center"
-        description="Centralized operations hub to search, filter, track, print labels, and manage shipments."
+        title="Orders Center"
         breadcrumbs={breadcrumbs}
         style={{ marginBottom: '0px' }}
         actions={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            {isCloudSynced && (
-              <Badge variant="success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', padding: '4px 8px' }}>
-                <ShieldCheck size={12} /> Supabase Cloud Synced
-              </Badge>
-            )}
-
             <Button
               variant="outline"
               size="sm"
               leftIcon={<RefreshCw size={14} className={isLoadingData ? 'animate-spin' : ''} />}
               onClick={handleRefreshData}
+              title="Refresh Orders"
             >
               Refresh
             </Button>
@@ -443,15 +472,6 @@ export const CustomerOrdersPage: React.FC = () => {
               onClick={() => alert('Exporting orders CSV file...')}
             >
               Export
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<FileSpreadsheet size={14} />}
-              onClick={() => alert('Downloading Order Import Excel Template...')}
-            >
-              Template
             </Button>
 
             <Button
@@ -470,174 +490,220 @@ export const CustomerOrdersPage: React.FC = () => {
               onClick={() => navigate('/app/orders/create')}
               style={{ backgroundColor: '#0284c7', borderColor: '#0284c7', fontWeight: '700' }}
             >
-              + Create Shipment
+              Create Shipment
             </Button>
           </div>
         }
       />
 
-      {/* 2. COLLAPSIBLE SMART FILTER SECTION */}
-      <Card style={{ padding: '12px 14px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          
-          {/* Global Search & Collapse Toggle Bar */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-            {/* Search Input */}
-            <div style={{ flex: 1, minWidth: '280px', position: 'relative' }}>
-              <Input
-                placeholder="Search by AWB, Order ID, Customer Name, Mobile Number..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ paddingLeft: '34px' }}
-              />
-              <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-            </div>
-
-            {/* Collapse Toggle & Clear Filters */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {activeFilterCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={handleResetFilters} style={{ color: '#ef4444', fontSize: '12px' }}>
-                  Clear Filters ({activeFilterCount})
-                </Button>
-              )}
-
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<Filter size={14} />}
-                onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
-                style={{ fontSize: '12px' }}
+      {/* 2. DELHIVERY ONE STYLE STATUS WORKFLOW TABS */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          borderBottom: '2px solid #e2e8f0',
+          backgroundColor: '#ffffff',
+          borderRadius: '10px 10px 0 0',
+          padding: '4px 12px 0 12px',
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
+        }}
+      >
+        {[
+          { key: 'all' as StatusTabKey, label: 'All Orders', count: tabCounts.all },
+          { key: 'booked' as StatusTabKey, label: 'Booked / Manifested', count: tabCounts.booked },
+          { key: 'in_transit' as StatusTabKey, label: 'In Transit', count: tabCounts.in_transit },
+          { key: 'delivered' as StatusTabKey, label: 'Delivered', count: tabCounts.delivered },
+          { key: 'ndr' as StatusTabKey, label: 'NDR / Exceptions', count: tabCounts.ndr },
+          { key: 'rto' as StatusTabKey, label: 'RTO Returned', count: tabCounts.rto },
+        ].map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => {
+                setActiveTab(tab.key);
+                setCurrentPage(1);
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 14px',
+                fontSize: '12px',
+                fontWeight: isActive ? '800' : '600',
+                color: isActive ? '#0284c7' : '#64748b',
+                border: 'none',
+                borderBottom: isActive ? '2.5px solid #0284c7' : '2.5px solid transparent',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span>{tab.label}</span>
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: '700',
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                  backgroundColor: isActive ? '#e0f2fe' : '#f1f5f9',
+                  color: isActive ? '#0284c7' : '#64748b',
+                }}
               >
-                Filters {activeFilterCount > 0 && `(${activeFilterCount})`}{' '}
-                {isFiltersCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-              </Button>
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 3. COMPACT SEARCH & SMART FILTER STRIP */}
+      <Card style={{ padding: '12px 14px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0 0 10px 10px', marginTop: '-14px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Search Input */}
+            <div style={{ flex: '1 1 320px', minWidth: '240px', position: 'relative' }}>
+              <Input
+                placeholder="Search by AWB, Order ID, Customer name, Mobile, City, Pincode..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                style={{ paddingLeft: '34px', height: '36px', fontSize: '12px' }}
+              />
+              <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             </div>
+
+            {/* Quick Filter: Mode (B2B / B2C) */}
+            <div style={{ width: '130px' }}>
+              <Select
+                value={modeFilter}
+                onChange={(e) => {
+                  setModeFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                options={[
+                  { label: 'All Modes', value: 'all' },
+                  { label: 'B2B Freight', value: 'B2B' },
+                  { label: 'B2C Surface', value: 'B2C' },
+                ]}
+                style={{ height: '36px', fontSize: '12px' }}
+              />
+            </div>
+
+            {/* Quick Filter: Payment (Prepaid / COD) */}
+            <div style={{ width: '130px' }}>
+              <Select
+                value={paymentFilter}
+                onChange={(e) => {
+                  setPaymentFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                options={[
+                  { label: 'All Payments', value: 'all' },
+                  { label: 'Prepaid', value: 'Prepaid' },
+                  { label: 'COD', value: 'COD' },
+                ]}
+                style={{ height: '36px', fontSize: '12px' }}
+              />
+            </div>
+
+            {/* Quick Filter: Date Range */}
+            <div style={{ width: '130px' }}>
+              <Select
+                value={dateRange}
+                onChange={(e) => {
+                  setDateRange(e.target.value);
+                  setCurrentPage(1);
+                }}
+                options={[
+                  { label: 'All Dates', value: 'all' },
+                  { label: 'Today', value: 'today' },
+                  { label: 'Last 7 Days', value: '7d' },
+                  { label: 'Last 30 Days', value: '30d' },
+                ]}
+                style={{ height: '36px', fontSize: '12px' }}
+              />
+            </div>
+
+            {/* Advanced Filters Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Filter size={13} />}
+              onClick={() => setIsAdvancedFiltersOpen(!isAdvancedFiltersOpen)}
+              style={{ height: '36px', fontSize: '12px' }}
+            >
+              More Filters {isAdvancedFiltersOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            </Button>
+
+            {/* Clear Filters Button */}
+            {isAnyFilterActive && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                style={{ color: '#ef4444', fontSize: '12px', height: '36px' }}
+              >
+                Clear Filters
+              </Button>
+            )}
           </div>
 
-          {/* Advanced Filter Grid (Collapsible) */}
-          {!isFiltersCollapsed && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
-              {/* Date Range */}
+          {/* Advanced Collapsible Filters */}
+          {isAdvancedFiltersOpen && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '4px' }}>Date Range</label>
-                <Select
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value)}
-                  options={[
-                    { label: 'All Dates', value: 'all' },
-                    { label: 'Today', value: 'today' },
-                    { label: 'Yesterday', value: 'yesterday' },
-                    { label: 'Last 7 Days', value: '7d' },
-                    { label: 'Last 30 Days', value: '30d' },
-                  ]}
-                />
-              </div>
-
-              {/* Courier Partner */}
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '4px' }}>Courier Partner</label>
+                <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '3px' }}>Courier Partner</label>
                 <Select
                   value={courierFilter}
                   onChange={(e) => setCourierFilter(e.target.value)}
                   options={[
                     { label: 'All Couriers', value: 'all' },
-                    { label: 'Delhivery', value: 'Delhivery' },
-                    { label: 'Blue Dart', value: 'Blue Dart' },
-                    { label: 'Gati Freight', value: 'Gati' },
-                    { label: 'Xpressbees', value: 'Xpressbees' },
-                    { label: 'TCI Express', value: 'TCI' },
+                    { label: 'Delhivery Surface B2B', value: 'Delhivery Surface B2B' },
+                    { label: 'Delhivery Surface', value: 'Delhivery Surface' },
                   ]}
                 />
               </div>
 
-              {/* Order Status */}
               <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '4px' }}>Order Status</label>
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  options={[
-                    { label: 'All Statuses', value: 'all' },
-                    { label: 'Pending', value: 'Pending' },
-                    { label: 'Booked', value: 'Booked' },
-                    { label: 'Pickup Scheduled', value: 'Pickup Scheduled' },
-                    { label: 'Picked Up', value: 'Picked Up' },
-                    { label: 'In Transit', value: 'In Transit' },
-                    { label: 'Out For Delivery (OFD)', value: 'OFD' },
-                    { label: 'Delivered', value: 'Delivered' },
-                    { label: 'NDR Exception', value: 'NDR' },
-                    { label: 'RTO Returned', value: 'RTO' },
-                    { label: 'Cancelled', value: 'Cancelled' },
-                  ]}
-                />
-              </div>
-
-              {/* Warehouse */}
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '4px' }}>Warehouse</label>
+                <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '3px' }}>Warehouse</label>
                 <Select
                   value={warehouseFilter}
                   onChange={(e) => setWarehouseFilter(e.target.value)}
                   options={[
                     { label: 'All Warehouses', value: 'all' },
-                    { label: 'Delhi Primary Warehouse', value: 'Delhi Primary Warehouse' },
-                    { label: 'Bengaluru Fulfillment Center', value: 'Bengaluru Fulfillment Center' },
-                    { label: 'Himachal Warehouse Hub', value: 'Himachal Warehouse Hub' },
+                    { label: 'Origin Hub Warehouse', value: 'Origin Warehouse' },
                   ]}
                 />
               </div>
 
-              {/* Payment Type */}
               <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '4px' }}>Payment Type</label>
+                <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '3px' }}>Sort By</label>
                 <Select
-                  value={paymentFilter}
-                  onChange={(e) => setPaymentFilter(e.target.value)}
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
                   options={[
-                    { label: 'All Payments', value: 'all' },
-                    { label: 'Prepaid', value: 'Prepaid' },
-                    { label: 'COD (Cash on Delivery)', value: 'COD' },
-                  ]}
-                />
-              </div>
-
-              {/* Shipment Type */}
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '4px' }}>Shipment Type</label>
-                <Select
-                  value={shipmentTypeFilter}
-                  onChange={(e) => setShipmentTypeFilter(e.target.value)}
-                  options={[
-                    { label: 'All Types', value: 'all' },
-                    { label: 'Forward', value: 'Forward' },
-                    { label: 'Reverse Return', value: 'Reverse' },
-                  ]}
-                />
-              </div>
-
-              {/* Mode (B2B / B2C) */}
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '4px' }}>Mode (B2B/B2C)</label>
-                <Select
-                  value={modeFilter}
-                  onChange={(e) => setModeFilter(e.target.value)}
-                  options={[
-                    { label: 'All Modes', value: 'all' },
-                    { label: 'B2C Express', value: 'B2C' },
-                    { label: 'B2B Freight', value: 'B2B' },
+                    { label: 'Booking Date (Newest)', value: 'date' },
+                    { label: 'Order Amount (Highest)', value: 'amount' },
+                    { label: 'Status', value: 'status' },
                   ]}
                 />
               </div>
             </div>
           )}
-
         </div>
       </Card>
 
-      {/* 3. FLOATING BULK ACTIONS BAR (Visible when checkboxes selected) */}
+      {/* 4. FLOATING BULK ACTIONS BAR (When Checkboxes Selected) */}
       {selectedIds.length > 0 && (
-        <div style={{ backgroundColor: '#0284c7', color: '#ffffff', padding: '12px 20px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 12px rgba(2,132,199,0.2)' }}>
-          <div style={{ fontSize: '13px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ backgroundColor: '#0284c7', color: '#ffffff', padding: '10px 18px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 12px rgba(2,132,199,0.2)' }}>
+          <div style={{ fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <CheckCircle2 size={16} />
             <span>{selectedIds.length} Order(s) Selected</span>
           </div>
@@ -662,29 +728,21 @@ export const CustomerOrdersPage: React.FC = () => {
             </Button>
 
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              style={{ backgroundColor: '#ffffff', color: '#0284c7', borderColor: '#ffffff', fontSize: '11px', fontWeight: '700' }}
-              onClick={() => alert(`Bulk Printing Shipping Labels for ${selectedIds.length} orders...`)}
+              style={{ color: '#ffffff', fontSize: '11px' }}
+              onClick={() => setSelectedIds([])}
             >
-              <Printer size={13} style={{ marginRight: '4px' }} /> Bulk Labels
-            </Button>
-
-            <Button variant="outline" size="sm" style={{ backgroundColor: '#ffffff', color: '#0284c7', borderColor: '#ffffff', fontSize: '11px', fontWeight: '700' }} onClick={() => alert(`Exporting ${selectedIds.length} selected orders to CSV...`)}>
-              <Download size={13} style={{ marginRight: '4px' }} /> Bulk Export
-            </Button>
-
-            <Button variant="ghost" size="sm" style={{ color: '#ffffff', fontSize: '11px' }} onClick={() => setSelectedIds([])}>
               Clear Selection
             </Button>
           </div>
         </div>
       )}
 
-      {/* 4. ORDERS DATA TABLE & EMPTY STATE */}
+      {/* 5. STREAMLINED 100% FIT ORDERS TABLE (ZERO HORIZONTAL SCROLL) */}
       <Card style={{ padding: '12px 14px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
         {isLoadingData ? (
-          <TableSkeleton rows={7} cols={8} />
+          <TableSkeleton rows={7} cols={6} />
         ) : filteredOrders.length === 0 ? (
           /* EMPTY STATE */
           <div style={{ padding: '48px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
@@ -709,10 +767,11 @@ export const CustomerOrdersPage: React.FC = () => {
           </div>
         ) : (
           <div>
-            {/* Enterprise Orders Table */}
+            {/* Streamlined Enterprise Table with 6 High-Density Columns */}
             <Table<OrderRecord>
               keyExtractor={(r) => r.id}
               columns={[
+                // COLUMN 0: CHECKBOX
                 {
                   key: 'checkbox',
                   header: (
@@ -730,24 +789,31 @@ export const CustomerOrdersPage: React.FC = () => {
                     />
                   ),
                 },
+
+                // COLUMN 1: ORDER & WAYBILL (Merged)
                 {
-                  key: 'orderId',
-                  header: 'Order ID',
-                  render: (r) => (
-                    <div onClick={() => setSelectedDrawerOrder(r)} style={{ cursor: 'pointer' }}>
-                      <strong style={{ color: '#0284c7', fontSize: '13px' }}>{r.orderId}</strong>
-                      <div style={{ fontSize: '10px', color: '#64748b' }}>{r.createdDate}</div>
-                    </div>
-                  ),
-                },
-                {
-                  key: 'awbNumber',
-                  header: 'AWB / LR Number',
+                  key: 'orderAwb',
+                  header: 'Order & Waybill',
                   render: (r) => (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ fontFamily: 'monospace', fontWeight: '700', color: '#0f172a', fontSize: '12px' }}>{r.awbNumber}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span
+                          onClick={() => setSelectedDrawerOrder(r)}
+                          style={{ color: '#0284c7', fontWeight: '800', fontSize: '13px', cursor: 'pointer', textDecoration: 'none' }}
+                          title="Click to view details"
+                        >
+                          {r.orderId}
+                        </span>
+                        <span style={{ fontSize: '10px', color: '#64748b' }}>{r.createdDate}</span>
+                      </div>
+
+                      {/* AWB with 1-click copy */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '1px' }}>
+                        <span style={{ fontFamily: 'monospace', fontWeight: '700', color: '#0f172a', fontSize: '12px' }}>
+                          {r.awbNumber}
+                        </span>
                         <button
+                          type="button"
                           onClick={(e) => handleCopyAwb(r.awbNumber, e)}
                           title="Copy AWB Number"
                           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: copiedAwb === r.awbNumber ? '#16a34a' : '#94a3b8' }}
@@ -755,121 +821,157 @@ export const CustomerOrdersPage: React.FC = () => {
                           {copiedAwb === r.awbNumber ? <Check size={12} /> : <Copy size={12} />}
                         </button>
                       </div>
+
+                      {/* Direct Waybill Download Link */}
                       {r.awbNumber && r.awbNumber !== 'PENDING' && (
-                        <a
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/app/shipments/${r.id}/label?format=waybill_lr&autoPrint=1`);
-                          }}
-                          style={{
-                            fontSize: '10px',
-                            color: '#0284c7',
-                            fontWeight: '600',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '3px',
-                            cursor: 'pointer',
-                            textDecoration: 'none',
-                          }}
-                          title="Download / Print Official B2B Lorry Receipt (LR Copy)"
-                        >
-                          <Download size={10} /> Download waybill copy 📥
-                        </a>
+                        <div style={{ marginTop: '2px' }}>
+                          <a
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/app/shipments/${r.id}/label?format=waybill_lr&autoPrint=1`);
+                            }}
+                            style={{
+                              fontSize: '10px',
+                              color: '#0284c7',
+                              fontWeight: '700',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              cursor: 'pointer',
+                              textDecoration: 'none',
+                            }}
+                            title="Download Official Delhivery B2B Waybill / LR Copy"
+                          >
+                            <FileText size={11} /> Download waybill copy 📥
+                          </a>
+                        </div>
                       )}
                     </div>
                   ),
                 },
+
+                // COLUMN 2: CUSTOMER & ROUTE (Merged)
                 {
-                  key: 'customerName',
-                  header: 'Customer Name',
+                  key: 'customerRoute',
+                  header: 'Customer & Route',
                   render: (r) => (
-                    <div>
-                      <strong style={{ color: '#1e293b', fontSize: '12px', display: 'block' }}>{r.customerName}</strong>
-                      <span style={{ fontSize: '10px', color: '#64748b' }}>{r.customerPhone}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <strong style={{ color: '#0f172a', fontSize: '12px' }}>{r.customerName}</strong>
+                        {r.customerPhone && (
+                          <span style={{ fontSize: '10px', color: '#64748b' }}>• {r.customerPhone}</span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#475569' }}>
+                        <MapPin size={11} style={{ color: '#94a3b8', flexShrink: 0 }} />
+                        <span>{r.originCity} ({r.originPincode})</span>
+                        <ArrowRight size={11} style={{ color: '#94a3b8', flexShrink: 0 }} />
+                        <span>{r.deliveryCity} ({r.deliveryPincode})</span>
+                      </div>
                     </div>
                   ),
                 },
+
+                // COLUMN 3: COURIER & MODE (Merged)
                 {
-                  key: 'courierName',
-                  header: 'Courier Partner',
+                  key: 'courierMode',
+                  header: 'Courier & Service',
                   render: (r) => (
-                    <div>
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          padding: '3px 8px',
-                          borderRadius: '6px',
-                          backgroundColor: '#f0f9ff',
-                          color: '#0284c7',
-                          border: '1px solid #bae6fd',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        <Truck size={12} style={{ color: '#0284c7' }} />
-                        {r.courierName}
-                      </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <div>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            padding: '2px 7px',
+                            borderRadius: '4px',
+                            backgroundColor: '#f0f9ff',
+                            color: '#0284c7',
+                            border: '1px solid #bae6fd',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          <Truck size={11} style={{ color: '#0284c7' }} />
+                          {r.courierName}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#64748b' }}>
+                        <Badge variant={r.mode === 'B2B' ? 'warning' : 'info'} style={{ padding: '1px 5px', fontSize: '9px' }}>
+                          {r.mode}
+                        </Badge>
+                        <span>• {r.boxCount} {r.boxCount > 1 ? 'Boxes' : 'Box'}</span>
+                      </div>
                     </div>
                   ),
                 },
+
+                // COLUMN 4: WEIGHT & BILLING (Merged)
                 {
-                  key: 'serviceType',
-                  header: 'Service Type',
+                  key: 'weightBilling',
+                  header: 'Weight & Amount',
                   render: (r) => (
-                    <Badge variant={r.mode === 'B2B' ? 'warning' : 'info'}>
-                      {r.mode} - {r.serviceType}
-                    </Badge>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <strong style={{ color: '#0f172a', fontSize: '13px' }}>₹ {r.totalAmount.toFixed(2)}</strong>
+                        <span
+                          style={{
+                            fontSize: '9px',
+                            fontWeight: '800',
+                            padding: '1px 5px',
+                            borderRadius: '3px',
+                            backgroundColor: r.paymentType === 'COD' ? '#fef3c7' : '#f1f5f9',
+                            color: r.paymentType === 'COD' ? '#92400e' : '#475569',
+                            border: r.paymentType === 'COD' ? '1px solid #fde68a' : '1px solid #e2e8f0',
+                          }}
+                        >
+                          {r.paymentType}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#64748b' }}>
+                        <span>Wt: <strong>{r.chargeableWeightKg} KG</strong> ({r.dimensionsCm})</span>
+                      </div>
+                    </div>
                   ),
                 },
-                {
-                  key: 'origin',
-                  header: 'Origin',
-                  render: (r) => <span style={{ fontSize: '11px', color: '#475569' }}>{r.originCity} ({r.originPincode})</span>,
-                },
-                {
-                  key: 'destination',
-                  header: 'Destination',
-                  render: (r) => <span style={{ fontSize: '11px', color: '#475569' }}>{r.deliveryCity} ({r.deliveryPincode})</span>,
-                },
-                {
-                  key: 'weight',
-                  header: 'Weight',
-                  render: (r) => <span style={{ fontSize: '11px', fontWeight: '600', color: '#334155' }}>{r.chargeableWeightKg} KG</span>,
-                },
-                {
-                  key: 'amount',
-                  header: 'Amount',
-                  align: 'right',
-                  render: (r) => <strong style={{ color: '#0f172a', fontSize: '12px' }}>₹ {r.totalAmount.toFixed(2)}</strong>,
-                },
+
+                // COLUMN 5: CURRENT STATUS
                 {
                   key: 'status',
-                  header: 'Current Status',
-                  render: (r) => <Badge variant={getStatusBadgeVariant(r.status)}>{r.status}</Badge>,
+                  header: 'Status',
+                  render: (r) => (
+                    <div>
+                      <Badge variant={getStatusBadgeVariant(r.status)}>
+                        {r.status}
+                      </Badge>
+                    </div>
+                  ),
                 },
+
+                // COLUMN 6: ACTIONS (Always visible on right)
                 {
                   key: 'actions',
                   header: 'Actions',
                   render: (r) => (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                      {/* VIEW DRAWER BUTTON */}
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setSelectedDrawerOrder(r)}
                         style={{
                           fontSize: '11px',
-                          padding: '4px 10px',
+                          padding: '4px 8px',
                           color: '#0284c7',
-                          borderColor: '#0284c7',
+                          borderColor: '#bae6fd',
                           backgroundColor: '#f0f9ff',
                           fontWeight: '700',
                           borderRadius: '6px',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '4px',
+                          gap: '3px',
                         }}
                       >
                         <Eye size={12} />
@@ -889,8 +991,8 @@ export const CustomerOrdersPage: React.FC = () => {
                             fontSize: '11px',
                             fontWeight: '700',
                             backgroundColor: '#ffffff',
-                            color: '#0284c7',
-                            border: '1px solid #bae6fd',
+                            color: '#0f172a',
+                            border: '1px solid #cbd5e1',
                             borderRadius: '6px',
                             cursor: 'pointer',
                           }}
@@ -912,7 +1014,7 @@ export const CustomerOrdersPage: React.FC = () => {
                               border: '1px solid #cbd5e1',
                               borderRadius: '8px',
                               boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
-                              width: '210px',
+                              width: '220px',
                               zIndex: 60,
                               overflow: 'hidden',
                               fontSize: '11px',
@@ -920,7 +1022,17 @@ export const CustomerOrdersPage: React.FC = () => {
                             }}
                           >
                             <div style={{ padding: '6px 10px', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontWeight: '800', color: '#64748b', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                              Select Label Format
+                              Select Print Format
+                            </div>
+                            <div
+                              onClick={() => {
+                                setOpenPrintDropdownId(null);
+                                navigate(`/app/shipments/${r.id}/label?format=waybill_lr&autoPrint=1`);
+                              }}
+                              style={{ padding: '9px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f0fdf4', color: '#166534', fontWeight: '700', borderBottom: '1px solid #dcfce7' }}
+                            >
+                              <span>📑</span>
+                              <span><strong>Waybill / LR Copy</strong> (POD)</span>
                             </div>
                             <div
                               onClick={() => {
@@ -967,33 +1079,16 @@ export const CustomerOrdersPage: React.FC = () => {
                                 setOpenPrintDropdownId(null);
                                 navigate(`/app/shipments/${r.id}/label?format=compact_3x2&autoPrint=1`);
                               }}
-                              style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #f1f5f9', color: '#1e293b' }}
+                              style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b' }}
                             >
                               <span>🏷️</span>
                               <span><strong>3" × 2"</strong> Shipping Label</span>
                             </div>
-                            <div
-                              onClick={() => {
-                                setOpenPrintDropdownId(null);
-                                navigate(`/app/shipments/${r.id}/label?format=waybill_lr&autoPrint=1`);
-                              }}
-                              style={{ padding: '9px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f0fdf4', color: '#166534', fontWeight: '700' }}
-                            >
-                              <span>📑</span>
-                              <span><strong>Waybill / LR Copy</strong> (POD)</span>
-                            </div>
                           </div>
                         )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Control Center (Full Page)"
-                        onClick={() => navigate(`/app/shipment-control-center/${r.id}`)}
-                        style={{ padding: '4px 6px', color: '#64748b' }}
-                      >
-                        <ExternalLink size={14} />
-                      </Button>
+
+                      {/* TRACKING BUTTON */}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1030,7 +1125,7 @@ export const CustomerOrdersPage: React.FC = () => {
                       { value: '50', label: '50 orders' },
                       { value: '100', label: '100 orders' },
                     ]}
-                    style={{ width: '110px', padding: '2px 6px' }}
+                    style={{ width: '110px', padding: '2px 6px', height: '32px' }}
                   />
                 </div>
               </div>
@@ -1045,200 +1140,39 @@ export const CustomerOrdersPage: React.FC = () => {
         )}
       </Card>
 
-      {/* 5. ORDER DETAILS SIDE DRAWER */}
+      {/* 6. ORDER DETAILS SIDE DRAWER */}
       <Drawer
         isOpen={!!selectedDrawerOrder}
         onClose={() => setSelectedDrawerOrder(null)}
-        title="Order Details & Operational Tracking"
-        position="right"
+        title={selectedDrawerOrder ? `Shipment Details — ${selectedDrawerOrder.orderId}` : 'Shipment Details'}
+        size="lg"
       >
         {selectedDrawerOrder && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', paddingBottom: '20px' }}>
             
-            {/* Order Header Summary */}
-            <div style={{ backgroundColor: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <strong style={{ fontSize: '16px', color: '#0284c7' }}>{selectedDrawerOrder.orderId}</strong>
-                <Badge variant={getStatusBadgeVariant(selectedDrawerOrder.status)}>{selectedDrawerOrder.status}</Badge>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
-                <span style={{ fontSize: '12px', color: '#475569', fontFamily: 'monospace' }}>
-                  AWB: <strong style={{ color: '#0f172a' }}>{selectedDrawerOrder.awbNumber}</strong>
-                </span>
-                <button
-                  onClick={(e) => handleCopyAwb(selectedDrawerOrder.awbNumber, e)}
-                  title="Copy AWB"
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '4px',
-                    padding: '2px 6px',
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '3px',
-                    color: copiedAwb === selectedDrawerOrder.awbNumber ? '#16a34a' : '#475569',
-                  }}
-                >
-                  {copiedAwb === selectedDrawerOrder.awbNumber ? <Check size={11} /> : <Copy size={11} />}
-                  {copiedAwb === selectedDrawerOrder.awbNumber ? 'Copied' : 'Copy'}
-                </button>
-              </div>
-              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-                Booked On: {selectedDrawerOrder.createdDate}
-              </div>
-            </div>
-
-            {/* Customer Details */}
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', backgroundColor: '#ffffff' }}>
-              <div style={{ fontWeight: '700', color: '#334155', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <User size={14} style={{ color: '#0284c7' }} /> Customer & Delivery Address
-              </div>
-              <div style={{ color: '#0f172a', fontWeight: '700' }}>{selectedDrawerOrder.customerName}</div>
-              <div style={{ color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Phone size={12} style={{ color: '#64748b' }} /> {selectedDrawerOrder.customerPhone || 'N/A'}
-              </div>
-              {selectedDrawerOrder.customerEmail && (
-                <div style={{ color: '#64748b' }}>{selectedDrawerOrder.customerEmail}</div>
-              )}
-              <div style={{ color: '#334155', marginTop: '4px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
-                <MapPin size={13} style={{ flexShrink: 0, marginTop: '2px', color: '#dc2626' }} />
-                <span>{selectedDrawerOrder.deliveryAddress}, {selectedDrawerOrder.deliveryCity} - <strong>{selectedDrawerOrder.deliveryPincode}</strong></span>
-              </div>
-            </div>
-
-            {/* Warehouse Origin */}
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', backgroundColor: '#ffffff' }}>
-              <div style={{ fontWeight: '700', color: '#334155', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Building2 size={14} style={{ color: '#0284c7' }} /> Origin Warehouse Hub
-              </div>
-              <div style={{ color: '#0f172a', fontWeight: '700' }}>{selectedDrawerOrder.warehouseName}</div>
-              <div style={{ color: '#475569' }}>{selectedDrawerOrder.originCity} ({selectedDrawerOrder.originPincode})</div>
-            </div>
-
-            {/* Courier & Weight Details */}
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', backgroundColor: '#ffffff' }}>
-              <div style={{ fontWeight: '700', color: '#334155', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Truck size={14} style={{ color: '#0284c7' }} /> Courier & Weight Specs
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Courier Partner:</span>
-                <strong style={{ color: '#0284c7' }}>{selectedDrawerOrder.courierName}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Service Mode:</span>
-                <span>{selectedDrawerOrder.mode} - {selectedDrawerOrder.serviceType}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Dead Weight:</span>
-                <span>{selectedDrawerOrder.deadWeightKg} KG</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Volumetric Weight:</span>
-                <span>{selectedDrawerOrder.volumetricWeightKg} KG</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#0284c7', fontWeight: '700', borderTop: '1px dashed #e2e8f0', paddingTop: '4px' }}>
-                <span>Chargeable Weight:</span>
-                <span>{selectedDrawerOrder.chargeableWeightKg} KG</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', fontSize: '11px' }}>
-                <span>Box Dimensions:</span>
-                <span>{selectedDrawerOrder.dimensionsCm}</span>
-              </div>
-            </div>
-
-            {/* Charge Breakdown */}
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', backgroundColor: '#ffffff' }}>
-              <div style={{ fontWeight: '700', color: '#334155', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px' }}>
-                Freight & Billing Breakdown
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Base Freight:</span>
-                <span>₹ {selectedDrawerOrder.baseFreight.toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Fuel Surcharge:</span>
-                <span>₹ {selectedDrawerOrder.fuelSurcharge.toFixed(2)}</span>
-              </div>
-              {selectedDrawerOrder.codCharge > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#64748b' }}>COD Fee:</span>
-                  <span>₹ {selectedDrawerOrder.codCharge.toFixed(2)}</span>
+            {/* Drawer Top Header Info */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '14px', borderBottom: '1px solid #e2e8f0' }}>
+              <div>
+                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>AIR WAYBILL NUMBER</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                  <span style={{ fontSize: '16px', fontWeight: '800', fontFamily: 'monospace', color: '#0f172a' }}>
+                    {selectedDrawerOrder.awbNumber}
+                  </span>
+                  <button
+                    onClick={(e) => handleCopyAwb(selectedDrawerOrder.awbNumber, e)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: copiedAwb === selectedDrawerOrder.awbNumber ? '#16a34a' : '#94a3b8' }}
+                  >
+                    {copiedAwb === selectedDrawerOrder.awbNumber ? <Check size={14} /> : <Copy size={14} />}
+                  </button>
                 </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>GST (18% Tax):</span>
-                <span>₹ {selectedDrawerOrder.gstAmount.toFixed(2)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: '#f0f9ff', padding: '8px 10px', borderRadius: '6px', fontWeight: '800', marginTop: '4px', border: '1px solid #bae6fd' }}>
-                <span style={{ color: '#0f172a' }}>Total Amount:</span>
-                <span style={{ color: '#0284c7', fontSize: '13px' }}>₹ {selectedDrawerOrder.totalAmount.toFixed(2)}</span>
-              </div>
-              <div style={{ fontSize: '11px', color: '#16a34a', fontWeight: '600', marginTop: '2px', textAlign: 'right' }}>
-                ✓ Debited via Skyonship Wallet
-              </div>
+              <Badge variant={getStatusBadgeVariant(selectedDrawerOrder.status)} style={{ fontSize: '12px', padding: '4px 10px' }}>
+                {selectedDrawerOrder.status}
+              </Badge>
             </div>
 
-            {/* Vertical Tracking Timeline */}
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px', backgroundColor: '#ffffff' }}>
-              <div style={{ fontWeight: '700', color: '#334155', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Clock size={14} style={{ color: '#16a34a' }} /> Tracking Timeline
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', position: 'relative', paddingLeft: '20px' }}>
-                {/* Vertical Line */}
-                <div style={{ position: 'absolute', left: '6px', top: '6px', bottom: '6px', width: '2px', backgroundColor: '#cbd5e1' }} />
-
-                {selectedDrawerOrder.timeline.map((step, idx) => (
-                  <div key={idx} style={{ position: 'relative' }}>
-                    {/* Node Dot */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: '-20px',
-                        top: '2px',
-                        width: '10px',
-                        height: '10px',
-                        borderRadius: '50%',
-                        backgroundColor: step.isError ? '#dc2626' : step.active ? '#16a34a' : step.completed ? '#0284c7' : '#cbd5e1',
-                        border: '2px solid #ffffff',
-                        boxShadow: '0 0 0 2px ' + (step.isError ? '#fecaca' : step.active ? '#bbf7d0' : step.completed ? '#bae6fd' : '#e2e8f0'),
-                      }}
-                    />
-
-                    <div>
-                      <div style={{ fontWeight: '700', color: step.isError ? '#dc2626' : step.active ? '#16a34a' : '#0f172a', fontSize: '12px' }}>
-                        {step.title}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#475569', marginTop: '1px' }}>
-                        {step.description}
-                      </div>
-                      <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
-                        {step.timestamp}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Action Buttons inside Drawer */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  const targetId = selectedDrawerOrder.id;
-                  setSelectedDrawerOrder(null);
-                  navigate(`/app/shipment-control-center/${targetId}`);
-                }}
-                style={{ backgroundColor: '#0284c7', borderColor: '#0284c7', width: '100%', fontWeight: '700' }}
-              >
-                Open Full Control Center Page →
-              </Button>
-
-              {/* Official Waybill / LR Copy 1-Click Action */}
+            {/* Quick Actions in Drawer */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <Button
                 variant="outline"
                 size="sm"
@@ -1289,22 +1223,86 @@ export const CustomerOrdersPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const trackTarget = selectedOrder.awbNumber && selectedOrder.awbNumber !== 'PENDING'
-                      ? selectedOrder.awbNumber
-                      : (selectedOrder.orderId || selectedOrder.id);
-                    navigate(`/app/tracking?query=${encodeURIComponent(trackTarget)}`);
+                    navigate(`/app/shipment-control-center/${selectedDrawerOrder.id}`);
                   }}
-                  style={{ color: '#0f172a', padding: '6px 4px', fontSize: '11px' }}
+                  style={{ color: '#475569', borderColor: '#cbd5e1', padding: '6px 4px', fontSize: '11px' }}
                 >
-                  <Truck size={13} style={{ marginRight: '3px' }} /> Track
+                  <ExternalLink size={13} style={{ marginRight: '3px' }} /> Details
                 </Button>
+              </div>
+            </div>
+
+            {/* Courier & Routing Section */}
+            <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a' }}>{selectedDrawerOrder.courierName}</span>
+                <Badge variant={selectedDrawerOrder.mode === 'B2B' ? 'warning' : 'info'}>{selectedDrawerOrder.mode} Cargo</Badge>
+              </div>
+              <div style={{ fontSize: '11px', color: '#475569', display: 'flex', justifyContent: 'space-between' }}>
+                <span>Origin: {selectedDrawerOrder.originCity} ({selectedDrawerOrder.originPincode})</span>
+                <span>Destination: {selectedDrawerOrder.deliveryCity} ({selectedDrawerOrder.deliveryPincode})</span>
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                Weight: {selectedDrawerOrder.chargeableWeightKg} KG • Boxes: {selectedDrawerOrder.boxCount}
+              </div>
+            </div>
+
+            {/* Customer Details */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a' }}>Delivery Address</div>
+              <div style={{ fontSize: '11px', color: '#334155', lineHeight: '1.4' }}>
+                <strong>{selectedDrawerOrder.customerName}</strong><br />
+                {selectedDrawerOrder.deliveryAddress}<br />
+                {selectedDrawerOrder.deliveryCity} - {selectedDrawerOrder.deliveryPincode}<br />
+                📞 {selectedDrawerOrder.customerPhone}
+              </div>
+            </div>
+
+            {/* Financial Summary */}
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a', marginBottom: '6px' }}>Financial Breakdown</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+                  <span>Base Freight</span>
+                  <span>₹ {selectedDrawerOrder.baseFreight.toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+                  <span>Fuel Surcharge</span>
+                  <span>₹ {selectedDrawerOrder.fuelSurcharge.toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+                  <span>GST (18%)</span>
+                  <span>₹ {selectedDrawerOrder.gstAmount.toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', color: '#0f172a', borderTop: '1px dashed #cbd5e1', paddingTop: '4px' }}>
+                  <span>Total Debit</span>
+                  <span>₹ {selectedDrawerOrder.totalAmount.toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px', fontSize: '10px', color: '#0284c7', fontWeight: '700' }}>
+                  <span>Payment Mode</span>
+                  <span>{selectedDrawerOrder.paymentType}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tracking Timeline */}
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a', marginBottom: '8px' }}>Tracking Events</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingLeft: '8px', borderLeft: '2px solid #e2e8f0' }}>
+                {selectedDrawerOrder.timeline.map((event, idx) => (
+                  <div key={idx} style={{ position: 'relative', paddingLeft: '10px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: event.completed ? '#16a34a' : '#94a3b8', position: 'absolute', left: '-15px', top: '4px' }} />
+                    <div style={{ fontSize: '11px', fontWeight: '700', color: '#0f172a' }}>{event.title}</div>
+                    <div style={{ fontSize: '10px', color: '#64748b' }}>{event.description}</div>
+                    <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '1px' }}>{event.timestamp}</div>
+                  </div>
+                ))}
               </div>
             </div>
 
           </div>
         )}
       </Drawer>
-
     </div>
   );
 };
