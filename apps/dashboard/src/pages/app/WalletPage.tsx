@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Wallet as WalletIcon,
   Plus,
@@ -7,7 +8,6 @@ import {
   RotateCcw,
   Search,
   FileSpreadsheet,
-  ShieldCheck,
   Package,
   Truck,
   ExternalLink,
@@ -16,8 +16,10 @@ import {
   Receipt,
   FileText,
   Copy,
+  Check,
   CheckCircle2,
   AlertCircle,
+  Zap,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
@@ -68,14 +70,23 @@ export const WalletPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Recharge Modal State
+  const [searchParams] = useSearchParams();
   const [rechargeAmount, setRechargeAmount] = useState<string>('1000');
   const [isRechargeModalOpen, setIsRechargeModalOpen] = useState(false);
   const [isRecharging, setIsRecharging] = useState(false);
+  const [copiedTxId, setCopiedTxId] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<{
     variant: 'success' | 'danger' | 'warning' | 'info';
     title: string;
     text: string;
   } | null>(null);
+
+  // Auto-open Add Money modal if requested via URL param (e.g. from Topbar)
+  useEffect(() => {
+    if (searchParams.get('recharge') === '1' || searchParams.get('action') === 'add_money') {
+      setIsRechargeModalOpen(true);
+    }
+  }, [searchParams]);
 
   // TAB A: Transactions Filter State
   const [txSearch, setTxSearch] = useState('');
@@ -423,28 +434,9 @@ export const WalletPage: React.FC = () => {
       {/* 1. Page Header */}
       <PageHeader
         title="Wallet & Transactions"
-        description="Comprehensive prepaid balance control, real-time audit ledger, and shipment-wise freight charges."
         breadcrumbs={breadcrumbs}
         actions={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {isCloudSynced && (
-              <Badge
-                variant="success"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  fontSize: '12px',
-                  padding: '6px 10px',
-                  fontWeight: 500,
-                  backgroundColor: '#f0fdf4',
-                  color: '#15803d',
-                  border: '1px solid #bbf7d0',
-                }}
-              >
-                <ShieldCheck size={14} /> Cloud Synced
-              </Badge>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <Button
               variant="outline"
               size="sm"
@@ -459,9 +451,9 @@ export const WalletPage: React.FC = () => {
               size="sm"
               onClick={() => setIsRechargeModalOpen(true)}
               leftIcon={<Plus size={15} />}
-              style={{ fontWeight: 600, padding: '7px 16px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+              style={{ fontWeight: 700, padding: '7px 16px', backgroundColor: '#0284c7', borderColor: '#0284c7' }}
             >
-              + Add Money
+              Add Money
             </Button>
           </div>
         }
@@ -480,80 +472,124 @@ export const WalletPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* 2. TOP SUMMARY KPI CARDS (White background, professional typography, INR formatted) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 'var(--space-4)' }}>
-        {/* Available Balance */}
-        <Card style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      {/* 2. TOP SUMMARY KPI CARDS (Executive Fintech Style) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+        {/* Available Balance - Standout Hero Card */}
+        <Card
+          style={{
+            padding: '20px',
+            background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+            color: '#ffffff',
+            borderRadius: '12px',
+            border: 'none',
+            boxShadow: '0 4px 16px rgba(2, 132, 199, 0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.8px', color: '#e0f2fe' }}>
               Available Balance
             </span>
-            <div style={{ padding: '8px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb' }}>
-              <WalletIcon size={18} />
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(255, 255, 255, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <WalletIcon size={18} style={{ color: '#ffffff' }} />
             </div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 700, color: '#0f172a', letterSpacing: '-0.5px' }}>
-            {formatCurrency(summaryStats.availableBalanceINR)}
+
+          <div style={{ margin: '14px 0 8px 0' }}>
+            <div style={{ fontSize: '32px', fontWeight: '900', letterSpacing: '-0.5px', color: '#ffffff', lineHeight: 1 }}>
+              {formatCurrency(summaryStats.availableBalanceINR)}
+            </div>
+            <div style={{ fontSize: '11px', color: '#bae6fd', marginTop: '6px' }}>
+              Usable Prepaid Freight & Cargo Balance
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
-            <Badge variant={summaryStats.isLowBalance ? 'warning' : 'success'} style={{ fontSize: '11px', padding: '2px 7px' }}>
-              {summaryStats.isLowBalance ? 'LOW BALANCE' : 'ACTIVE'}
-            </Badge>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Usable prepaid shipping funds</span>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.2)' }}>
+            <span style={{ fontSize: '11px', color: '#e0f2fe', fontWeight: '600' }}>
+              {summaryStats.isLowBalance ? '⚠️ Balance Low' : '● Operational Ready'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsRechargeModalOpen(true)}
+              style={{
+                backgroundColor: '#ffffff',
+                color: '#0284c7',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '5px 12px',
+                fontSize: '11px',
+                fontWeight: '800',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+              }}
+            >
+              <Plus size={13} /> Add Funds
+            </button>
           </div>
         </Card>
 
         {/* Total Added */}
-        <Card style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Total Added
+        <Card style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Total Recharged
             </span>
-            <div style={{ padding: '8px', borderRadius: '8px', backgroundColor: '#f0fdf4', color: '#16a34a' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>
               <ArrowDownLeft size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 700, color: '#16a34a', letterSpacing: '-0.5px' }}>
-            {formatCurrency(summaryStats.totalAddedINR)}
-          </div>
-          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>
-            Successful recharges & credits
+          <div style={{ margin: '14px 0 0 0' }}>
+            <div style={{ fontSize: '26px', fontWeight: '800', color: '#16a34a', letterSpacing: '-0.5px' }}>
+              {formatCurrency(summaryStats.totalAddedINR)}
+            </div>
+            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+              Lifetime Credits & Deposits
+            </div>
           </div>
         </Card>
 
         {/* Total Deducted */}
-        <Card style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Total Deducted
+        <Card style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Total Spent
             </span>
-            <div style={{ padding: '8px', borderRadius: '8px', backgroundColor: '#fef2f2', color: '#dc2626' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626' }}>
               <ArrowUpRight size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 700, color: '#dc2626', letterSpacing: '-0.5px' }}>
-            {formatCurrency(summaryStats.totalUsedINR)}
-          </div>
-          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>
-            Spent on shipment charges & adjustments
+          <div style={{ margin: '14px 0 0 0' }}>
+            <div style={{ fontSize: '26px', fontWeight: '800', color: '#dc2626', letterSpacing: '-0.5px' }}>
+              {formatCurrency(summaryStats.totalUsedINR)}
+            </div>
+            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+              Shipment Freight Deductions
+            </div>
           </div>
         </Card>
 
         {/* Amount On Hold */}
-        <Card style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Amount On Hold
+        <Card style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Funds on Hold
             </span>
-            <div style={{ padding: '8px', borderRadius: '8px', backgroundColor: '#fffbeb', color: '#d97706' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
               <Clock size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 700, color: '#475569', letterSpacing: '-0.5px' }}>
-            {formatCurrency(summaryStats.reservedBalanceINR || 0)}
-          </div>
-          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>
-            Reserved for pending bookings
+          <div style={{ margin: '14px 0 0 0' }}>
+            <div style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' }}>
+              {formatCurrency(summaryStats.reservedBalanceINR || summaryStats.holdBalanceINR || 0)}
+            </div>
+            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+              Active Booking Escrow
+            </div>
           </div>
         </Card>
       </div>
@@ -740,35 +776,51 @@ export const WalletPage: React.FC = () => {
                   render: (row: unknown) => {
                     const tx = (row || {}) as WalletTransaction;
                     const txId = tx?.id || '';
+                    const shortId = txId.startsWith('tx-') || txId.startsWith('TXN-')
+                      ? txId
+                      : `TXN-${txId.slice(0, 8).toUpperCase()}`;
                     return (
-                      <span
-                        style={{
-                          fontFamily: 'monospace',
-                          fontSize: '12px',
-                          color: '#475569',
-                          backgroundColor: '#f8fafc',
-                          padding: '3px 6px',
-                          borderRadius: '4px',
-                          border: '1px solid #e2e8f0',
-                        }}
-                      >
-                        {txId.length > 20 ? `${txId.slice(0, 10)}...${txId.slice(-6)}` : txId || '—'}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span
+                          style={{
+                            fontFamily: 'monospace',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            color: '#0f172a',
+                            backgroundColor: '#f8fafc',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            border: '1px solid #e2e8f0',
+                          }}
+                        >
+                          {shortId}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(txId || shortId);
+                            setCopiedTxId(txId || shortId);
+                            setTimeout(() => setCopiedTxId(null), 1500);
+                          }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: copiedTxId === (txId || shortId) ? '#16a34a' : '#94a3b8' }}
+                          title="Copy Transaction ID"
+                        >
+                          {copiedTxId === (txId || shortId) ? <Check size={12} /> : <Copy size={12} />}
+                        </button>
+                      </div>
                     );
                   },
                 },
                 {
                   key: 'reference',
-                  header: 'Reference / AWB',
+                  header: 'Reference / Order',
                   render: (row: unknown) => {
                     const tx = (row || {}) as WalletTransaction;
                     const ref = tx?.referenceId || 'N/A';
                     return (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Badge variant="outline" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
-                          {tx?.referenceType || tx?.type || 'TX'}
-                        </Badge>
-                        <span style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>{ref}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>{ref}</span>
+                        <span style={{ fontSize: '10px', color: '#64748b' }}>{tx?.referenceType || tx?.type || 'SHP'}</span>
                       </div>
                     );
                   },
@@ -779,40 +831,32 @@ export const WalletPage: React.FC = () => {
                   render: (row: unknown) => {
                     const tx = (row || {}) as WalletTransaction;
                     return (
-                      <span style={{ fontSize: '13px', color: '#334155', maxWidth: '280px', display: 'inline-block' }}>
-                        {tx?.description || '—'}
+                      <span style={{ fontSize: '12px', color: '#334155', maxWidth: '320px', display: 'inline-block', lineHeight: 1.3 }}>
+                        {tx?.description || 'Freight charges debit'}
                       </span>
                     );
                   },
                 },
                 {
-                  key: 'credit',
-                  header: 'Credit (+)',
+                  key: 'amount',
+                  header: 'Amount',
                   render: (row: unknown) => {
                     const tx = (row || {}) as WalletTransaction;
-                    if (tx?.direction === 'CREDIT') {
-                      return (
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#16a34a' }}>
-                          +{formatCurrency((tx?.amountMinor || 0) / 100)}
-                        </span>
-                      );
-                    }
-                    return <span style={{ color: '#cbd5e1' }}>—</span>;
-                  },
-                },
-                {
-                  key: 'debit',
-                  header: 'Debit (-)',
-                  render: (row: unknown) => {
-                    const tx = (row || {}) as WalletTransaction;
-                    if (tx?.direction === 'DEBIT') {
-                      return (
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#dc2626' }}>
-                          -{formatCurrency((tx?.amountMinor || 0) / 100)}
-                        </span>
-                      );
-                    }
-                    return <span style={{ color: '#cbd5e1' }}>—</span>;
+                    const isCredit = tx?.direction === 'CREDIT';
+                    const amt = (tx?.amountMinor || 0) / 100;
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {isCredit ? (
+                          <span style={{ fontSize: '13px', fontWeight: 800, color: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                            <ArrowDownLeft size={14} /> +{formatCurrency(amt)}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '13px', fontWeight: 800, color: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                            <ArrowUpRight size={14} /> -{formatCurrency(amt)}
+                          </span>
+                        )}
+                      </div>
+                    );
                   },
                 },
                 {
@@ -821,7 +865,7 @@ export const WalletPage: React.FC = () => {
                   render: (row: unknown) => {
                     const tx = (row || {}) as WalletTransaction;
                     return (
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
                         {formatCurrency((tx?.balanceAfterMinor || 0) / 100)}
                       </span>
                     );
@@ -833,7 +877,7 @@ export const WalletPage: React.FC = () => {
                   render: (row: unknown) => {
                     const tx = (row || {}) as WalletTransaction;
                     return (
-                      <Badge variant="success" style={{ fontSize: '11px', padding: '3px 8px' }}>
+                      <Badge variant="success" style={{ fontSize: '11px', padding: '2px 8px' }}>
                         {tx?.status || 'POSTED'}
                       </Badge>
                     );
@@ -841,7 +885,7 @@ export const WalletPage: React.FC = () => {
                 },
                 {
                   key: 'action',
-                  header: '',
+                  header: 'Action',
                   render: (row: unknown) => {
                     const tx = (row || {}) as WalletTransaction;
                     return (
@@ -849,7 +893,7 @@ export const WalletPage: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => tx && setSelectedTx(tx)}
-                        style={{ fontSize: '12px', padding: '4px 8px', color: '#2563eb' }}
+                        style={{ fontSize: '11px', padding: '3px 8px', color: '#0284c7', fontWeight: 700 }}
                       >
                         View Details
                       </Button>
@@ -1353,55 +1397,120 @@ export const WalletPage: React.FC = () => {
         )}
       </Drawer>
 
-      {/* 8. ADD MONEY RECHARGE MODAL (Preserves Existing Razorpay Integration) */}
+      {/* 8. DYNAMIC ADD MONEY RECHARGE MODAL (Preserves Existing Razorpay & Admin Integration) */}
       <Modal
         isOpen={isRechargeModalOpen}
         onClose={() => {
           if (!isRecharging) setIsRechargeModalOpen(false);
         }}
-        title="Add Money to Seller Wallet"
+        title="⚡ Add Funds to Freight Wallet"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', padding: 'var(--space-2)' }}>
-          <div style={{ fontSize: '13px', color: '#64748b' }}>
-            Instant balance recharge via Razorpay Secure Checkout (UPI, Cards, NetBanking).
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '4px' }}>
+          <div style={{ fontSize: '13px', color: '#475569', lineHeight: 1.4 }}>
+            Recharge your prepaid wallet for instant automated dispatch. Funds are credited immediately.
           </div>
 
+          {/* Amount Input with Currency Symbol */}
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#0f172a', marginBottom: '6px' }}>
               Recharge Amount (INR)
             </label>
-            <Input
-              type="number"
-              placeholder="Enter amount (e.g. 1000)"
-              value={rechargeAmount}
-              onChange={(e) => setRechargeAmount(e.target.value)}
-              disabled={isRecharging}
-              min="1"
-            />
-          </div>
-
-          {/* Quick presets */}
-          <div>
-            <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
-              Quick Presets:
-            </span>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {['500', '1000', '2000', '5000', '10000'].map((val) => (
-                <Button
-                  key={val}
-                  type="button"
-                  variant={rechargeAmount === val ? 'primary' : 'outline'}
-                  size="sm"
-                  onClick={() => setRechargeAmount(val)}
-                  disabled={isRecharging}
-                >
-                  ₹{parseInt(val, 10).toLocaleString('en-IN')}
-                </Button>
-              ))}
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: '800', color: '#64748b', fontSize: '16px' }}>
+                ₹
+              </span>
+              <Input
+                type="number"
+                placeholder="Enter amount (e.g. 1000)"
+                value={rechargeAmount}
+                onChange={(e) => setRechargeAmount(e.target.value)}
+                disabled={isRecharging}
+                min="100"
+                style={{ paddingLeft: '28px', fontSize: '16px', fontWeight: '800', height: '42px' }}
+              />
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: 'var(--space-2)' }}>
+          {/* Quick Smart Slabs with Badges */}
+          <div>
+            <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>
+              Popular Recharge Slabs:
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(85px, 1fr))', gap: '8px' }}>
+              {[
+                { val: '500', label: '₹500' },
+                { val: '1000', label: '₹1,000', popular: true },
+                { val: '2000', label: '₹2,000' },
+                { val: '5000', label: '₹5,000', b2b: true },
+                { val: '10000', label: '₹10,000' },
+              ].map((slab) => {
+                const isSelected = rechargeAmount === slab.val;
+                return (
+                  <button
+                    key={slab.val}
+                    type="button"
+                    onClick={() => setRechargeAmount(slab.val)}
+                    disabled={isRecharging}
+                    style={{
+                      padding: '8px 4px',
+                      borderRadius: '8px',
+                      border: isSelected ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                      backgroundColor: isSelected ? '#f0f9ff' : '#ffffff',
+                      color: isSelected ? '#0284c7' : '#0f172a',
+                      fontWeight: isSelected ? '800' : '600',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '2px',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span>{slab.label}</span>
+                    {slab.popular && (
+                      <span style={{ fontSize: '9px', fontWeight: '700', color: '#0284c7', backgroundColor: '#e0f2fe', padding: '1px 4px', borderRadius: '4px' }}>
+                        Popular
+                      </span>
+                    )}
+                    {slab.b2b && (
+                      <span style={{ fontSize: '9px', fontWeight: '700', color: '#d97706', backgroundColor: '#fef3c7', padding: '1px 4px', borderRadius: '4px' }}>
+                        B2B Bulk
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Dynamic Post-Recharge Balance Calculation Card */}
+          <div style={{ backgroundColor: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+              Balance Preview
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#475569', marginBottom: '3px' }}>
+              <span>Current Available Balance:</span>
+              <strong style={{ color: '#0f172a' }}>{formatCurrency(summaryStats.availableBalanceINR)}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#16a34a', marginBottom: '6px' }}>
+              <span>Adding to Wallet:</span>
+              <strong>+ ₹{parseFloat(rechargeAmount || '0').toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#0284c7', fontWeight: '800', borderTop: '1px dashed #cbd5e1', paddingTop: '6px' }}>
+              <span>New Available Balance:</span>
+              <span>₹{(summaryStats.availableBalanceINR + (parseFloat(rechargeAmount) || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+
+          {/* Payment Methods Trust Badges */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', backgroundColor: '#f1f5f9', borderRadius: '6px', fontSize: '11px', color: '#475569' }}>
+            <span>💳 UPI (GPay/PhonePe), Cards & NetBanking</span>
+            <span style={{ fontWeight: '700', color: '#16a34a' }}>🔒 256-Bit SSL</span>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
             <Button
               variant="outline"
               onClick={() => setIsRechargeModalOpen(false)}
@@ -1413,9 +1522,10 @@ export const WalletPage: React.FC = () => {
               variant="primary"
               onClick={handleExecuteRecharge}
               isLoading={isRecharging}
-              disabled={isRecharging}
+              disabled={isRecharging || !parseFloat(rechargeAmount) || parseFloat(rechargeAmount) <= 0}
+              style={{ backgroundColor: '#0284c7', borderColor: '#0284c7', fontWeight: '800' }}
             >
-              {isRecharging ? 'Processing...' : `Pay ₹${parseFloat(rechargeAmount || '0').toLocaleString('en-IN')}`}
+              {isRecharging ? 'Opening Gateway...' : `Proceed to Pay ₹${parseFloat(rechargeAmount || '0').toLocaleString('en-IN')}`}
             </Button>
           </div>
         </div>

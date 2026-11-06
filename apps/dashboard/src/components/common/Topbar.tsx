@@ -260,7 +260,7 @@ export const Topbar: React.FC<TopbarProps> = ({
               variant="primary"
               size="sm"
               leftIcon={<Plus size={13} aria-hidden="true" />}
-              onClick={() => navigate('/app/wallet')}
+              onClick={() => navigate('/app/wallet?recharge=1')}
               style={{
                 height: '32px',
                 fontSize: '12px',
@@ -271,7 +271,7 @@ export const Topbar: React.FC<TopbarProps> = ({
                 borderRadius: '6px',
               }}
             >
-              + Add Money
+              Add Money
             </Button>
           </div>
         )}

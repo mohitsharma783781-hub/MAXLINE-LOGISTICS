@@ -83,14 +83,14 @@ export const Topbar: React.FC<TopbarProps> = ({
           </div>
         </div>
 
-        {/* + Add Money Button */}
+        {/* Add Money Button */}
         <button
           type="button"
           onClick={onOpenWallet}
           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#0284c7] hover:bg-[#0369a1] text-white font-medium text-xs shadow-xs transition-colors shrink-0"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>+ Add Money</span>
+          <span>Add Money</span>
         </button>
 
         {/* Marketing Landing Page Link */}
