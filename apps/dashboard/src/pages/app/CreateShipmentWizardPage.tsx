@@ -471,6 +471,85 @@ export const CreateShipmentWizardPage: React.FC = () => {
     });
   };
 
+  // B2B Multi-Invoice & E-Way Bill Table State
+  const [b2bInvoices, setB2bInvoices] = useState<Array<{ id: string; invNum: string; invAmt: string; ewbNum: string }>>([
+    { id: 'inv-1', invNum: '', invAmt: '', ewbNum: '' },
+  ]);
+
+  const handleUpdateB2BInvoice = (index: number, field: 'invNum' | 'invAmt' | 'ewbNum', value: string) => {
+    setB2bInvoices((prev) => {
+      const copy = [...prev];
+      if (!copy[index]) return prev;
+      copy[index] = { ...copy[index], [field]: value };
+
+      const total = copy.reduce((sum, item) => sum + (parseFloat(item.invAmt) || 0), 0);
+      if (total > 0) {
+        setInvoiceValue(String(total));
+      }
+      const firstEwb = copy.find((item) => item.ewbNum)?.ewbNum || '';
+      if (firstEwb) {
+        setEwayBillNumber(firstEwb);
+      }
+      return copy;
+    });
+  };
+
+  const handleAddB2BInvoice = () => {
+    setB2bInvoices((prev) => [
+      ...prev,
+      { id: `inv-${Date.now()}-${prev.length + 1}`, invNum: '', invAmt: '', ewbNum: '' },
+    ]);
+  };
+
+  const handleRemoveB2BInvoice = (index: number) => {
+    setB2bInvoices((prev) => {
+      if (prev.length <= 1) return prev;
+      const copy = prev.filter((_, i) => i !== index);
+      const total = copy.reduce((sum, item) => sum + (parseFloat(item.invAmt) || 0), 0);
+      setInvoiceValue(String(total || 0));
+      return copy;
+    });
+  };
+
+  // Quick Preset Add for B2B Standard Cartons
+  const handleAddPresetBox = (l: number, w: number, h: number, wt: number, qty: number = 1) => {
+    setPackages((prev) => {
+      if (
+        prev.length === 1 &&
+        (!prev[0].actualWeightKg || prev[0].actualWeightKg <= 1) &&
+        (!prev[0].lengthCm || prev[0].lengthCm <= 20)
+      ) {
+        return [
+          {
+            id: 'pkg-1',
+            packageNumber: 1,
+            packageType: 'Carton',
+            lengthCm: l,
+            widthCm: w,
+            heightCm: h,
+            actualWeightKg: wt,
+            quantity: qty,
+            packageContents: contentsDescription || 'Commercial Freight Cargo',
+          },
+        ];
+      }
+      return [
+        ...prev,
+        {
+          id: `pkg-${Date.now()}-${prev.length + 1}`,
+          packageNumber: prev.length + 1,
+          packageType: 'Carton',
+          lengthCm: l,
+          widthCm: w,
+          heightCm: h,
+          actualWeightKg: wt,
+          quantity: qty,
+          packageContents: contentsDescription || 'Commercial Freight Cargo',
+        },
+      ];
+    });
+  };
+
   const handleSelectShipmentType = (type: 'b2b_freight' | 'parcel' | 'document') => {
     setShipmentCategory(type);
     if (type === 'document') {
@@ -595,7 +674,8 @@ export const CreateShipmentWizardPage: React.FC = () => {
     let totalActual = 0;
     let totalVolumetric = 0;
     let totalQty = 0;
-    const SYSTEM_ADMIN_DEFAULT_DIVISOR = 5000;
+    const isB2B = shipmentCategory === 'b2b_freight';
+    const divisor = isB2B ? 2700 : 5000;
 
     const calculatedRows = packages.map((pkg, idx) => {
       const q = Math.max(1, Number(pkg.quantity) || 1);
@@ -605,7 +685,7 @@ export const CreateShipmentWizardPage: React.FC = () => {
       const h = Math.max(0, Number(pkg.heightCm) || 0);
 
       const rowActual = actPerUnit * q;
-      const volPerUnit = (l * w * h) / SYSTEM_ADMIN_DEFAULT_DIVISOR;
+      const volPerUnit = (l * w * h) / divisor;
       const rowVolumetric = volPerUnit * q;
       const rowChargeable = Math.max(rowActual, rowVolumetric);
 
@@ -616,21 +696,29 @@ export const CreateShipmentWizardPage: React.FC = () => {
       return {
         id: pkg.id || `pkg-${idx + 1}`,
         packageNumber: pkg.packageNumber || idx + 1,
-        packageType: pkg.packageType || 'Box',
+        packageType: pkg.packageType || (isB2B ? 'Carton' : 'Box'),
         quantity: q,
         actualWeightKg: actPerUnit,
-        rowActualWeightKg: Math.round(rowActual * 10) / 10,
-        volumetricWeightKg: Math.round(volPerUnit * 10) / 10,
-        rowVolumetricWeightKg: Math.round(rowVolumetric * 10) / 10,
-        rowChargeableWeightKg: Math.round(rowChargeable * 10) / 10,
+        rowActualWeightKg: Math.round(rowActual * 100) / 100,
+        volumetricWeightKg: Math.round(volPerUnit * 100) / 100,
+        rowVolumetricWeightKg: Math.round(rowVolumetric * 100) / 100,
+        rowChargeableWeightKg: Math.round(rowChargeable * 100) / 100,
       };
     });
 
-    const roundedActual = Math.round(totalActual * 10) / 10;
-    const roundedVolumetric = Math.round(totalVolumetric * 10) / 10;
-    const totalChargeable = Math.max(roundedActual, roundedVolumetric);
-    const chargeableBasis: 'Dead Weight' | 'Volumetric Weight' =
-      roundedActual >= roundedVolumetric ? 'Dead Weight' : 'Volumetric Weight';
+    const roundedActual = Math.round(totalActual * 100) / 100;
+    const roundedVolumetric = Math.round(totalVolumetric * 100) / 100;
+    const rawChargeable = Math.max(roundedActual, roundedVolumetric);
+    const minSlab = isB2B ? 20 : 0.5;
+    const totalChargeable = Math.max(minSlab, Math.round(rawChargeable * 100) / 100);
+    const isMinSlabApplied = isB2B && rawChargeable < 20;
+
+    const chargeableBasis: 'Dead Weight' | 'Volumetric Weight' | 'Minimum Slab' =
+      isMinSlabApplied
+        ? 'Minimum Slab'
+        : roundedActual >= roundedVolumetric
+        ? 'Dead Weight'
+        : 'Volumetric Weight';
 
     return {
       rows: calculatedRows,
@@ -638,11 +726,13 @@ export const CreateShipmentWizardPage: React.FC = () => {
       totalUnitsCount: totalQty,
       totalActualWeightKg: roundedActual,
       totalVolumetricWeightKg: roundedVolumetric,
-      totalChargeableWeightKg: Math.max(0.5, Math.round(totalChargeable * 10) / 10),
+      rawChargeableWeightKg: rawChargeable,
+      totalChargeableWeightKg: totalChargeable,
+      isMinSlabApplied,
       chargeableBasis,
-      divisorUsed: SYSTEM_ADMIN_DEFAULT_DIVISOR,
+      divisorUsed: divisor,
     };
-  }, [packages]);
+  }, [packages, shipmentCategory]);
 
   // Eligible Couriers list via Centralized Rate Assignment Service
   const eligibleCouriers = useMemo(() => {
@@ -1892,6 +1982,36 @@ export const CreateShipmentWizardPage: React.FC = () => {
                   )}
                 </div>
 
+                {/* B2B Quick Presets Banner */}
+                {shipmentCategory === 'b2b_freight' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', backgroundColor: '#eff6ff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      ⚡ B2B Quick Presets:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleAddPresetBox(30, 30, 30, 10, 1)}
+                      style={{ padding: '4px 10px', fontSize: '11px', fontWeight: '600', backgroundColor: '#ffffff', border: '1px solid #93c5fd', borderRadius: '6px', color: '#1d4ed8', cursor: 'pointer' }}
+                    >
+                      + Small (30×30×30 cm, 10kg)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddPresetBox(40, 30, 30, 15, 1)}
+                      style={{ padding: '4px 10px', fontSize: '11px', fontWeight: '600', backgroundColor: '#ffffff', border: '1px solid #93c5fd', borderRadius: '6px', color: '#1d4ed8', cursor: 'pointer' }}
+                    >
+                      + Medium (40×30×30 cm, 15kg)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddPresetBox(50, 40, 40, 25, 1)}
+                      style={{ padding: '4px 10px', fontSize: '11px', fontWeight: '600', backgroundColor: '#ffffff', border: '1px solid #93c5fd', borderRadius: '6px', color: '#1d4ed8', cursor: 'pointer' }}
+                    >
+                      + Master (50×40×40 cm, 25kg)
+                    </button>
+                  </div>
+                )}
+
                 {packages.map((pkg, idx) => (
                   <div
                     key={pkg.id || idx}
@@ -1980,6 +2100,15 @@ export const CreateShipmentWizardPage: React.FC = () => {
                         onChange={(e) => handleUpdatePackage(idx, 'heightCm', parseFloat(e.target.value) || 0)}
                       />
                     </div>
+
+                    {/* Inline 10 CFT Calculation Helper per Box Row */}
+                    {shipmentCategory === 'b2b_freight' && (
+                      <div style={{ fontSize: '11px', color: '#2563eb', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '2px' }}>
+                        <span>📐 10 CFT Vol / Box: {Math.round(((pkg.lengthCm * pkg.widthCm * pkg.heightCm) / 2700) * 10) / 10} KG</span>
+                        <span>•</span>
+                        <span>Row Volumetric ({pkg.quantity}x): {Math.round(((pkg.lengthCm * pkg.widthCm * pkg.heightCm) / 2700) * pkg.quantity * 10) / 10} KG</span>
+                      </div>
+                    )}
                   </div>
                 ))}
 
@@ -1997,44 +2126,103 @@ export const CreateShipmentWizardPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 3. Small Summary: Total Boxes & Total Dead Weight (kg) */}
-              <div
-                style={{
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  padding: '12px 18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '12px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-                  <div>
-                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      TOTAL BOXES
+              {/* 3. Package Summary / 10 CFT Commercial Cargo Live Breakdown Card */}
+              {shipmentCategory === 'b2b_freight' ? (
+                <div
+                  style={{
+                    background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)',
+                    border: '1.5px solid #bfdbfe',
+                    borderRadius: '12px',
+                    padding: '16px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '800', color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      🏢 Delhivery B2B (10 CFT Standard) Volumetric & Slab Engine
                     </span>
-                    <div style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', marginTop: '1px' }}>
-                      {packageTotals.totalBoxes} {packageTotals.totalBoxes === 1 ? 'Box' : 'Boxes'}
-                    </div>
+                    <Badge variant={packageMath.isMinSlabApplied ? 'warning' : packageMath.chargeableBasis === 'Volumetric Weight' ? 'brand' : 'default'} size="sm">
+                      {packageMath.isMinSlabApplied ? '🏷️ Min Slab (20 KG) Applied' : packageMath.chargeableBasis === 'Volumetric Weight' ? '⚡ 10 CFT Volumetric Dominates' : '⚖️ Dead Weight Dominates'}
+                    </Badge>
                   </div>
 
-                  <div style={{ borderLeft: '1px solid #cbd5e1', paddingLeft: '24px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      TOTAL DEAD WEIGHT
-                    </span>
-                    <div style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', marginTop: '1px' }}>
-                      {packageTotals.totalDeadWeightKg} KG
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '16px' }}>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>TOTAL CARTONS</span>
+                      <div style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', marginTop: '2px' }}>
+                        {packageTotals.totalBoxes} Pcs
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>Across {packages.length} size{packages.length > 1 ? 's' : ''}</div>
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>SCALE DEAD WT</span>
+                      <div style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', marginTop: '2px' }}>
+                        {packageMath.totalActualWeightKg} KG
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>Physical scale weight</div>
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>10 CFT VOLUMETRIC</span>
+                      <div style={{ fontSize: '18px', fontWeight: '900', color: '#2563eb', marginTop: '2px' }}>
+                        {packageMath.totalVolumetricWeightKg} KG
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>Formula: (L×W×H)/2700</div>
+                    </div>
+
+                    <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 14px', border: '1.5px solid #dbeafe', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '800', color: '#1e40af', textTransform: 'uppercase' }}>FINAL BILLING WEIGHT</span>
+                      <div style={{ fontSize: '20px', fontWeight: '900', color: '#1d4ed8', marginTop: '2px' }}>
+                        {packageMath.totalChargeableWeightKg} KG
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#0369a1', fontWeight: '700' }}>
+                        {packageMath.isMinSlabApplied ? '20 KG Minimum Slab' : `${packageMath.chargeableBasis}`}
+                      </div>
                     </div>
                   </div>
                 </div>
+              ) : (
+                <div
+                  style={{
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    padding: '12px 18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        TOTAL BOXES
+                      </span>
+                      <div style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', marginTop: '1px' }}>
+                        {packageTotals.totalBoxes} {packageTotals.totalBoxes === 1 ? 'Box' : 'Boxes'}
+                      </div>
+                    </div>
 
-                <div style={{ fontSize: '11px', color: '#64748b' }}>
-                  Physical scale weight of consignment
+                    <div style={{ borderLeft: '1px solid #cbd5e1', paddingLeft: '24px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        TOTAL DEAD WEIGHT
+                      </span>
+                      <div style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', marginTop: '1px' }}>
+                        {packageTotals.totalDeadWeightKg} KG
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                    Physical scale weight of consignment
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* 4. Shipment Information */}
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -2049,15 +2237,134 @@ export const CreateShipmentWizardPage: React.FC = () => {
                     value={contentsDescription}
                     onChange={(e) => setContentsDescription(e.target.value)}
                   />
-                  <Input
-                    label="Declared Invoice Value (₹) *"
-                    type="number"
-                    min="1"
-                    placeholder="e.g. 2500"
-                    value={invoiceValue}
-                    onChange={(e) => setInvoiceValue(e.target.value)}
-                  />
+                  {shipmentCategory !== 'b2b_freight' && (
+                    <Input
+                      label="Declared Invoice Value (₹) *"
+                      type="number"
+                      min="1"
+                      placeholder="e.g. 2500"
+                      value={invoiceValue}
+                      onChange={(e) => setInvoiceValue(e.target.value)}
+                    />
+                  )}
                 </div>
+
+                {/* B2B Commercial Multi-Invoice & E-Way Bill Table */}
+                {shipmentCategory === 'b2b_freight' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                      <div>
+                        <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>
+                          Commercial Consignment Invoices & E-Way Bills *
+                        </span>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>
+                          Add all client bills/invoices for this consignment (supports multiple invoices per LR)
+                        </div>
+                      </div>
+                      <Badge variant={Number(invoiceValue) > 50000 && !isEwbExempt && (!ewayBillNumber || ewayBillNumber.length !== 12) ? 'warning' : 'brand'} size="sm">
+                        {Number(invoiceValue) > 50000
+                          ? isEwbExempt
+                            ? '✓ EWB Exempt (Rule 138(14))'
+                            : ewayBillNumber.length === 12
+                            ? '✓ E-Way Bill Attached'
+                            : '⚠️ E-Way Bill Required (> ₹50k)'
+                          : '✓ Under ₹50,000 Threshold'}
+                      </Badge>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {b2bInvoices.map((inv, idx) => (
+                        <div
+                          key={inv.id || idx}
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr)) auto',
+                            gap: '10px',
+                            alignItems: 'center',
+                            backgroundColor: '#ffffff',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                          }}
+                        >
+                          <Input
+                            label={idx === 0 ? 'Invoice / Bill No. *' : undefined}
+                            placeholder="e.g. INV-1001"
+                            value={inv.invNum}
+                            onChange={(e) => handleUpdateB2BInvoice(idx, 'invNum', e.target.value)}
+                          />
+                          <Input
+                            label={idx === 0 ? 'Invoice Value (₹) *' : undefined}
+                            type="number"
+                            min="1"
+                            placeholder="Amount in ₹"
+                            value={inv.invAmt}
+                            onChange={(e) => handleUpdateB2BInvoice(idx, 'invAmt', e.target.value)}
+                          />
+                          <Input
+                            label={idx === 0 ? 'E-Way Bill (12 Digits)' : undefined}
+                            placeholder="12-digit EWB Number"
+                            value={inv.ewbNum}
+                            maxLength={12}
+                            onChange={(e) => handleUpdateB2BInvoice(idx, 'ewbNum', e.target.value.replace(/\D/g, '').slice(0, 12))}
+                          />
+                          {b2bInvoices.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveB2BInvoice(idx)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#ef4444',
+                                cursor: 'pointer',
+                                padding: '6px',
+                                marginTop: idx === 0 ? '18px' : '0',
+                              }}
+                              title="Remove Invoice"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', paddingTop: '4px' }}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddB2BInvoice}
+                        style={{ fontSize: '11px', fontWeight: '700', borderColor: '#0284c7', color: '#0284c7' }}
+                      >
+                        <Plus size={13} style={{ marginRight: '4px' }} /> Add Another Invoice / Bill
+                      </Button>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#475569' }}>
+                          Total Declared Value:
+                        </span>
+                        <span style={{ fontSize: '16px', fontWeight: '900', color: '#0f172a' }}>
+                          ₹ {Number(invoiceValue || 0).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {Number(invoiceValue) > 50000 && (
+                      <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#475569', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={isEwbExempt}
+                            onChange={(e) => setIsEwbExempt(e.target.checked)}
+                            style={{ width: '14px', height: '14px', cursor: 'pointer' }}
+                          />
+                          <span>Consignment is legally exempt from E-Way Bill under GST Rule 138(14)</span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Payment Mode Selection */}
                 <div>
@@ -2118,39 +2425,35 @@ export const CreateShipmentWizardPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Progressive Disclosure: E-Way Bill Number when value >= ₹50,000 or B2B Cargo */}
-                {(Number(invoiceValue) >= 50000 || shipmentCategory === 'b2b_freight') && (
+                {/* Progressive Disclosure: E-Way Bill Number for B2C Parcels when value >= ₹50,000 */}
+                {shipmentCategory !== 'b2b_freight' && Number(invoiceValue) >= 50000 && (
                   <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
                     <div style={{ maxWidth: '360px' }}>
                       <Input
-                        label={`E-Way Bill Number ${shipmentCategory === 'b2b_freight' && Number(invoiceValue) > 50000 && !isEwbExempt ? '(Required for B2B > ₹50,000) *' : '(Optional)'}`}
+                        label="E-Way Bill Number (Required for Value > ₹50,000) *"
                         placeholder="12-digit E-Way Bill Number"
                         value={ewayBillNumber}
                         onChange={(e) => setEwayBillNumber(e.target.value.replace(/\D/g, '').slice(0, 12))}
                         maxLength={12}
                         disabled={isEwbExempt}
                       />
-                      <span style={{ fontSize: '11px', color: Number(invoiceValue) > 50000 && shipmentCategory === 'b2b_freight' && !isEwbExempt ? '#dc2626' : '#64748b', marginTop: '3px', display: 'block', fontWeight: Number(invoiceValue) > 50000 && shipmentCategory === 'b2b_freight' && !isEwbExempt ? '600' : 'normal' }}>
-                        {Number(invoiceValue) > 50000 && shipmentCategory === 'b2b_freight'
-                          ? isEwbExempt
-                            ? '✓ Marked exempt under GST Rule 138(14).'
-                            : '⚠️ Legally mandatory under Indian GST (CGST Rule 138) for consignment value exceeding ₹50,000.'
-                          : 'Mandatory in India for consignments with invoice value exceeding ₹50,000.'}
+                      <span style={{ fontSize: '11px', color: !isEwbExempt && (!ewayBillNumber || ewayBillNumber.length !== 12) ? '#dc2626' : '#64748b', marginTop: '3px', display: 'block', fontWeight: '600' }}>
+                        {isEwbExempt
+                          ? '✓ Marked exempt under GST Rule 138(14).'
+                          : '⚠️ Legally mandatory under Indian GST (CGST Rule 138) for consignment value exceeding ₹50,000.'}
                       </span>
 
-                      {shipmentCategory === 'b2b_freight' && Number(invoiceValue) > 50000 && (
-                        <div style={{ marginTop: '8px' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#475569', cursor: 'pointer' }}>
-                            <input
-                              type="checkbox"
-                              checked={isEwbExempt}
-                              onChange={(e) => setIsEwbExempt(e.target.checked)}
-                              style={{ width: '14px', height: '14px', cursor: 'pointer' }}
-                            />
-                            <span>Consignment is legally exempt from E-Way Bill under GST Rule 138(14) (e.g. intra-state enhanced threshold, agricultural or non-taxable goods)</span>
-                          </label>
-                        </div>
-                      )}
+                      <div style={{ marginTop: '8px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#475569', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={isEwbExempt}
+                            onChange={(e) => setIsEwbExempt(e.target.checked)}
+                            style={{ width: '14px', height: '14px', cursor: 'pointer' }}
+                          />
+                          <span>Consignment is legally exempt from E-Way Bill under GST Rule 138(14)</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 )}
