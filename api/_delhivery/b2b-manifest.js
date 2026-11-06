@@ -284,15 +284,13 @@ module.exports = async (req, res) => {
     ];
     formData.append('invoices', JSON.stringify(invoicesArray));
 
-    // shipment_details JSON array
+    // shipment_details JSON array (Clean specification accepted by Delhivery)
     const shipmentDetailsArray = [
       {
         order_id: String(orderId || `B2B-ORD-${Date.now()}`),
         box_count: totalPieces,
         description: String(description || 'B2B Cargo Consignment'),
         weight: totalWeightGrams,
-        waybills: [],
-        master: false,
       },
     ];
     formData.append('shipment_details', JSON.stringify(shipmentDetailsArray));
@@ -301,7 +299,9 @@ module.exports = async (req, res) => {
     formData.append('dimensions', JSON.stringify(normalizedDimensions));
 
     formData.append('fm_pickup', fmPickup ? 'True' : 'False');
-    formData.append('freight_mode', freightMode === 'fod' ? 'fod' : 'fop');
+    if (freightMode && freightMode !== 'default') {
+      formData.append('freight_mode', freightMode);
+    }
 
     // billing_address JSON (consignor / billing master) - strictly dynamic, no hardcoded personal data
     const billingObj = {
@@ -313,7 +313,7 @@ module.exports = async (req, res) => {
       state: billingAddress?.state || process.env.DELHIVERY_B2B_BILLING_STATE || 'State',
       pin: String(billingAddress?.pin || process.env.DELHIVERY_B2B_BILLING_PIN || '110001').replace(/\D/g, ''),
       phone: String(billingAddress?.phone || process.env.DELHIVERY_B2B_BILLING_PHONE || '9999999999').replace(/\D/g, ''),
-      gst_number: billingAddress?.gst_number || consigneeGstin || 'URP',
+      gst_number: billingAddress?.gst_number || (consigneeGstin && consigneeGstin !== 'URP' ? consigneeGstin : 'UR'),
     };
     formData.append('billing_address', JSON.stringify(billingObj));
 
@@ -385,13 +385,15 @@ module.exports = async (req, res) => {
           break;
         }
 
-        // If explicitly failed in queue
-        if (poll.data?.status === 'FAILED' || poll.data?.error) {
+        // If explicitly failed or inactive in queue
+        const queueReason = poll.data?.data?.reason || poll.data?.reason || poll.data?.error?.message || poll.data?.message;
+        const queueStatus = poll.data?.data?.status || poll.data?.status;
+        if (queueStatus === 'FAILED' || queueStatus === 'RetryError' || poll.data?.error) {
           return res.status(400).json({
             success: false,
             status: 'FAILED',
             jobId,
-            message: poll.data?.error?.message || poll.data?.message || 'Shipment manifestation failed during queue processing.',
+            message: queueReason || 'Shipment manifestation rejected during queue processing.',
             details: poll.data,
           });
         }
