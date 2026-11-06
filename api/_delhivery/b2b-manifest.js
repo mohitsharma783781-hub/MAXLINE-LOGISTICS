@@ -155,7 +155,7 @@ module.exports = async (req, res) => {
       billingAddress,
       rovInsurance = false,
       fmPickup = false,
-      freightMode = 'fop',
+      freightMode = '',
       description = 'B2B Cargo Consignment',
       isEwbExempt = false,
     } = req.body || {};
@@ -184,7 +184,8 @@ module.exports = async (req, res) => {
     }
 
     // 2. Legal E-Way Bill Validation under CGST Rule 138
-    const invVal = Number(invoiceValueINR) || 0;
+    const rawInvVal = Number(invoiceValueINR) || 0;
+    const invVal = Math.max(1, rawInvVal || 1000);
     const cleanEwb = String(ewayBillNumber || '').trim().replace(/\D/g, '');
 
     if (cleanEwb) {
@@ -299,7 +300,7 @@ module.exports = async (req, res) => {
     formData.append('dimensions', JSON.stringify(normalizedDimensions));
 
     formData.append('fm_pickup', fmPickup ? 'True' : 'False');
-    if (freightMode && freightMode !== 'default') {
+    if (freightMode && freightMode !== 'default' && freightMode !== 'fop') {
       formData.append('freight_mode', freightMode);
     }
 
