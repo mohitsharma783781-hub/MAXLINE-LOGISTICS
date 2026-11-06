@@ -159,3 +159,5 @@ maxline-landing-page.zip
  
 .backup_pre_sprint/
 *.zip
+.vercel
+.env*

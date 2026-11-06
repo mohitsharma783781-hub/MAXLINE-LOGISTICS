@@ -98,7 +98,7 @@ export class DelhiveryB2bService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...params,
-          pickupWarehouse: params.pickupWarehouse || this.DEFAULT_WAREHOUSE,
+          pickupWarehouse: params.pickupWarehouse || undefined,
           token,
         }),
       });
@@ -147,7 +147,7 @@ export class DelhiveryB2bService {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pickupWarehouse: params.pickupWarehouse || this.DEFAULT_WAREHOUSE,
+          pickupWarehouse: params.pickupWarehouse || undefined,
           pickupDate: params.pickupDate,
           pickupTime: params.pickupTime,
           expectedPackageCount: params.expectedPackageCount,

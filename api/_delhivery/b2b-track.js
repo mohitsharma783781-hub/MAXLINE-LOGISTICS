@@ -1,10 +1,13 @@
 /**
  * MAXLINE LOGISTICS - Delhivery B2B Tracking Service
- * Tracks B2B LR numbers against Delhivery Freight gateway (/v2/track/{lrnum}).
+ * Tracks B2B LR numbers against the official Delhivery LTL tracking gateway:
+ * GET https://ltl-clients-api-dev.delhivery.com/lrn/track?lrnum={lrnum}
  */
 
-const B2B_STAGING_BASE = 'https://btob-api-dev.delhivery.com';
-const B2B_PROD_BASE = 'https://btob.api.delhivery.com';
+const LTL_STAGING_BASE = 'https://ltl-clients-api-dev.delhivery.com';
+const LTL_PROD_BASE = 'https://ltl-clients-api.delhivery.com';
+const LEGACY_STAGING_BASE = 'https://btob-api-dev.delhivery.com';
+const LEGACY_PROD_BASE = 'https://btob.api.delhivery.com';
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -21,10 +24,10 @@ module.exports = async (req, res) => {
 
   try {
     const isProd = process.env.DELHIVERY_B2B_ENV === 'production';
-    const baseUrl = isProd && process.env.DELHIVERY_B2B_ALLOW_LIVE === 'true' ? B2B_PROD_BASE : B2B_STAGING_BASE;
+    const baseUrl = isProd && process.env.DELHIVERY_B2B_ALLOW_LIVE === 'true' ? LTL_PROD_BASE : LTL_STAGING_BASE;
 
     const lrNumber = req.query?.lrNumber || req.query?.waybill || req.query?.lrnum;
-    let token = req.query?.token || req.headers?.authorization?.replace('Bearer ', '');
+    let token = req.query?.token || req.headers?.authorization?.replace(/^Bearer\s+/i, '');
 
     if (!lrNumber) {
       return res.status(400).json({
@@ -45,9 +48,9 @@ module.exports = async (req, res) => {
       }
 
       try {
-        const loginRes = await fetch(`${baseUrl}/ums/login/`, {
+        const loginRes = await fetch(`${baseUrl}/ums/login`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
             username: b2bUser.trim(),
             password: b2bPass.trim(),
@@ -55,10 +58,10 @@ module.exports = async (req, res) => {
         });
         if (loginRes.ok) {
           const lData = await loginRes.json();
-          token = lData.jwt || lData.token;
+          token = lData?.data?.jwt || lData?.jwt || lData?.token || lData?.data?.token;
         }
       } catch (loginErr) {
-        console.warn('[Delhivery B2B Auto-Login Fallback]:', loginErr);
+        console.warn('[Delhivery B2B Track Auto-Login Fallback]:', loginErr.message);
       }
     }
 
@@ -69,7 +72,8 @@ module.exports = async (req, res) => {
       });
     }
 
-    const trackRes = await fetch(`${baseUrl}/v2/track/${encodeURIComponent(lrNumber)}`, {
+    // Official LTL tracking endpoint: GET /lrn/track?lrnum={lrnum}
+    let trackRes = await fetch(`${baseUrl}/lrn/track?lrnum=${encodeURIComponent(lrNumber)}`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -77,7 +81,27 @@ module.exports = async (req, res) => {
       },
     });
 
-    const data = await trackRes.json().catch(() => ({}));
+    let data = await trackRes.json().catch(() => ({}));
+
+    // Fallback to legacy tracking endpoint if official returns 404 or empty
+    if (!trackRes.ok && trackRes.status === 404) {
+      const legacyBase = isProd && process.env.DELHIVERY_B2B_ALLOW_LIVE === 'true' ? LEGACY_PROD_BASE : LEGACY_STAGING_BASE;
+      try {
+        const fbRes = await fetch(`${legacyBase}/v2/track/${encodeURIComponent(lrNumber)}`, {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${token.trim()}`,
+          },
+        });
+        if (fbRes.ok) {
+          trackRes = fbRes;
+          data = await fbRes.json().catch(() => ({}));
+        }
+      } catch (fbErr) {
+        console.warn('[Delhivery B2B Legacy Track Fallback Error]:', fbErr.message);
+      }
+    }
 
     return res.status(trackRes.status).json({
       success: trackRes.ok,

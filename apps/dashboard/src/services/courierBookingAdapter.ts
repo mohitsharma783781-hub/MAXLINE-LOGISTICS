@@ -114,15 +114,15 @@ export const CourierBookingAdapter = {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderId: input.orderId,
-            consigneeName: input.deliveryContactName || 'Customer Consignee',
-            consigneePhone: input.deliveryPhone || '9876543210',
+            consigneeName: input.deliveryContactName,
+            consigneePhone: input.deliveryPhone,
             consigneeGstin: input.consigneeGstin || '',
-            consigneeAddress: input.deliveryAddress || 'Commercial Freight Destination',
-            consigneeCity: input.deliveryCity || 'City',
-            consigneeState: input.deliveryState || 'State',
+            consigneeAddress: input.deliveryAddress,
+            consigneeCity: input.deliveryCity || '',
+            consigneeState: input.deliveryState || '',
             consigneePincode: input.destinationPincode,
             boxes: normalizedBoxes,
-            pickupWarehouse: input.pickupLocation || 'MAXLINE LOGI - 156',
+            pickupWarehouse: input.pickupLocation,
             paymentMode: input.paymentMode === 'COD' ? 'COD' : 'Prepaid',
             invoiceNumber: input.invoiceNumber || '',
             invoiceValueINR: input.invoiceValueINR || input.sellingPriceINR || 0,
@@ -134,19 +134,25 @@ export const CourierBookingAdapter = {
 
         const mData = await manifestRes.json().catch(() => null);
 
-        if (manifestRes.ok && mData?.success && mData?.lrNumber) {
+        if (manifestRes.ok && mData?.success) {
+          const lrNumber = mData.lrNumber || '';
+          const jobId = mData.jobId || '';
+          const isPending = mData.status === 'PROCESSING' && !lrNumber;
+
           return {
             success: true,
             bookingId: `bk-del-b2b-${Date.now()}`,
-            awbNumber: mData.lrNumber,
+            awbNumber: lrNumber || jobId,
             courierId: input.courierId,
             courierName: input.courierName,
             serviceName: input.serviceName,
-            status: 'BOOKED',
+            status: isPending ? 'PROCESSING' : 'BOOKED',
             isMock: false,
-            bookingReference: mData.lrNumber,
-            labelUrl: `/api/delhivery/label?awb=${mData.lrNumber}`,
-            message: `B2B Consignment manifested successfully with Delhivery Freight. LR: ${mData.lrNumber}`,
+            bookingReference: lrNumber || jobId,
+            labelUrl: lrNumber ? `/api/delhivery/label?awb=${lrNumber}` : '',
+            message: isPending
+              ? `B2B Consignment queued in Delhivery LTL system. Job ID: ${jobId}`
+              : `B2B Consignment manifested successfully with Delhivery Freight. LR: ${lrNumber}`,
             bookedAt: new Date().toISOString(),
           };
         }
