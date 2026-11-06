@@ -177,7 +177,7 @@ export const AdminWeightDiscrepancyPage: React.FC = () => {
   const breadcrumbs = [
     { label: 'Super Admin Portal', path: '/admin' },
     { label: 'Operations & Audits', path: '/admin/shipments' },
-    { label: 'Admin Weight Dispute & Audit Review Panel', path: '/admin/weight-discrepancies' },
+    { label: 'Weight Disputes', path: '/admin/weight-discrepancies' },
   ];
 
   return (
@@ -185,8 +185,8 @@ export const AdminWeightDiscrepancyPage: React.FC = () => {
       
       {/* 1. Page Header */}
       <PageHeader
-        title="Admin Weight Dispute & Audit Review Panel"
-        description="Supervise merchant weight disputes, inspect evidence files, approve Credit Note refunds, and track carrier reweigh statistics."
+        title="Weight Disputes"
+        description="Supervise merchant weight disputes, inspect evidence files, and issue credit note refunds."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: '8px' }}>

@@ -51,12 +51,12 @@ export const AdminUsersRolesPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Admin Users & Role-Based Access Control (RBAC)"
-        description="Manage platform administrator accounts, security roles (Super Admin, Operations, Finance, Support), and server-side authorization matrices."
+        title="Admin Users & Roles"
+        description="Manage platform administrator accounts and access permissions."
         breadcrumbs={breadcrumbs}
         actions={
           <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => setIsAddOpen(true)}>
-            + Add Admin User
+            Add Admin User
           </Button>
         }
       />

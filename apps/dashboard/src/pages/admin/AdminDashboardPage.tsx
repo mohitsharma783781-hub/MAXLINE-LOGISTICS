@@ -63,8 +63,8 @@ export const AdminDashboardPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', width: '100%' }}>
       {/* PAGE HEADER */}
       <PageHeader
-        title="Admin Operational Dashboard"
-        description="Platform operational metrics, merchant onboarding, rate assignments, and live database telemetry."
+        title="Admin Dashboard"
+        description="Platform operational metrics, merchant accounts, rate cards, and live system status."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
@@ -91,7 +91,7 @@ export const AdminDashboardPage: React.FC = () => {
               leftIcon={<Users size={14} />}
               onClick={() => navigate('/admin/customers')}
             >
-              + Register Customer
+              Register Customer
             </Button>
           </div>
         }

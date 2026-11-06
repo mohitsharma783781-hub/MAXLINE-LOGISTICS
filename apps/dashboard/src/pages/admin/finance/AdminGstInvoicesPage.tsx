@@ -155,8 +155,8 @@ export const AdminGstInvoicesPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Super Admin Portal', path: '/admin' },
-    { label: 'Finance Engine', path: '/admin/wallets' },
-    { label: 'Admin Billing & Invoice Engine', path: '/admin/billing' },
+    { label: 'Finance', path: '/admin/customer-wallets' },
+    { label: 'GST Invoices', path: '/admin/finance/gst-invoices' },
   ];
 
   return (
@@ -164,8 +164,8 @@ export const AdminGstInvoicesPage: React.FC = () => {
       
       {/* 1. Page Header */}
       <PageHeader
-        title="Admin Billing, Invoice & Ledger Engine"
-        description="Supervise automated delivered shipment billing runs, issue B2B & B2C tax invoices, create Credit Notes, and manage adjustments."
+        title="GST Tax Invoices"
+        description="Supervise automated billing runs, issue B2B & B2C tax invoices, and create Credit Notes."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: '8px' }}>

@@ -277,7 +277,7 @@ export const AdminCustomersPage: React.FC = () => {
               onClick={() => setIsAddOpen(true)}
               style={{ backgroundColor: '#0f172a', borderColor: '#0f172a' }}
             >
-              + Register New Seller Account
+              Register Seller Account
             </Button>
           </div>
         }

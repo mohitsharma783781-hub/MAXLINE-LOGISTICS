@@ -51,8 +51,8 @@ export const AdminAccessLogsPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       <PageHeader
-        title="User Access & Security Audit Logs"
-        description="Comprehensive audit trail tracking RBAC policy changes, role creation, user assignments, and unauthorized access attempts."
+        title="User Access Logs"
+        description="Audit trail tracking role changes, user assignments, and authorization events."
         breadcrumbs={breadcrumbs}
       />
 

@@ -628,7 +628,7 @@ export const AdminCustomerDetailPage: React.FC = () => {
               value={adjustDirection}
               onChange={(e) => setAdjustDirection(e.target.value as any)}
               options={[
-                { value: 'CREDIT', label: 'CREDIT (+ Add Funds to Wallet)' },
+                { value: 'CREDIT', label: 'CREDIT (Add Funds to Wallet)' },
                 { value: 'DEBIT', label: 'DEBIT (- Deduct Funds from Wallet)' },
               ]}
             />

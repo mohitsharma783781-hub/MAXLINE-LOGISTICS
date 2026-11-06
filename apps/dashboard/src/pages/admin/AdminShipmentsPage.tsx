@@ -60,8 +60,8 @@ export const AdminShipmentsPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Global Platform Shipments (Super Admin Control)"
-        description="Monitor multi-tenant dispatches, status lifecycle history, internal courier buy costs, customer selling prices, and platform gross margins."
+        title="Platform Shipments"
+        description="Monitor multi-tenant dispatches, delivery statuses, courier costs, and gross margins."
         breadcrumbs={breadcrumbs}
       />
 

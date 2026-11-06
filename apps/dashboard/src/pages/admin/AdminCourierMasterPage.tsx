@@ -33,8 +33,8 @@ export const AdminCourierMasterPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Courier Partner Master & Service Configuration Control Center"
-        description="Configure active logistics courier partners, B2B/B2C commercial capabilities, COD support, multi-package flags, and API integration statuses."
+        title="Courier Partner Master"
+        description="Configure active logistics courier partners, B2B/B2C capabilities, and integration statuses."
         breadcrumbs={breadcrumbs}
       />
 

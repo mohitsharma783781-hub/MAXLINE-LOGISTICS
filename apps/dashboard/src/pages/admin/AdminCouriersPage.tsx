@@ -111,8 +111,8 @@ export const AdminCouriersPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Courier Master & Account Hub"
-        description="Manage master courier partners, account instances, priority rules, and capabilities."
+        title="Courier Partners"
+        description="Manage courier partners, carrier accounts, and routing rules."
         breadcrumbs={breadcrumbs}
         actions={
           <Button
@@ -121,7 +121,7 @@ export const AdminCouriersPage: React.FC = () => {
             leftIcon={<Plus size={16} />}
             onClick={() => setIsAddModalOpen(true)}
           >
-            + Register Courier Partner
+            Register Courier Partner
           </Button>
         }
       />

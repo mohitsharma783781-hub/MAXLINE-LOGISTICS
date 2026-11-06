@@ -59,15 +59,16 @@ export const AdminReportsPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Super Admin Portal', path: '/admin' },
-    { label: 'Reports & Business Intelligence', path: '/admin/reports' },
+    { label: 'System', path: '/admin/reports' },
+    { label: 'Reports & Analytics', path: '/admin/reports' },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Multi-Tenant BI Reports & Platform Analytics"
-        description="Generate shipment analytics, customer revenue, courier buy cost, platform gross margin, and wallet transaction reports."
+        title="Reports & Analytics"
+        description="Generate shipment analytics, customer revenue, courier buy cost, and platform gross margins."
         breadcrumbs={breadcrumbs}
         actions={
           <Button variant="primary" size="sm" leftIcon={<Download size={16} />} onClick={handleExportCSV}>

@@ -119,12 +119,12 @@ export const AdminSurchargesPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', width: '100%' }}>
       {/* PAGE HEADER */}
       <PageHeader
-        title="Additional Charges & Surcharges Master"
-        description="Configure platform surcharge rules (Docket, Fuel, ROV, Insurance, COD, Handling, FM, Appointment, Custom charges) across B2B and B2C rate cards."
+        title="Surcharges Master"
+        description="Configure platform surcharge rules (Docket, Fuel, COD, Handling) across rate cards."
         breadcrumbs={breadcrumbs}
         actions={
           <Button variant="primary" size="sm" leftIcon={<Plus size={14} />} onClick={handleOpenAdd}>
-            + Add Surcharge Rule
+            Add Surcharge Rule
           </Button>
         }
       />

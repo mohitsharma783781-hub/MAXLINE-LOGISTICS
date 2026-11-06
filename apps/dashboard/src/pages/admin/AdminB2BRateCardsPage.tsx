@@ -593,8 +593,8 @@ export const AdminB2BRateCardsPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', width: '100%', maxWidth: '1440px', margin: '0 auto' }}>
       {/* PAGE HEADER */}
       <PageHeader
-        title="Admin B2B Rate Management"
-        description="Authoritative database configuration for courier B2B commercial cargo rate cards, 16×16 zone matrices, volumetric divisors, minimum weights, fuel surcharges, and GST rules."
+        title="B2B Commercial Rate Cards"
+        description="Configure B2B cargo rate cards, 16×16 zone matrices, volumetric divisors, minimum weights, and surcharges."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -617,7 +617,7 @@ export const AdminB2BRateCardsPage: React.FC = () => {
               Test Pricing Engine
             </Button>
             <Button variant="primary" size="sm" leftIcon={<Plus size={14} />} onClick={handleOpenCreateForm}>
-              + Create B2B Rate Card
+              Create B2B Rate Card
             </Button>
             <input
               type="file"

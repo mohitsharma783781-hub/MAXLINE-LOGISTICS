@@ -146,7 +146,7 @@ export const AdminCostRatesPage: React.FC = () => {
               leftIcon={<Plus size={16} />}
               onClick={() => setIsAddCardOpen(true)}
             >
-              + Create Cost Rate Card
+              Create Cost Rate Card
             </Button>
           </div>
         }

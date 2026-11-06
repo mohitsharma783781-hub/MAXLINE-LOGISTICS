@@ -50,7 +50,7 @@ export const AdminAuditLogsPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       <PageHeader
         title="Platform Audit Logs"
-        description="Immutable audit trail of all platform administrative actions, rate changes, tenant creation, and financial adjustments."
+        description="Audit trail of administrative actions, rate changes, tenant creation, and financial updates."
         breadcrumbs={breadcrumbs}
       />
 

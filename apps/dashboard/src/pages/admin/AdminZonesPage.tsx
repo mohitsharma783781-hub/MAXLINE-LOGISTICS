@@ -65,7 +65,7 @@ export const AdminZonesPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Super Admin Portal', path: '/admin' },
-    { label: 'Settings', path: '/admin/settings' },
+    { label: 'Partners & Network', path: '/admin/zones' },
     { label: 'Zone Master', path: '/admin/zones' },
   ];
 
@@ -73,8 +73,8 @@ export const AdminZonesPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', width: '100%' }}>
       {/* PAGE HEADER */}
       <PageHeader
-        title="Settings → Zone Master"
-        description="Centralized geographic zone mappings (N1 to NE2) used across courier rate cards, pricing engines, and linehaul route resolution."
+        title="Zone Master"
+        description="Geographic zone mappings (N1 to NE2) used across courier rate cards and linehaul route resolution."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>

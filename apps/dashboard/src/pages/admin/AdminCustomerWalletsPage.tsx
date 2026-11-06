@@ -118,8 +118,8 @@ export const AdminCustomerWalletsPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       <PageHeader
-        title="Customer Wallet Management"
-        description="Monitor multi-tenant merchant wallet balances, perform credit/debit adjustments, and inspect transaction ledgers with full audit logging."
+        title="Customer Wallets"
+        description="Monitor merchant wallet balances, post credit adjustments, and audit transaction ledgers."
         breadcrumbs={breadcrumbs}
         actions={
           <Button

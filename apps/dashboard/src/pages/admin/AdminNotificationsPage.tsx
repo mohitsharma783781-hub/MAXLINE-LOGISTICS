@@ -163,15 +163,16 @@ export const AdminNotificationsPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Super Admin Portal', path: '/admin' },
-    { label: 'Notification & Billing Engine', path: '/admin/notifications' },
+    { label: 'System', path: '/admin/notifications' },
+    { label: 'Notifications', path: '/admin/notifications' },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* Page Header */}
       <PageHeader
-        title="Branded Notifications, Pricing & Usage Billing Engine"
-        description="Configure global WhatsApp/SMS notification gateways, monthly free quotas, paid per-message pricing, provider costs, and merchant branding moderation."
+        title="Notifications & Gateway"
+        description="Configure WhatsApp and SMS notification gateways, quotas, and pricing."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>

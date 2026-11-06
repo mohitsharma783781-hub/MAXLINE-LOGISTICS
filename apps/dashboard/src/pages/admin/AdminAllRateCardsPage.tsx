@@ -143,12 +143,12 @@ export const AdminAllRateCardsPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', width: '100%' }}>
       {/* PAGE HEADER */}
       <PageHeader
-        title="All Rate Cards Master Catalog"
-        description="Comprehensive overview of all B2B Commercial Freight and B2C Express Selling rate cards, version history, and assigned merchant customers."
+        title="All Rate Cards"
+        description="Overview of B2B Commercial Freight and B2C Express selling rate cards."
         breadcrumbs={breadcrumbs}
         actions={
           <Button variant="primary" size="sm" leftIcon={<Plus size={14} />} onClick={() => navigate('/admin/create-rate-card')}>
-            + Create Rate Card
+            Create Rate Card
           </Button>
         }
       />

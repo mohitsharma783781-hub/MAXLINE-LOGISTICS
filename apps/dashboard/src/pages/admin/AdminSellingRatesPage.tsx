@@ -519,7 +519,7 @@ export const AdminSellingRatesPage: React.FC = () => {
         actions={
           activeViewMode === 'LIST' ? (
             <Button variant="primary" size="sm" leftIcon={<Plus size={14} />} onClick={handleOpenCreateB2c}>
-              + Create B2C Rate Card
+              Create B2C Rate Card
             </Button>
           ) : (
             <Button variant="outline" size="sm" leftIcon={<ArrowLeft size={14} />} onClick={() => setActiveViewMode('LIST')}>
@@ -774,7 +774,7 @@ export const AdminSellingRatesPage: React.FC = () => {
                 </span>
               </div>
               <Button variant="outline" size="sm" leftIcon={<Plus size={14} />} onClick={() => setIsSlabModalOpen(true)}>
-                + Add Weight Slab
+                Add Weight Slab
               </Button>
             </div>
 

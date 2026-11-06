@@ -210,7 +210,7 @@ export const AdminRolesPage: React.FC = () => {
               leftIcon={<Plus size={16} />}
               onClick={() => handleOpenCreateModal(activeTab)}
             >
-              + Create New Role
+              Create New Role
             </Button>
           </div>
         }

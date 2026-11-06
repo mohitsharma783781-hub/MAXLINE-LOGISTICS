@@ -154,12 +154,12 @@ export const AdminCustomerRateAssignmentsPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Customer-Specific Courier & Rate Assignment Control"
-        description="Assign B2B and B2C selling rate cards, enable/disable courier partners per merchant tenant, set default couriers, and preview customer prices."
+        title="Customer Rate Assignments"
+        description="Assign B2B and B2C selling rate cards and enable courier partners per merchant."
         breadcrumbs={breadcrumbs}
         actions={
           <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => setIsAddOpen(true)}>
-            + Add Rate Card Assignment
+            Assign Rate Card
           </Button>
         }
       />

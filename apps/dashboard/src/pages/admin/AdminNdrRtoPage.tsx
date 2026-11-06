@@ -57,15 +57,15 @@ export const AdminNdrRtoPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Super Admin Portal', path: '/admin' },
-    { label: 'NDR & RTO Control Center', path: '/admin/ndr' },
+    { label: 'NDR & RTO', path: '/admin/ndr' },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Super Admin NDR & RTO Control Center"
-        description="Monitor platform undelivered NDR exception attempts, merchant re-attempt instructions, and RTO return flows across all courier partners."
+        title="NDR & RTO Exceptions"
+        description="Monitor undelivered delivery exceptions, reattempt instructions, and RTO return flows."
         breadcrumbs={breadcrumbs}
       />
 

@@ -128,12 +128,12 @@ export const AdminCodRemittancesPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Admin COD Remittance & Settlement Control Center"
-        description="Manage Cash on Delivery receivables, merchant remittance batches, courier COD settlements, double-remittance guards, and reconciliation exceptions."
+        title="COD Remittances"
+        description="Manage Cash on Delivery collections, merchant settlements, and bank remittance batches."
         breadcrumbs={breadcrumbs}
         actions={
           <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => setIsCreateModalOpen(true)}>
-            + Create New Remittance Batch
+            Create Remittance Batch
           </Button>
         }
       />
