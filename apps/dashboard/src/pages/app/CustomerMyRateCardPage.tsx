@@ -16,7 +16,7 @@ export const CustomerMyRateCardPage: React.FC = () => {
   const b2bCard = DEMO_B2B_RATE_CARDS[0];
 
   const breadcrumbs = [
-    { label: 'Customer Portal', path: '/app' },
+    { label: 'Merchant Portal', path: '/app' },
     { label: 'My Rate Card', path: '/app/my-rate-card' },
   ];
 
@@ -34,8 +34,8 @@ export const CustomerMyRateCardPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', width: '100%' }}>
       {/* PAGE HEADER */}
       <PageHeader
-        title="My Rate Card & Pricing Schedule"
-        description="Your active assigned selling rate card schedules for B2C Express and B2B Freight Cargo shipments."
+        title="My Rate Card"
+        description="Active commercial pricing schedules for B2C Express and B2B Freight cargo."
         breadcrumbs={breadcrumbs}
       />
 

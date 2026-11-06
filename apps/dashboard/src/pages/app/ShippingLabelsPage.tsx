@@ -111,8 +111,8 @@ export const ShippingLabelsPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Merchant Portal', path: '/app' },
-    { label: 'Bulk Operations Center', path: '/app/orders/bulk-upload' },
-    { label: 'Bulk Shipping Labels Center', path: '/app/labels' },
+    { label: 'Shipments', path: '/app/orders' },
+    { label: 'Shipping Labels', path: '/app/labels' },
   ];
 
   return (
@@ -120,8 +120,8 @@ export const ShippingLabelsPage: React.FC = () => {
       
       {/* 1. Page Header */}
       <PageHeader
-        title="Bulk Thermal 4x6 Label Printing Center"
-        description="Batch generate 4x6 thermal shipping labels, preview carrier barcodes & QR codes, print A4 label sheets, and download ZIP dispatches."
+        title="Shipping Labels"
+        description="Batch generate and print 4x6 thermal shipping labels and A4 sheets."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: '8px' }}>

@@ -350,27 +350,27 @@ export const CustomerDashboard: React.FC = () => {
   const activityFeedData = [
     {
       id: 'act-1',
-      title: 'Database Synchronized',
-      description: 'Dedicated MAXLINE Supabase cloud connection active (HTTP 200 OK)',
-      time: 'Real-time',
+      title: 'Dispatch System Active',
+      description: 'All courier carrier connections operational and synchronized',
+      time: 'Live',
       icon: CheckCircle2,
       iconColor: '#16a34a',
       bgColor: '#f0fdf4',
     },
     {
       id: 'act-2',
-      title: 'Merchant Workspace Initialized',
+      title: 'Merchant Hub Online',
       description: 'Multi-carrier routing & automated rate assignment engine standing by',
-      time: 'Live',
+      time: 'Active',
       icon: Package,
       iconColor: '#1d4ed8',
       bgColor: '#eff6ff',
     },
     {
       id: 'act-3',
-      title: 'Billing & Wallet Ready',
-      description: 'Prepaid balance ledger and automated freight debit system active',
-      time: 'System',
+      title: 'Prepaid Wallet Ready',
+      description: 'Instant freight debit system active for automated bookings',
+      time: 'Active',
       icon: Wallet,
       iconColor: '#0f172a',
       bgColor: '#f8fafc',
@@ -916,7 +916,7 @@ export const CustomerDashboard: React.FC = () => {
               }}
               title="Add balance instantly via UPI, NetBanking or Cards"
             >
-              + Add Money to Wallet
+              Add Funds to Wallet
             </Button>
             <span style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', display: 'block', marginTop: '6px' }}>
               Instant 24x7 recharge via UPI, NetBanking &amp; Cards (Razorpay)

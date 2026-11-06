@@ -93,7 +93,7 @@ export const CouriersPage: React.FC = () => {
               leftIcon={<Plus size={16} />}
               onClick={() => navigate('/app/couriers/add')}
             >
-              + Add Courier
+              Add Courier
             </Button>
           </div>
         }

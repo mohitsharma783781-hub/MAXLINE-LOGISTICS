@@ -79,8 +79,8 @@ export const CustomerPickupRequestsPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Pickups & Manifests Center"
-        description="Schedule carrier vehicle collections from your Panchkula hub and generate official handover run sheets."
+        title="Pickups & Manifests"
+        description="Schedule carrier vehicle pickups and generate official handover run sheets."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -90,7 +90,7 @@ export const CustomerPickupRequestsPage: React.FC = () => {
               leftIcon={<FileText size={16} />}
               onClick={() => navigate('/app/manifests/create')}
             >
-              + Create Manifest
+              Create Manifest
             </Button>
 
             <Button
@@ -100,7 +100,7 @@ export const CustomerPickupRequestsPage: React.FC = () => {
               onClick={() => navigate('/app/pickups/create')}
               style={{ backgroundColor: '#0284c7', borderColor: '#0284c7', fontWeight: '700' }}
             >
-              + Schedule Courier Pickup
+              Schedule Courier Pickup
             </Button>
           </div>
         }

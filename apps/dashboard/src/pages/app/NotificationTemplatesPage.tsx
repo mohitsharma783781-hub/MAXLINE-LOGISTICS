@@ -123,7 +123,7 @@ export const NotificationTemplatesPage: React.FC = () => {
               Back to Notifications
             </Button>
             <Button variant="primary" size="sm" onClick={openCreateModal} leftIcon={<Plus size={16} />}>
-              + Create Template
+              Create Template
             </Button>
           </div>
         }

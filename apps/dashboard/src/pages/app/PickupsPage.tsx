@@ -85,7 +85,7 @@ export const PickupsPage: React.FC = () => {
         actions={
           <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
             <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => setIsAddModalOpen(true)}>
-              + Schedule Pickup Request
+              Schedule Pickup Request
             </Button>
           </div>
         }

@@ -127,7 +127,8 @@ export const CustomerGstInvoicesPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Merchant Portal', path: '/app' },
-    { label: 'Billing & Ledger Ecosystem', path: '/app/billing' },
+    { label: 'Finance', path: '/app/wallet' },
+    { label: 'GST Invoices', path: '/app/billing' },
   ];
 
   return (
@@ -135,8 +136,8 @@ export const CustomerGstInvoicesPage: React.FC = () => {
       
       {/* 1. Page Header */}
       <PageHeader
-        title="Billing, Invoice & Ledger Center"
-        description="Automated post-delivery billing, separate B2B vs B2C tax invoices, itemized AWB/LRN charge ledgers, Credit Notes, and GST ITC reconciliation."
+        title="GST Tax Invoices"
+        description="Download tax invoices, itemized freight ledgers, and credit notes for GST reconciliation."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -144,7 +145,7 @@ export const CustomerGstInvoicesPage: React.FC = () => {
               Export GST Reconcile CSV
             </Button>
             <Button variant="primary" size="sm" onClick={() => handleGenerateInvoice('B2B')} style={{ backgroundColor: '#0284c7', borderColor: '#0284c7' }}>
-              + Auto-Bill B2B Shipments
+              Auto-Bill B2B Shipments
             </Button>
           </div>
         }

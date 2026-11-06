@@ -26,16 +26,17 @@ export const RtoManagementPage: React.FC = () => {
   }, [tenantId, refreshTick]);
 
   const breadcrumbs = [
-    { label: 'Customer Portal', path: '/app' },
-    { label: 'Return to Origin (RTO) Shipments', path: '/app/rto' },
+    { label: 'Merchant Portal', path: '/app' },
+    { label: 'Tracking & NDR', path: '/app/rto' },
+    { label: 'RTO Returns', path: '/app/rto' },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Return to Origin (RTO) Tracking Dashboard"
-        description="Track shipments marked for return to origin, linehaul reverse transit, and warehouse return delivery."
+        title="RTO Returns"
+        description="Track reverse shipments returning to origin facilities and delivery updates."
         breadcrumbs={breadcrumbs}
       />
 

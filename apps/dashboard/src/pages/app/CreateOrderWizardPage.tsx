@@ -561,7 +561,7 @@ export const CreateOrderWizardPage: React.FC = () => {
               </div>
 
               <Button variant="outline" size="sm" leftIcon={<Plus size={16} />} onClick={handleAddItem}>
-                + Add Item
+                Add Item
               </Button>
             </div>
 

@@ -580,8 +580,8 @@ export const TrackingPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Merchant Portal', path: '/app' },
-    { label: 'Shipments Center', path: '/app/orders' },
-    { label: 'Tracking Visibility Hub', path: '/app/tracking' },
+    { label: 'Tracking & NDR', path: '/app/tracking' },
+    { label: 'Live Tracking', path: '/app/tracking' },
   ];
 
   return (
@@ -589,8 +589,8 @@ export const TrackingPage: React.FC = () => {
       
       {/* 1. PAGE HEADER */}
       <PageHeader
-        title="Tracking & Shipment Details Center"
-        description="Real-time end-to-end visibility for AWB tracking, courier milestones, financial breakdowns, and activity logs."
+        title="Live Shipment Tracking"
+        description="Real-time end-to-end visibility for AWB status, transit milestones, and activity logs."
         breadcrumbs={breadcrumbs}
         style={{ marginBottom: '0px' }}
       />

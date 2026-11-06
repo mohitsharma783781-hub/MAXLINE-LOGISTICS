@@ -134,9 +134,9 @@ export const ServiceabilityPage: React.FC = () => {
   };
 
   const breadcrumbs = [
-    { label: 'Customer Portal', path: '/app' },
-    { label: 'Courier Partners', path: '/app/couriers' },
-    { label: 'Serviceability', path: '/app/serviceability' },
+    { label: 'Merchant Portal', path: '/app' },
+    { label: 'Tools', path: '/app' },
+    { label: 'Pincode Serviceability', path: '/app/serviceability' },
   ];
 
   const columns: Column<TableRowData>[] = [
@@ -200,15 +200,10 @@ export const ServiceabilityPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
       {/* Header */}
       <PageHeader
-        title="Serviceability"
-        description="Check whether a destination is serviceable and review available courier options."
+        title="Pincode Serviceability"
+        description="Verify delivery lane coverage, COD eligibility, and expected transit times."
         breadcrumbs={breadcrumbs}
       />
-
-      {/* Demo Notice Banner */}
-      <Alert variant="info" title="Demo Serviceability Engine Active">
-        Demo serviceability — live courier availability will be connected during courier API integration.
-      </Alert>
 
       {/* Grid Layout: Search Form & Results */}
       <div

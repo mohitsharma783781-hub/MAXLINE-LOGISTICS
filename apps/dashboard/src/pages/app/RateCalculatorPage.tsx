@@ -627,7 +627,7 @@ export const RateCalculatorPage: React.FC = () => {
             }}
           >
             <Sliders size={13} />
-            {showDimensions ? 'Hide Box Dimensions' : '+ Add Box Dimensions (L × W × H)'}
+            {showDimensions ? 'Hide Box Dimensions' : 'Add Box Dimensions (L × W × H)'}
             {showDimensions ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
         </div>

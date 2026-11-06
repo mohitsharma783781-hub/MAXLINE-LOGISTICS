@@ -211,8 +211,8 @@ export const WeightDiscrepancyPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Merchant Portal', path: '/app' },
-    { label: 'Exceptions & Audits', path: '/app/weight-discrepancies' },
-    { label: 'Weight Disputes & Audit Manager', path: '/app/weight-discrepancies' },
+    { label: 'Tracking & NDR', path: '/app/weight-discrepancies' },
+    { label: 'Weight Disputes', path: '/app/weight-discrepancies' },
   ];
 
   return (
@@ -220,25 +220,9 @@ export const WeightDiscrepancyPage: React.FC = () => {
       
       {/* 1. Page Header */}
       <PageHeader
-        title="Weight Discrepancy & Dispute Center"
-        description="Audit courier partner reweigh scans, inspect frozen booked weights, upload evidence, and manage commercial dispute workflows."
+        title="Weight Disputes"
+        description="Audit carrier reweigh notices, inspect booked weights, and manage dispute claims."
         breadcrumbs={breadcrumbs}
-        actions={
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <Button variant="outline" size="sm" onClick={() => WeightDiscrepancyService.simulateCourierAudit({
-              shipmentId: `SHP-ORD-2026-${Math.floor(Math.random() * 9000 + 1000)}`,
-              awbNumber: `DEL${Math.floor(Math.random() * 90000000 + 10000000)}`,
-              orderId: `ORD-2026-${Math.floor(Math.random() * 9000 + 1000)}`,
-              merchantName: 'Acme Merchants Ltd',
-              courierName: 'Delhivery Surface',
-              bookedWeightKg: 20,
-              auditedWeightKg: 28,
-              additionalChargeINR: 420,
-            }) && refreshData()}>
-              + Simulate Discrepancy Detection (+8 KG)
-            </Button>
-          </div>
-        }
       />
 
       {toastMsg && (

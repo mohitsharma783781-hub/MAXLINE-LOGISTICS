@@ -149,7 +149,7 @@ export const PricingPage: React.FC = () => {
               Pricing Preview Sandbox
             </Button>
             <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => setIsAddModalOpen(true)}>
-              + Create Pricing Rule
+              Create Pricing Rule
             </Button>
           </div>
         }

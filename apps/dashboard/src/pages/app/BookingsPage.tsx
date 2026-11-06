@@ -79,7 +79,7 @@ export const BookingsPage: React.FC = () => {
         actions={
           <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
             <Button variant="primary" size="sm" leftIcon={<Plus size={16} />} onClick={() => navigate('/app/shipments/create')}>
-              + New Shipment Booking
+              New Shipment Booking
             </Button>
           </div>
         }

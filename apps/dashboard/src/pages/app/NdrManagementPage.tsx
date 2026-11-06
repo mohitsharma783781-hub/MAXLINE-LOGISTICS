@@ -195,8 +195,9 @@ export const NdrManagementPage: React.FC = () => {
   };
 
   const breadcrumbs = [
-    { label: 'Customer Portal', path: '/app' },
-    { label: 'NDR Exception Management Console', path: '/app/ndr' },
+    { label: 'Merchant Portal', path: '/app' },
+    { label: 'Tracking & NDR', path: '/app/ndr' },
+    { label: 'NDR Exceptions', path: '/app/ndr' },
   ];
 
   return (
@@ -204,7 +205,7 @@ export const NdrManagementPage: React.FC = () => {
       {/* 1. Page Header */}
       <PageHeader
         title="NDR Management"
-        description="Manage delivery exceptions and take action before shipments move to RTO."
+        description="Manage delivery exceptions and take reattempt actions before packages move to RTO."
         breadcrumbs={breadcrumbs}
         actions={
           <Button variant="outline" size="sm" onClick={handleExportCSV} leftIcon={<FileSpreadsheet size={15} />}>

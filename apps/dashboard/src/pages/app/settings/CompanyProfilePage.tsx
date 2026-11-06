@@ -56,8 +56,8 @@ export const CompanyProfilePage: React.FC = () => {
   };
 
   const breadcrumbs = [
-    { label: 'Seller Portal', path: '/app' },
-    { label: 'Settings', path: '/app/settings/profile' },
+    { label: 'Merchant Portal', path: '/app' },
+    { label: 'Settings', path: '/app/settings/company' },
     { label: 'Company Profile', path: '/app/settings/company' },
   ];
 
@@ -65,8 +65,8 @@ export const CompanyProfilePage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1100px', margin: '0 auto', paddingBottom: '40px' }}>
       
       <PageHeader
-        title="Seller Company Profile & Identity Center"
-        description="Manage company details, GST/PAN compliance, brand logo, support channels, and registered billing address."
+        title="Company Profile"
+        description="Manage company details, GST/PAN compliance, and registered business contacts."
         breadcrumbs={breadcrumbs}
       />
 

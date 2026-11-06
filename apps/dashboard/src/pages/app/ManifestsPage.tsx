@@ -72,8 +72,8 @@ export const ManifestsPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Merchant Portal', path: '/app' },
-    { label: 'Pickups & Manifests', path: '/app/pickups' },
-    { label: 'Carrier Manifest Center', path: '/app/manifests' },
+    { label: 'Shipments', path: '/app/orders' },
+    { label: 'Dispatch Manifests', path: '/app/manifests' },
   ];
 
   return (
@@ -81,8 +81,8 @@ export const ManifestsPage: React.FC = () => {
       
       {/* 1. Page Header */}
       <PageHeader
-        title="Carrier Dispatch Manifest Center"
-        description="Generate daily courier handover manifests, warehouse dispatches, print driver sign-off sheets, and track parcel handover logs."
+        title="Dispatch Manifests"
+        description="Generate carrier handover manifests and print driver sign-off sheets."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -90,7 +90,7 @@ export const ManifestsPage: React.FC = () => {
               Pickup Requests
             </Button>
             <Button variant="primary" size="sm" onClick={() => navigate('/app/manifests/create')} leftIcon={<Plus size={16} />} style={{ backgroundColor: '#0284c7', borderColor: '#0284c7' }}>
-              + Generate New Manifest
+              Create Manifest
             </Button>
           </div>
         }

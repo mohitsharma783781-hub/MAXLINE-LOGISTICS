@@ -136,16 +136,17 @@ export const CodDashboardPage: React.FC = () => {
   };
 
   const breadcrumbs = [
-    { label: 'Customer Portal', path: '/app' },
-    { label: 'COD Remittance & Settlement', path: '/app/cod' },
+    { label: 'Merchant Portal', path: '/app' },
+    { label: 'Finance', path: '/app/wallet' },
+    { label: 'COD Remittance', path: '/app/cod' },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', width: '100%' }}>
       {/* 1. Page Header */}
       <PageHeader
-        title="Cash on Delivery (COD) Remittance & Settlement Dashboard"
-        description="Monitor Cash on Delivery collections, pending settlements, bank payouts, and instant early COD remittances."
+        title="COD Remittance"
+        description="Monitor Cash on Delivery collections, pending settlements, and bank transfers."
         breadcrumbs={breadcrumbs}
         actions={
           <Button variant="outline" size="sm" onClick={handleExportCSV} leftIcon={<FileSpreadsheet size={15} />}>

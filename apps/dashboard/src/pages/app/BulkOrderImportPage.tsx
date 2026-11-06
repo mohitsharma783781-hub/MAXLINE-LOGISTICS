@@ -145,8 +145,8 @@ export const BulkOrderImportPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Merchant Portal', path: '/app' },
-    { label: 'Bulk Operations Center', path: '/app/orders/bulk-upload' },
-    { label: 'Bulk Order Upload & Dispatch Wizard', path: '/app/orders/bulk-upload' },
+    { label: 'Shipments', path: '/app/orders' },
+    { label: 'Bulk Upload', path: '/app/bulk/upload' },
   ];
 
   return (
@@ -154,16 +154,16 @@ export const BulkOrderImportPage: React.FC = () => {
       
       {/* 1. Page Header */}
       <PageHeader
-        title="Bulk Operations & Dispatch Operations Center"
-        description="Batch upload dispatches via CSV/XLSX, execute pre-upload data validation, book bulk shipments, print thermal 4x6 labels, and generate courier manifests."
+        title="Bulk Shipment Upload"
+        description="Batch upload shipments via CSV template with automated pre-dispatch validation."
         breadcrumbs={breadcrumbs}
         actions={
           <div style={{ display: 'flex', gap: '8px' }}>
             <Button variant="outline" size="sm" onClick={handleDownloadB2cTemplate} leftIcon={<Download size={14} />}>
-              Download B2C CSV Template
+              B2C Template
             </Button>
             <Button variant="outline" size="sm" onClick={handleDownloadB2bTemplate} leftIcon={<Download size={14} />}>
-              Download B2B CSV Template
+              B2B Cargo Template
             </Button>
           </div>
         }

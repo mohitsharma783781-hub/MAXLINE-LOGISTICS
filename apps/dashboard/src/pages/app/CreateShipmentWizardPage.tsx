@@ -1428,7 +1428,7 @@ export const CreateShipmentWizardPage: React.FC = () => {
 
   const breadcrumbs = [
     { label: 'Merchant Portal', path: '/app' },
-    { label: 'Shipment Creation Wizard', path: '/app/orders/create' },
+    { label: 'Create Shipment', path: '/app/orders/create' },
   ];
 
   return (
@@ -1436,8 +1436,8 @@ export const CreateShipmentWizardPage: React.FC = () => {
       
       {/* Page Header */}
       <PageHeader
-        title="Shipment Creation Wizard"
-        description="Guided 6-step shipment booking flow for B2C Express & B2B Freight."
+        title="Create Shipment"
+        description="Book B2C Express Parcels and B2B Commercial Cargo with verified courier rates."
         breadcrumbs={breadcrumbs}
         style={{ marginBottom: '0px' }}
         actions={

@@ -155,8 +155,8 @@ export const CreateManifestPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
       <PageHeader
-        title="Create Courier Handover Manifest"
-        description="Consolidate booked dispatches into an official pickup run sheet with barcodes."
+        title="Create Manifest"
+        description="Consolidate booked shipments into an official carrier handover sheet."
         breadcrumbs={breadcrumbs}
       />
 

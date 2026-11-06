@@ -231,9 +231,9 @@ export const SellerKycVerificationPage: React.FC = () => {
   };
 
   const breadcrumbs = [
-    { label: 'Seller Portal', path: '/app' },
-    { label: 'Settings', path: '/app/settings/profile' },
-    { label: 'KYC Verification Center', path: '/app/settings/kyc' },
+    { label: 'Merchant Portal', path: '/app' },
+    { label: 'Settings', path: '/app/settings/company' },
+    { label: 'KYC Verification', path: '/app/settings/kyc' },
   ];
 
   return (
@@ -249,8 +249,8 @@ export const SellerKycVerificationPage: React.FC = () => {
       />
 
       <PageHeader
-        title="Seller KYC Verification Center"
-        description="Upload official company compliance documents, bank verification details, and track verification status."
+        title="KYC Verification"
+        description="Upload business compliance documents and track verification approval."
         breadcrumbs={breadcrumbs}
       />
 

@@ -237,8 +237,8 @@ export const CreatePickupWizardPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
       {/* Header */}
       <PageHeader
-        title="Schedule Courier Pickup Dispatch"
-        description="Select booked shipments and request official vehicle collection from your registered hub."
+        title="Schedule Courier Pickup"
+        description="Select booked shipments and request carrier vehicle collection from your registered hub."
         breadcrumbs={breadcrumbs}
         actions={
           <Button
