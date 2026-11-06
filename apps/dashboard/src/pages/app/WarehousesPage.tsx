@@ -9,9 +9,10 @@ import {
   Star,
   Package,
   ShieldCheck,
+  CheckCircle2,
+  Search,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
-import { StatCard } from '../../components/common/StatCard';
 import {
   Button,
   Card,
@@ -42,6 +43,7 @@ export const WarehousesPage: React.FC = () => {
   );
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [isSaving, setIsSaving] = useState(false);
 
   // Modals
@@ -65,7 +67,6 @@ export const WarehousesPage: React.FC = () => {
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
-  const [isCloudSynced, setIsCloudSynced] = useState<boolean>(false);
 
   // Automatically sync with Supabase Cloud DB on mount
   useEffect(() => {
@@ -77,7 +78,6 @@ export const WarehousesPage: React.FC = () => {
     CustomerWarehouseService.syncFromSupabase(tenantId)
       .then((cloudList) => {
         setWarehouses([...cloudList]);
-        setIsCloudSynced(true);
       })
       .catch(() => {
         setWarehouses(CustomerWarehouseService.getWarehouses(tenantId));
@@ -92,7 +92,6 @@ export const WarehousesPage: React.FC = () => {
     CustomerWarehouseService.syncFromSupabase(tenantId)
       .then((cloudList) => {
         setWarehouses([...cloudList]);
-        setIsCloudSynced(true);
       })
       .catch(() => {
         setWarehouses([...CustomerWarehouseService.getWarehouses(tenantId)]);
@@ -251,6 +250,8 @@ export const WarehousesPage: React.FC = () => {
 
   // Filtered List
   const filteredWarehouses = warehouses.filter((w) => {
+    if (statusFilter === 'ACTIVE' && w.status !== 'ACTIVE') return false;
+    if (statusFilter === 'INACTIVE' && w.status !== 'INACTIVE') return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -262,271 +263,697 @@ export const WarehousesPage: React.FC = () => {
   });
 
   const activeCount = warehouses.filter((w) => w.status === 'ACTIVE').length;
+  const inactiveCount = warehouses.length - activeCount;
   const defaultWarehouse = warehouses.find((w) => w.isDefault);
   const totalShipments = warehouses.reduce((sum, w) => sum + (w.totalShipmentsCount || 0), 0);
 
   const breadcrumbs = [
-    { label: 'Customer Portal', path: '/app' },
-    { label: 'Shipment Settings', path: '/app/settings' },
-    { label: 'Pickup Warehouses', path: '/app/warehouses' },
+    { label: 'Merchant Portal', path: '/app' },
+    { label: 'Tools', path: '/app' },
+    { label: 'Warehouses', path: '/app/warehouses' },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', width: '100%' }}>
-      {/* 1. Page Header */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+      {/* 1. Sleek Page Header */}
       <PageHeader
-        title="Multi-Warehouse & Pickup Locations Manager"
-        description="Operate shipments from multiple physical pickup facilities across India. Configure custom origin addresses, pickup timings, and primary defaults."
+        title="Pickup Warehouses"
+        description="Manage origin dispatch locations and pickup facilities across India."
         breadcrumbs={breadcrumbs}
         actions={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            {isCloudSynced && (
-              <Badge variant="success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', padding: '4px 8px' }}>
-                <ShieldCheck size={12} /> Supabase Cloud Synced
-              </Badge>
-            )}
-            <Button variant="primary" size="sm" onClick={handleOpenAddModal}>
-              <PlusCircle size={14} style={{ marginRight: '6px' }} /> + Add Pickup Warehouse
-            </Button>
-          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleOpenAddModal}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: '#2563eb',
+              color: '#ffffff',
+              fontWeight: 600,
+              padding: '8px 14px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              boxShadow: '0 1px 3px rgba(37,99,235,0.25)',
+            }}
+          >
+            <PlusCircle size={15} /> Add Warehouse
+          </Button>
         }
       />
 
       {toastMsg && (
-        <Alert variant="success" title="Warehouse Updated">
+        <Alert variant="success" title="Success">
           {toastMsg}
         </Alert>
       )}
 
-      {/* 2. Overview Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
-        <StatCard label="Active Pickup Warehouses" value={activeCount} subtext="Configured physical locations" icon={Building2} />
-        <StatCard label="Primary Default Facility" value={defaultWarehouse ? defaultWarehouse.warehouseCode : 'None'} subtext={defaultWarehouse ? defaultWarehouse.city : 'Assign default'} badgeText="DEFAULT" badgeVariant="success" icon={Star} />
-        <StatCard label="Origin Shipments Dispatched" value={totalShipments.toString()} subtext="Combined multi-warehouse dispatches" icon={Package} />
+      {/* 2. Modern Executive Metrics Strip (Compact & Zero Space Waste) */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '12px',
+        }}
+      >
+        {/* Metric 1: Active Facilities */}
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+          }}
+        >
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              backgroundColor: '#eff6ff',
+              color: '#2563eb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Building2 size={22} />
+          </div>
+          <div>
+            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Active Locations
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', lineHeight: 1.2, marginTop: '2px' }}>
+              {activeCount} <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>Hubs configured</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Metric 2: Primary Default Facility */}
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+          }}
+        >
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              backgroundColor: '#ecfdf5',
+              color: '#059669',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Star size={22} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Primary Default Origin
+              </span>
+              <span
+                style={{
+                  fontSize: '9px',
+                  backgroundColor: '#dcfce7',
+                  color: '#15803d',
+                  padding: '1px 6px',
+                  borderRadius: '999px',
+                  fontWeight: 700,
+                }}
+              >
+                DEFAULT
+              </span>
+            </div>
+            <div
+              style={{
+                fontSize: '16px',
+                fontWeight: 700,
+                color: '#0f172a',
+                lineHeight: 1.2,
+                marginTop: '2px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {defaultWarehouse ? (
+                <span>
+                  {defaultWarehouse.warehouseCode} <span style={{ fontSize: '13px', fontWeight: 500, color: '#475569' }}>• {defaultWarehouse.city}</span>
+                </span>
+              ) : (
+                <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 500 }}>No default assigned</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Metric 3: Total Dispatches */}
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+          }}
+        >
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              backgroundColor: '#f8fafc',
+              color: '#475569',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Package size={22} />
+          </div>
+          <div>
+            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Origin Dispatches
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', lineHeight: 1.2, marginTop: '2px' }}>
+              {totalShipments} <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>Shipments</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Deactivation Protection Notice */}
-      <Alert variant="info" title="Deletion Protection & Snapshot Guarantee">
-        Warehouses associated with historical shipments cannot be permanently deleted. Deactivating a warehouse prevents future selection, while <strong>all past shipments preserve their original pickup address snapshot</strong>.
-      </Alert>
+      {/* 3. Main Directory Card with Filter Tabs & Search */}
+      <Card style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px', borderRadius: '12px' }}>
+        {/* Search & Status Filter Row */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          {/* Quick Filter Tabs */}
+          <div style={{ display: 'inline-flex', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px', gap: '2px' }}>
+            <button
+              onClick={() => setStatusFilter('ALL')}
+              style={{
+                border: 'none',
+                background: statusFilter === 'ALL' ? '#ffffff' : 'transparent',
+                color: statusFilter === 'ALL' ? '#0f172a' : '#64748b',
+                fontWeight: statusFilter === 'ALL' ? 600 : 500,
+                fontSize: '12px',
+                padding: '5px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                boxShadow: statusFilter === 'ALL' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              All ({warehouses.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('ACTIVE')}
+              style={{
+                border: 'none',
+                background: statusFilter === 'ACTIVE' ? '#ffffff' : 'transparent',
+                color: statusFilter === 'ACTIVE' ? '#0f172a' : '#64748b',
+                fontWeight: statusFilter === 'ACTIVE' ? 600 : 500,
+                fontSize: '12px',
+                padding: '5px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                boxShadow: statusFilter === 'ACTIVE' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Active ({activeCount})
+            </button>
+            <button
+              onClick={() => setStatusFilter('INACTIVE')}
+              style={{
+                border: 'none',
+                background: statusFilter === 'INACTIVE' ? '#ffffff' : 'transparent',
+                color: statusFilter === 'INACTIVE' ? '#0f172a' : '#64748b',
+                fontWeight: statusFilter === 'INACTIVE' ? 600 : 500,
+                fontSize: '12px',
+                padding: '5px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                boxShadow: statusFilter === 'INACTIVE' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Inactive ({inactiveCount})
+            </button>
+          </div>
 
-      {/* 3. Search & Cards Grid */}
-      <Card style={{ padding: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
-          <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Pickup Warehouses Directory</h3>
-          <div style={{ width: '280px' }}>
+          {/* Search Box */}
+          <div style={{ width: '280px', position: 'relative' }}>
             <Input
-              placeholder="Search Name, Code, City, Pincode..."
+              placeholder="Search Name, City, Pincode..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ height: '36px', fontSize: '13px' }}
             />
           </div>
         </div>
 
-        {/* Warehouse Cards Display Grid */}
+        {/* Warehouse Cards Grid */}
         {filteredWarehouses.length === 0 ? (
           <div
             style={{
-              padding: 'var(--space-8) var(--space-4)',
+              padding: '36px 16px',
               textAlign: 'center',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 'var(--space-3)',
-              backgroundColor: 'var(--color-bg-secondary)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px dashed var(--color-border-main)',
+              gap: '10px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '10px',
+              border: '1px dashed #cbd5e1',
             }}
           >
-            <Building2 size={44} style={{ color: 'var(--color-text-muted)' }} />
-            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-              {warehouses.length === 0 ? 'No Pickup Warehouses Configured' : 'No Warehouses Found'}
+            <Building2 size={36} style={{ color: '#94a3b8' }} />
+            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
+              {warehouses.length === 0 ? 'No Pickup Warehouses Configured' : 'No Matching Warehouses'}
             </h4>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-secondary)', maxWidth: '420px', lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: '13px', color: '#64748b', maxWidth: '400px', lineHeight: 1.4 }}>
               {warehouses.length === 0
-                ? 'Configure your primary origin facility or dispatch hub. Couriers will pick up shipments from these physical addresses.'
-                : `No pickup locations matched "${searchQuery}". Try searching for another name, city, or pincode.`}
+                ? 'Configure your origin facility or hub. Delhivery and courier partners pick up parcels from these addresses.'
+                : `No pickup locations match "${searchQuery}".`}
             </p>
             {warehouses.length === 0 && (
-              <Button variant="primary" size="sm" onClick={handleOpenAddModal} style={{ marginTop: 'var(--space-2)' }}>
-                <PlusCircle size={14} style={{ marginRight: '6px' }} /> + Add Primary Pickup Warehouse
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleOpenAddModal}
+                style={{
+                  marginTop: '8px',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                }}
+              >
+                <PlusCircle size={14} style={{ marginRight: '6px' }} /> Add First Warehouse
               </Button>
             )}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 'var(--space-4)' }}>
-          {filteredWarehouses.map((wh) => (
-            <Card
-              key={wh.id}
-              style={{
-                padding: 'var(--space-4)',
-                border: wh.isDefault ? '2px solid var(--color-violet-main)' : '1px solid var(--color-border-main)',
-                backgroundColor: wh.status === 'INACTIVE' ? 'var(--color-bg-secondary)' : '#ffffff',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 'var(--space-3)',
-                position: 'relative',
-              }}
-            >
-              {/* Header Badges */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <Badge variant="brand" style={{ fontSize: '10px', marginBottom: '4px' }}>
-                    {wh.warehouseCode}
-                  </Badge>
-                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
-                    {wh.warehouseName}
-                  </h4>
-                </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '14px' }}>
+            {filteredWarehouses.map((wh) => (
+              <div
+                key={wh.id}
+                style={{
+                  borderRadius: '10px',
+                  border: wh.isDefault ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                  backgroundColor: wh.status === 'INACTIVE' ? '#f8fafc' : wh.isDefault ? '#fbfcfe' : '#ffffff',
+                  boxShadow: wh.isDefault ? '0 2px 8px rgba(37,99,235,0.08)' : '0 1px 3px rgba(0,0,0,0.02)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {/* Card Top Strip */}
+                <div
+                  style={{
+                    padding: '12px 14px 10px 14px',
+                    borderBottom: '1px solid #f1f5f9',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    backgroundColor: wh.isDefault ? '#eff6ff' : 'transparent',
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          backgroundColor: wh.isDefault ? '#dbeafe' : '#f1f5f9',
+                          color: wh.isDefault ? '#1e40af' : '#475569',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          letterSpacing: '0.03em',
+                        }}
+                      >
+                        {wh.warehouseCode}
+                      </span>
+                      {wh.isDefault && (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            backgroundColor: '#dcfce7',
+                            color: '#15803d',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                          }}
+                        >
+                          <Star size={10} fill="currentColor" /> DEFAULT ORIGIN
+                        </span>
+                      )}
+                    </div>
+                    <h4
+                      style={{
+                        margin: 0,
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color: '#0f172a',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {wh.warehouseName}
+                    </h4>
+                  </div>
 
-                <div style={{ display: 'flex', gap: '4px', flexDirection: 'column', alignItems: 'flex-end' }}>
-                  {wh.isDefault && (
-                    <Badge variant="success" style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                      <Star size={11} /> DEFAULT PICKUP
-                    </Badge>
-                  )}
-                  <Badge variant={wh.status === 'ACTIVE' ? 'info' : 'neutral'}>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '999px',
+                      backgroundColor: wh.status === 'ACTIVE' ? '#f0fdf4' : '#f1f5f9',
+                      color: wh.status === 'ACTIVE' ? '#16a34a' : '#64748b',
+                      border: wh.status === 'ACTIVE' ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                      textTransform: 'uppercase',
+                      flexShrink: 0,
+                    }}
+                  >
                     {wh.status}
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Address & Contact Info */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                  <MapPin size={14} style={{ color: 'var(--color-violet-main)', flexShrink: 0, marginTop: '2px' }} />
-                  <span>
-                    {wh.addressLine1}{wh.addressLine2 ? `, ${wh.addressLine2}` : ''}, <strong>{wh.city}, {wh.state} - {wh.pincode}</strong>
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Phone size={14} style={{ color: 'var(--color-violet-main)', flexShrink: 0 }} />
-                  <span>Contact: <strong>{wh.contactPerson}</strong> ({wh.phone})</span>
+                {/* Card Body: Address & Contacts (Compact Spacing) */}
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '7px',
+                    fontSize: '12px',
+                    color: '#475569',
+                    flex: 1,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <MapPin size={14} style={{ color: '#2563eb', flexShrink: 0, marginTop: '2px' }} />
+                    <span style={{ lineHeight: 1.35 }}>
+                      {wh.addressLine1}
+                      {wh.addressLine2 ? `, ${wh.addressLine2}` : ''},{' '}
+                      <strong style={{ color: '#0f172a' }}>
+                        {wh.city}, {wh.state} - {wh.pincode}
+                      </strong>
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Phone size={14} style={{ color: '#2563eb', flexShrink: 0 }} />
+                    <span>
+                      Contact:{' '}
+                      <strong style={{ color: '#0f172a' }}>{wh.contactPerson}</strong> ({wh.phone})
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Clock size={14} style={{ color: '#2563eb', flexShrink: 0 }} />
+                    <span>
+                      Pickup Window:{' '}
+                      <strong style={{ color: '#0f172a' }}>
+                        {wh.pickupStartTime} – {wh.pickupEndTime}
+                      </strong>
+                    </span>
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Clock size={14} style={{ color: 'var(--color-violet-main)', flexShrink: 0 }} />
-                  <span>Pickup Slot: <strong>{wh.pickupStartTime} – {wh.pickupEndTime}</strong></span>
+                {/* Card Actions (Always 100% visible, No Cut-Off) */}
+                <div
+                  style={{
+                    borderTop: '1px solid #f1f5f9',
+                    padding: '8px 14px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: wh.isDefault ? '#fbfcfe' : '#ffffff',
+                  }}
+                >
+                  <div>
+                    {!wh.isDefault && wh.status === 'ACTIVE' ? (
+                      <button
+                        onClick={() => handleSetDefault(wh)}
+                        style={{
+                          border: '1px solid #bfdbfe',
+                          backgroundColor: '#eff6ff',
+                          color: '#2563eb',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Star size={11} /> Make Default
+                      </button>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          color: wh.isDefault ? '#15803d' : '#94a3b8',
+                          fontWeight: wh.isDefault ? 600 : 400,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                        }}
+                      >
+                        {wh.isDefault ? (
+                          <>
+                            <CheckCircle2 size={12} /> Default Origin
+                          </>
+                        ) : (
+                          'Inactive Facility'
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      onClick={() => handleOpenEditModal(wh)}
+                      style={{
+                        border: '1px solid #e2e8f0',
+                        backgroundColor: '#ffffff',
+                        color: '#334155',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <Edit2 size={11} /> Edit
+                    </button>
+                    {wh.status === 'ACTIVE' && (
+                      <button
+                        onClick={() => handleDeactivate(wh)}
+                        style={{
+                          border: '1px solid #fee2e2',
+                          backgroundColor: '#fff5f5',
+                          color: '#dc2626',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Deactivate
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              {/* Card Actions */}
-              <div style={{ borderTop: '1px solid var(--color-border-main)', paddingTop: 'var(--space-3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {!wh.isDefault && wh.status === 'ACTIVE' ? (
-                  <Button size="sm" variant="outline" onClick={() => handleSetDefault(wh)} style={{ fontSize: '11px' }}>
-                    <Star size={12} style={{ marginRight: '4px' }} /> Set as Default
-                  </Button>
-                ) : (
-                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                    {wh.isDefault ? 'Primary Default' : 'Inactive Facility'}
-                  </span>
-                )}
-
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenEditModal(wh)}>
-                    <Edit2 size={13} /> Edit
-                  </Button>
-                  {wh.status === 'ACTIVE' && (
-                    <Button size="sm" variant="outline" onClick={() => handleDeactivate(wh)} style={{ color: 'var(--color-danger-main)' }}>
-                      Deactivate
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+            ))}
+          </div>
         )}
+
+        {/* Subtle, Non-Intrusive Snapshot Guarantee Note at bottom */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '11px',
+            color: '#64748b',
+            borderTop: '1px solid #f1f5f9',
+            paddingTop: '10px',
+            marginTop: '4px',
+          }}
+        >
+          <ShieldCheck size={14} style={{ color: '#0ea5e9', flexShrink: 0 }} />
+          <span>
+            Historical Pickup Snapshot: Past bookings and LR waybills retain their original pickup address even if a facility is edited or deactivated.
+          </span>
+        </div>
       </Card>
 
       {/* ADD / EDIT WAREHOUSE MODAL */}
       <Modal
         isOpen={isAddEditModalOpen}
         onClose={() => setIsAddEditModalOpen(false)}
-        title={editingWarehouse ? `Edit Pickup Warehouse — ${editingWarehouse.warehouseCode}` : '+ Add New Pickup Warehouse'}
+        title={editingWarehouse ? `Edit Pickup Warehouse — ${editingWarehouse.warehouseCode}` : 'Add New Pickup Warehouse'}
         maxWidth="650px"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {duplicateWarning && (
             <Alert variant="warning" title="Duplicate Location Warning">
               {duplicateWarning}
             </Alert>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Warehouse Facility Name *</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                Warehouse Facility Name *
+              </label>
               <Input placeholder="e.g. Mumbai Fulfillment Center" value={formName} onChange={(e) => setFormName(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Contact Person Name *</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                Contact Person Name *
+              </label>
               <Input placeholder="e.g. Rahul Sharma" value={formContact} onChange={(e) => setFormContact(e.target.value)} />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Mobile Number *</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                Mobile Number *
+              </label>
               <Input placeholder="+91 98765 43210" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Warehouse Email (Optional)</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                Warehouse Email (Optional)
+              </label>
               <Input placeholder="mumbai.wh@yourstore.com" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} />
             </div>
           </div>
 
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Address Line 1 *</label>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+              Address Line 1 *
+            </label>
             <Input placeholder="Plot/Building No, Industrial Estate, Street..." value={formAddress1} onChange={(e) => setFormAddress1(e.target.value)} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Address Line 2</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                Address Line 2
+              </label>
               <Input placeholder="Locality / Area..." value={formAddress2} onChange={(e) => setFormAddress2(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Landmark</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                Landmark
+              </label>
               <Input placeholder="Near Metro Station..." value={formLandmark} onChange={(e) => setFormLandmark(e.target.value)} />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Pincode (Auto-populates) *</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                Pincode (Auto-populates) *
+              </label>
               <Input placeholder="e.g. 400001" value={formPincode} onChange={(e) => handlePincodeChange(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>City *</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                City *
+              </label>
               <Input value={formCity} onChange={(e) => setFormCity(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>State *</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                State *
+              </label>
               <Input value={formState} onChange={(e) => setFormState(e.target.value)} />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Pickup Start Slot</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                Pickup Start Slot
+              </label>
               <Input value={formStartTime} onChange={(e) => setFormStartTime(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Pickup End Slot</label>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                Pickup End Slot
+              </label>
               <Input value={formEndTime} onChange={(e) => setFormEndTime(e.target.value)} />
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
             <Checkbox checked={formIsDefault} onChange={(e) => setFormIsDefault(e.target.checked)} />
-            <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Set as Primary Default Warehouse for New Bookings</label>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+              Set as Primary Default Warehouse for New Bookings
+            </label>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
-            <Button variant="outline" onClick={() => setIsAddEditModalOpen(false)} disabled={isSaving}>Cancel</Button>
-            <Button variant="primary" onClick={handleSaveWarehouse} isLoading={isSaving}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+            <Button variant="outline" onClick={() => setIsAddEditModalOpen(false)} disabled={isSaving} size="sm">
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSaveWarehouse}
+              isLoading={isSaving}
+              size="sm"
+              style={{ backgroundColor: '#2563eb', color: '#ffffff', fontWeight: 600 }}
+            >
               {editingWarehouse ? 'Update Warehouse' : 'Save Warehouse Location'}
             </Button>
           </div>
